@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Build artifacts
+*.app/
+*.icns
+MyIcon.iconset/
+*.dSYM/
+*.o
+*.out
+
+# Xcode / Swift PM
+.build/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/

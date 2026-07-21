@@ -1,0 +1,47 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Cosmic background gradient -->
+    <radialGradient id="bg" cx="60%" cy="35%" r="80%">
+      <stop offset="0%" stop-color="#c9b6fc"/>
+      <stop offset="45%" stop-color="#5a46c7"/>
+      <stop offset="100%" stop-color="#13182b"/>
+    </radialGradient>
+    <radialGradient id="moonGlow" cx="50%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="#e5e6ff" stop-opacity="0.98"/>
+      <stop offset="80%" stop-color="#a187e6" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#252442" stop-opacity="0.04"/>
+    </radialGradient>
+    <linearGradient id="crescentGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffbe9"/>
+      <stop offset="100%" stop-color="#d1b6fa"/>
+    </linearGradient>
+    <radialGradient id="starGlow" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background squircle -->
+  <rect x="56" y="56" width="912" height="912" rx="220" fill="url(#bg)"/>
+  <!-- Cosmic nebula swirl (subtle) -->
+  <ellipse cx="512" cy="600" rx="280" ry="90" fill="#7b6dd1" opacity="0.09"/>
+  <ellipse cx="600" cy="390" rx="200" ry="60" fill="#6bb8fa" opacity="0.07"/>
+  <!-- Moon face -->
+  <circle cx="520" cy="530" r="180" fill="url(#moonGlow)"/>
+  <!-- Crescent overlay -->
+  <ellipse cx="590" cy="460" rx="56" ry="48" fill="url(#crescentGrad)" opacity="0.85"/>
+  <ellipse cx="603" cy="455" rx="40" ry="41" fill="#b1a5e6" opacity="0.08"/>
+  <!-- Moon face features -->
+  <ellipse cx="537" cy="560" rx="19" ry="8" fill="#fff" opacity="0.18"/>
+  <path d="M480,550 Q520,590 560,550" stroke="#a889d9" stroke-width="8" fill="none" opacity="0.8"/>
+  <path d="M482,523 Q492,537 502,522" stroke="#a889d9" stroke-width="7" fill="none" opacity="0.8"/>
+  <path d="M538,522 Q547,537 557,523" stroke="#a889d9" stroke-width="7" fill="none" opacity="0.8"/>
+  <!-- Sparkle stars -->
+  <circle cx="645" cy="370" r="9" fill="url(#starGlow)" opacity="0.9"/>
+  <circle cx="670" cy="400" r="5" fill="url(#starGlow)" opacity="0.7"/>
+  <circle cx="588" cy="398" r="4" fill="url(#starGlow)" opacity="0.6"/>
+  <circle cx="600" cy="340" r="7" fill="url(#starGlow)" opacity="0.7"/>
+  <!-- Subtle highlight -->
+  <ellipse cx="490" cy="480" rx="54" ry="22" fill="#fff" opacity="0.13"/>
+  <!-- Squircle inner border for depth -->
+  <rect x="70" y="70" width="884" height="884" rx="200" fill="none" stroke="#fff" stroke-width="9" opacity="0.07"/>
+</svg>
