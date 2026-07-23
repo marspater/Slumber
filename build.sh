@@ -19,6 +19,18 @@ mkdir -p "${RESOURCES_DIR}"
 # Compile Swift files
 swiftc -O -parse-as-library -target $(uname -m)-apple-macos26.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
 
+# Build AppIcon.icns from Main_Icon.icon preview artwork
+echo "Building app icon from Main_Icon.icon..."
+ICON_SRC="Assets/Main_Icon.icon/Assets/preview.png"
+mkdir -p _AppIcon.iconset
+for size in 16 32 128 256 512; do
+    sips -z $size $size "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}.png" > /dev/null 2>&1
+    double=$((size * 2))
+    sips -z $double $double "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}@2x.png" > /dev/null 2>&1
+done
+iconutil -c icns _AppIcon.iconset -o "${RESOURCES_DIR}/AppIcon.icns"
+rm -rf _AppIcon.iconset
+
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -32,9 +44,7 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
     <key>CFBundleIconFile</key>
-    <string>Main_Icon</string>
-    <key>CFBundleIconName</key>
-    <string>Main_Icon</string>
+    <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
     <string>2.6</string>
     <key>CFBundleVersion</key>
@@ -47,12 +57,10 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
 </plist>
 EOF
 
+# Copy sounds
 echo "Copying assets..."
-mkdir -p "${RESOURCES_DIR}"
-
-# Copy all assets as-is without any generation or processing
-if [ -d "Assets" ]; then
-    cp -R Assets/* "${RESOURCES_DIR}/" 2>/dev/null || true
+if ls Assets/*.wav 1> /dev/null 2>&1; then
+    cp Assets/*.wav "${RESOURCES_DIR}/"
 fi
 
 echo "Signing binary..."
@@ -60,7 +68,6 @@ find "${APP_DIR}" -name '.DS_Store' -delete || true
 xattr -cr "${APP_DIR}"
 codesign --force --deep --sign - "${APP_DIR}"
 
-# Force Finder refresh
 touch "${APP_DIR}"
 
 echo "Build complete. App is ready at ${APP_DIR}!"
