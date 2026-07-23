@@ -29,6 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupGlobalMonitor()
         setupGlobalHotkey()
+        setupDisplayObserver()
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleActuallyClose), name: .slumberActuallyClose, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleTogglePopoverNotification), name: .slumberTogglePopover, object: nil)
@@ -103,6 +104,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             0,
             &hotKeyRef
         )
+    }
+
+    private func setupDisplayObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDisplayModeChange),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleDisplayModeChange() {
+        guard let screen = NSScreen.main else { return }
+        let _ = screen.maximumExtendedDynamicRangeColorComponentValue
+        Task { @MainActor in
+            popover?.contentViewController?.view.needsDisplay = true
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

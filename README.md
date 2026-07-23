@@ -1,74 +1,84 @@
 <div align="center">
-  <img src="Assets/glass_sleep_art.png" alt="Slumber App Icon" width="200" height="200"/>
+  <img src="Assets/icon_preview.png" alt="Slumber App Icon" width="220" height="220"/>
   <h1>Slumber 🌙✨</h1>
-  <p><b>An elegant, aesthetic macOS menu bar sleep timer for macOS 27+</b></p>
+  <p><b>An aesthetic macOS 26 & 27 menu bar sleep timer with vector graphics, companion animations, and P3 wide-gamut visuals.</b></p>
+
+  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+  [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
+  [![Swift 6](https://img.shields.io/badge/Swift-6.0-orange.svg)]()
 </div>
 
 ---
 
 ## 🌟 Overview
 
-**Slumber** is a minimalist menu bar utility designed to put your Mac to sleep after a customizable countdown timer. Featuring a beautiful wide-gamut Display P3 dynamic starfield background, ambient soft sound effects, and a global hotkey, Slumber ensures your device sleeps beautifully.
+**Slumber** is an ambient, minimalist menu bar application for macOS. Built with native Swift and SwiftUI, it puts your Mac to sleep after a customizable countdown timer while providing a relaxing visual experience.
 
-With our latest overhaul for **macOS 27**, we've integrated Apple's continuous corner curvature (n=5 superellipse), vibrant dark mode popover materials, and extremely soft ambient audio, crafting an intuitive and premium experience.
+Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic shooting stars, and orbiting **animal companions** (like the sleeping fox and purple kitten) that accompany you as you drift off to sleep.
 
 ---
 
-## 📸 Screenshot
+## 📸 Screenshots & UI
 
 <div align="center">
-  <img src="Assets/screenshot.png" alt="Slumber UI Screenshot" width="400"/>
+  <img src="Assets/screenshot.png" alt="Slumber App UI Screenshot" width="440"/>
   <br/>
-  <em>(Experience the dynamic cosmic nebula right from your menu bar!)</em>
+  <em>(Experience peaceful bedtime timers right from your macOS menu bar!)</em>
 </div>
 
 ---
 
-## ✨ Features
+## ✨ Features & Architecture
 
-- 🕒 **Custom Sleep Countdown**: Quick duration chips (15m, 30m, 45m, 60m) or precise slider inputs.
-- 🌌 **Cosmic Aesthetic UI**: Twinkling starfield with vector clouds, a sleeping moon, and interactive visual feedback.
-- 🎵 **Ambient Audio**: Extremely soft, ambient sine-wave sounds for a calming bedtime experience.
-- 🛡️ **Wake Protection**: Automatically cancels timers if you wake the Mac, preventing unexpected shutdowns.
-- ⚡ **Global Hotkey**: Press `Ctrl + Option + S` to toggle the Slumber popover anywhere.
-- 🍏 **macOS 27 Native**: Beautiful glass materials, Apple standard typography (SF Pro), and continuous superellipse corners.
+### 🎨 1. Beautiful Vector Graphics Engine
+- Pure SwiftUI vector path shapes for clouds, twinkling stars, and cosmic auroras.
+- Display P3 wide-gamut color definitions (`Color.p3(...)`) for vibrant colors across both Light & Dark OS themes.
+
+### 🦊 2. Animated Animal Companions
+- **Sleeping Fox & Kitten**: Interactive companions resting on soft clouds during idle state, smoothly transitioning to orbit around the sleeping moon when a countdown starts.
+- **Keplerian Orbital Motion & Physics**: Continuous wall-clock time math using `TimelineView` for smooth floating, breathing sine-wave motions, and spring-interpolated position lerping.
+
+### 🖥️ 3. Full macOS 26 & macOS 27 Support
+- Native `.icon` bundle format support (`Main_Icon.icon`) with 3 adaptive modes and zero white borders.
+- Display parameter change listener for SDR & HDR display adaptation.
+- System wake notifications automatically cancel pending timers if the Mac is opened.
+
+### 🎵 4. Soft Ambient Bedtime Audio
+- Synthesized low-volume sine-wave audio cues for timer start, button presses, and cancellations.
 
 ---
 
-## 🚀 Easy Installation & Building
-
-No complex Xcode setups required! 
+## 🚀 Installation & Building
 
 ### Prerequisites
-- **macOS 27.0** or later
-- Swift Command Line Tools
+- **macOS 26.0** or later.
+- Swift Command Line Tools (`swiftc`, `sips`, `iconutil`).
 
-### 1-Click Build
+### 1-Click Build & Install
 
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/marspater/Slumber.git
    cd Slumber
    ```
-2. **Build the app:**
-   ```bash
-   ./build.sh
-   ```
-   *This single command compiles the Swift package and builds the `.app` bundle with the vector icons!*
 
-3. **Run Slumber:**
+2. **Build & install:**
    ```bash
-   open Slumber.app
+   chmod +x build.sh
+   ./build.sh
+   cp -R Slumber.app /Applications/
    ```
-   *(Or drag `Slumber.app` to your `/Applications` folder for easy access!)*
+
+3. **Launch Slumber:**
+   ```bash
+   open /Applications/Slumber.app
+   ```
 
 ---
 
-## 🛠 Tech Stack
+## 📄 License
 
-- **Language**: Swift 6
-- **UI Frameworks**: SwiftUI & AppKit
-- **System APIs**: `Carbon` (Global Hotkeys), `AVFoundation`, `ProcessInfo`, `pmset`
+Slumber is open-source software licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
 
 ---
 

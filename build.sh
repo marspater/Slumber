@@ -17,7 +17,7 @@ mkdir -p "${MACOS_DIR}"
 mkdir -p "${RESOURCES_DIR}"
 
 # Compile Swift files
-swiftc -O -parse-as-library -target $(uname -m)-apple-macos15.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
+swiftc -O -parse-as-library -target $(uname -m)-apple-macos26.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
@@ -34,11 +34,11 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.5</string>
+    <string>2.6</string>
     <key>CFBundleVersion</key>
-    <string>2.5</string>
+    <string>2.6</string>
     <key>MinimumOSVersion</key>
-    <string>15.0</string>
+    <string>26.0</string>
     <key>LSUIElement</key>
     <true/>
 </dict>
@@ -47,28 +47,41 @@ EOF
 
 echo "Copying assets..."
 mkdir -p "${RESOURCES_DIR}"
-# Copy new dock icon
-NEW_ICON="Assets/glass_sleep_art.png"
-if [ -f "$NEW_ICON" ]; then
-    cp "$NEW_ICON" "${RESOURCES_DIR}/glass_sleep_art.png"
+
+# Copy Main_Icon.icon bundle for macOS 26/27 native icon renderer
+if [ -d "Assets/Main_Icon.icon" ]; then
+    cp -R "Assets/Main_Icon.icon" "${RESOURCES_DIR}/"
+fi
+
+# Copy glass art icon & generate icns from Main_Icon.icon preview or glass_sleep_art
+MAIN_ICON_PREVIEW="Assets/Main_Icon.icon/Assets/preview.png"
+FALLBACK_ICON="Assets/glass_sleep_art.png"
+SOURCE_ICON=""
+
+if [ -f "$MAIN_ICON_PREVIEW" ]; then
+    SOURCE_ICON="$MAIN_ICON_PREVIEW"
+elif [ -f "$FALLBACK_ICON" ]; then
+    SOURCE_ICON="$FALLBACK_ICON"
+fi
+
+if [ -n "$SOURCE_ICON" ]; then
+    cp "$SOURCE_ICON" "${RESOURCES_DIR}/glass_sleep_art.png"
     
-    # Create iconset for dock
+    # Create iconset for dock without white borders
     mkdir -p MyIcon.iconset
-    sips -s format png -z 16 16     "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_16x16.png > /dev/null
-    sips -s format png -z 32 32     "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_16x16@2x.png > /dev/null
-    sips -s format png -z 32 32     "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_32x32.png > /dev/null
-    sips -s format png -z 64 64     "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_32x32@2x.png > /dev/null
-    sips -s format png -z 128 128   "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_128x128.png > /dev/null
-    sips -s format png -z 256 256   "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_128x128@2x.png > /dev/null
-    sips -s format png -z 256 256   "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_256x256.png > /dev/null
-    sips -s format png -z 512 512   "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_256x256@2x.png > /dev/null
-    sips -s format png -z 512 512   "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_512x512.png > /dev/null
-    sips -s format png -z 1024 1024 "${RESOURCES_DIR}/glass_sleep_art.png" --out MyIcon.iconset/icon_512x512@2x.png > /dev/null
+    sips -s format png -z 16 16     "$SOURCE_ICON" --out MyIcon.iconset/icon_16x16.png > /dev/null
+    sips -s format png -z 32 32     "$SOURCE_ICON" --out MyIcon.iconset/icon_16x16@2x.png > /dev/null
+    sips -s format png -z 32 32     "$SOURCE_ICON" --out MyIcon.iconset/icon_32x32.png > /dev/null
+    sips -s format png -z 64 64     "$SOURCE_ICON" --out MyIcon.iconset/icon_32x32@2x.png > /dev/null
+    sips -s format png -z 128 128   "$SOURCE_ICON" --out MyIcon.iconset/icon_128x128.png > /dev/null
+    sips -s format png -z 256 256   "$SOURCE_ICON" --out MyIcon.iconset/icon_128x128@2x.png > /dev/null
+    sips -s format png -z 256 256   "$SOURCE_ICON" --out MyIcon.iconset/icon_256x256.png > /dev/null
+    sips -s format png -z 512 512   "$SOURCE_ICON" --out MyIcon.iconset/icon_256x256@2x.png > /dev/null
+    sips -s format png -z 512 512   "$SOURCE_ICON" --out MyIcon.iconset/icon_512x512.png > /dev/null
+    sips -s format png -z 1024 1024 "$SOURCE_ICON" --out MyIcon.iconset/icon_512x512@2x.png > /dev/null
     iconutil -c icns MyIcon.iconset
     cp MyIcon.icns "${RESOURCES_DIR}/AppIcon.icns"
     rm -r MyIcon.iconset MyIcon.icns
-else
-    echo "⚠️ Warning: $NEW_ICON not found. App icon will not be generated!"
 fi
 
 # Copy generated/provided sounds
