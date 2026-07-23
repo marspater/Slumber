@@ -67,9 +67,9 @@ if [ -d "Assets/Main_Icon.icon" ]; then
     # Copy raw .icon bundle
     cp -R "Assets/Main_Icon.icon" "${RESOURCES_DIR}/"
     
-    # 2. Generate borderless AppIcon.icns from Main_Icon.icon using Apple continuous corner squircle mask (n=5 superellipse)
+    # 2. Render AppIcon.icns & icon_preview.png from Main_Icon.icon matching Icon Composer specification
     if [ -f "Assets/Main_Icon.icon/Assets/preview.png" ]; then
-        swift scratch/clip_icon.swift "Assets/Main_Icon.icon/Assets/preview.png" "Assets/icon_preview.png" > /dev/null 2>&1 || true
+        swift scratch/render_composer_icon.swift "Assets/Main_Icon.icon/Assets/preview.png" "Assets/icon_preview.png" > /dev/null 2>&1 || true
         
         mkdir -p MyIcon.iconset
         sips -s format png -z 16 16     "Assets/icon_preview.png" --out MyIcon.iconset/icon_16x16.png > /dev/null
