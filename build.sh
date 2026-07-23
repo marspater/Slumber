@@ -33,6 +33,8 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>${APP_NAME}</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
     <string>2.6</string>
     <key>CFBundleVersion</key>
@@ -45,43 +47,48 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
 </plist>
 EOF
 
-echo "Copying assets..."
+echo "Copying & compiling assets..."
 mkdir -p "${RESOURCES_DIR}"
 
-# Copy Main_Icon.icon bundle for macOS 26/27 native icon renderer
+# 1. Native macOS 26/27 actool compilation of Main_Icon.icon into Assets.car
 if [ -d "Assets/Main_Icon.icon" ]; then
+    echo "Compiling Main_Icon.icon into Assets.car..."
+    mkdir -p TempCatalog.xcassets
+    rm -rf TempCatalog.xcassets/AppIcon.appiconset
+    cp -R "Assets/Main_Icon.icon" TempCatalog.xcassets/AppIcon.appiconset
+    actool TempCatalog.xcassets \
+        --compile "${RESOURCES_DIR}" \
+        --minimum-deployment-target 26.0 \
+        --platform macosx \
+        --app-icon AppIcon \
+        --output-partial-info-plist "${CONTENTS_DIR}/actool-info.plist" > /dev/null 2>&1 || true
+    rm -rf TempCatalog.xcassets
+
+    # Copy raw .icon bundle
     cp -R "Assets/Main_Icon.icon" "${RESOURCES_DIR}/"
-fi
-
-# Copy glass art icon & generate icns from Main_Icon.icon preview or glass_sleep_art
-MAIN_ICON_PREVIEW="Assets/Main_Icon.icon/Assets/preview.png"
-FALLBACK_ICON="Assets/glass_sleep_art.png"
-SOURCE_ICON=""
-
-if [ -f "$MAIN_ICON_PREVIEW" ]; then
-    SOURCE_ICON="$MAIN_ICON_PREVIEW"
-elif [ -f "$FALLBACK_ICON" ]; then
-    SOURCE_ICON="$FALLBACK_ICON"
-fi
-
-if [ -n "$SOURCE_ICON" ]; then
-    cp "$SOURCE_ICON" "${RESOURCES_DIR}/glass_sleep_art.png"
     
-    # Create iconset for dock without white borders
-    mkdir -p MyIcon.iconset
-    sips -s format png -z 16 16     "$SOURCE_ICON" --out MyIcon.iconset/icon_16x16.png > /dev/null
-    sips -s format png -z 32 32     "$SOURCE_ICON" --out MyIcon.iconset/icon_16x16@2x.png > /dev/null
-    sips -s format png -z 32 32     "$SOURCE_ICON" --out MyIcon.iconset/icon_32x32.png > /dev/null
-    sips -s format png -z 64 64     "$SOURCE_ICON" --out MyIcon.iconset/icon_32x32@2x.png > /dev/null
-    sips -s format png -z 128 128   "$SOURCE_ICON" --out MyIcon.iconset/icon_128x128.png > /dev/null
-    sips -s format png -z 256 256   "$SOURCE_ICON" --out MyIcon.iconset/icon_128x128@2x.png > /dev/null
-    sips -s format png -z 256 256   "$SOURCE_ICON" --out MyIcon.iconset/icon_256x256.png > /dev/null
-    sips -s format png -z 512 512   "$SOURCE_ICON" --out MyIcon.iconset/icon_256x256@2x.png > /dev/null
-    sips -s format png -z 512 512   "$SOURCE_ICON" --out MyIcon.iconset/icon_512x512.png > /dev/null
-    sips -s format png -z 1024 1024 "$SOURCE_ICON" --out MyIcon.iconset/icon_512x512@2x.png > /dev/null
-    iconutil -c icns MyIcon.iconset
-    cp MyIcon.icns "${RESOURCES_DIR}/AppIcon.icns"
-    rm -r MyIcon.iconset MyIcon.icns
+    # 2. Generate fallback AppIcon.icns from Main_Icon.icon preview with no white borders
+    if [ -f "Assets/Main_Icon.icon/Assets/preview.png" ]; then
+        mkdir -p MyIcon.iconset
+        sips -s format png -z 16 16     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_16x16.png > /dev/null
+        sips -s format png -z 32 32     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_16x16@2x.png > /dev/null
+        sips -s format png -z 32 32     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_32x32.png > /dev/null
+        sips -s format png -z 64 64     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_32x32@2x.png > /dev/null
+        sips -s format png -z 128 128   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_128x128.png > /dev/null
+        sips -s format png -z 256 256   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_128x128@2x.png > /dev/null
+        sips -s format png -z 256 256   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_256x256.png > /dev/null
+        sips -s format png -z 512 512   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_256x256@2x.png > /dev/null
+        sips -s format png -z 512 512   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_512x512.png > /dev/null
+        sips -s format png -z 1024 1024 "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_512x512@2x.png > /dev/null
+        iconutil -c icns MyIcon.iconset
+        cp MyIcon.icns "${RESOURCES_DIR}/AppIcon.icns"
+        rm -r MyIcon.iconset MyIcon.icns
+    fi
+fi
+
+# 3. Preserve original companion artwork
+if [ -f "Assets/glass_sleep_art.png" ]; then
+    cp "Assets/glass_sleep_art.png" "${RESOURCES_DIR}/glass_sleep_art.png"
 fi
 
 # Copy generated/provided sounds
