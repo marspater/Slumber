@@ -17,7 +17,7 @@ With our latest overhaul for **macOS 27**, we've integrated Apple's continuous c
 ## 📸 Screenshot
 
 <div align="center">
-  <img src="Assets/glass_sleep_art.png" alt="Slumber UI Screenshot" width="400"/>
+  <img src="Assets/screenshot.png" alt="Slumber UI Screenshot" width="400"/>
   <br/>
   <em>(Experience the dynamic cosmic nebula right from your menu bar!)</em>
 </div>
