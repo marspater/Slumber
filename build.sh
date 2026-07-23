@@ -69,8 +69,79 @@ if [ -d "Assets/Main_Icon.icon" ]; then
     
     # 2. Render AppIcon.icns & icon_preview.png from Main_Icon.icon matching Icon Composer specification
     if [ -f "Assets/Main_Icon.icon/Assets/preview.png" ]; then
-        swift scratch/render_composer_icon.swift "Assets/Main_Icon.icon/Assets/preview.png" "Assets/icon_preview.png" > /dev/null 2>&1 || true
-        
+        swift - "Assets/Main_Icon.icon/Assets/preview.png" "Assets/icon_preview.png" << 'SWIFT_EOF' > /dev/null 2>&1 || true
+import AppKit
+import CoreGraphics
+
+func superellipsePath(in rect: CGRect, n: Double = 5.0, numPoints: Int = 360) -> CGPath {
+    let path = CGMutablePath()
+    let cx = rect.midX
+    let cy = rect.midY
+    let a = rect.width / 2.0
+    let b = rect.height / 2.0
+    var points = [CGPoint]()
+    for i in 0..<numPoints {
+        let theta = (2.0 * .pi * Double(i)) / Double(numPoints)
+        let cosT = cos(theta)
+        let sinT = sin(theta)
+        let sgnX: Double = cosT >= 0 ? 1.0 : -1.0
+        let sgnY: Double = sinT >= 0 ? 1.0 : -1.0
+        let x = cx + a * sgnX * pow(abs(cosT), 2.0 / n)
+        let y = cy + b * sgnY * pow(abs(sinT), 2.0 / n)
+        points.append(CGPoint(x: x, y: y))
+    }
+    if let first = points.first {
+        path.move(to: first)
+        for pt in points.dropFirst() { path.addLine(to: pt) }
+        path.closeSubpath()
+    }
+    return path
+}
+
+let args = CommandLine.arguments
+let inputPath = args.count > 1 ? args[1] : "Assets/Main_Icon.icon/Assets/preview.png"
+let outputPath = args.count > 2 ? args[2] : "Assets/icon_preview.png"
+
+if let inputImage = NSImage(contentsOfFile: inputPath),
+   let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) {
+    NSGraphicsContext.saveGraphicsState()
+    if let ctx = NSGraphicsContext(bitmapImageRep: rep)?.cgContext {
+        let size = CGSize(width: 1024, height: 1024)
+        ctx.clear(CGRect(origin: .zero, size: size))
+        let squirclePath = superellipsePath(in: CGRect(origin: .zero, size: size), n: 5.0)
+        ctx.saveGState()
+        ctx.addPath(squirclePath)
+        ctx.clip()
+        let colors = [
+            NSColor(red: 0.12, green: 0.08, blue: 0.32, alpha: 1.0).cgColor,
+            NSColor(red: 0.38, green: 0.22, blue: 0.65, alpha: 1.0).cgColor,
+            NSColor(red: 0.78, green: 0.25, blue: 0.85, alpha: 1.0).cgColor
+        ] as CFArray
+        if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0.0, 0.5, 1.0]) {
+            ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: 1024), end: CGPoint(x: 1024, y: 0), options: [])
+        }
+        if let cgImage = inputImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+            ctx.draw(cgImage, in: CGRect(x: -30, y: -30, width: 1084, height: 1084))
+        }
+        let glassColors = [NSColor.white.withAlphaComponent(0.35).cgColor, NSColor.white.withAlphaComponent(0.05).cgColor, NSColor.clear.cgColor] as CFArray
+        if let glassGrad = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: glassColors, locations: [0.0, 0.4, 1.0]) {
+            ctx.drawLinearGradient(glassGrad, start: CGPoint(x: 0, y: 1024), end: CGPoint(x: 1024, y: 0), options: [])
+        }
+        ctx.restoreGState()
+        ctx.saveGState()
+        ctx.addPath(squirclePath)
+        ctx.setLineWidth(4.0)
+        ctx.setStrokeColor(NSColor.white.withAlphaComponent(0.3).cgColor)
+        ctx.strokePath()
+        ctx.restoreGState()
+    }
+    NSGraphicsContext.restoreGraphicsState()
+    if let pngData = rep.representation(using: .png, properties: [:]) {
+        try? pngData.write(to: URL(fileURLWithPath: outputPath))
+    }
+}
+SWIFT_EOF
+
         mkdir -p MyIcon.iconset
         sips -s format png -z 16 16     "Assets/icon_preview.png" --out MyIcon.iconset/icon_16x16.png > /dev/null
         sips -s format png -z 32 32     "Assets/icon_preview.png" --out MyIcon.iconset/icon_16x16@2x.png > /dev/null
