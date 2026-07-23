@@ -17,7 +17,7 @@ mkdir -p "${MACOS_DIR}"
 mkdir -p "${RESOURCES_DIR}"
 
 # Compile Swift files
-swiftc -O -parse-as-library -target $(uname -m)-apple-macos15.0 *.swift -o "${MACOS_DIR}/${APP_NAME}"
+swiftc -O -parse-as-library -target $(uname -m)-apple-macos15.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
@@ -34,9 +34,9 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.0</string>
+    <string>2.5</string>
     <key>CFBundleVersion</key>
-    <string>2</string>
+    <string>2.5</string>
     <key>MinimumOSVersion</key>
     <string>15.0</string>
     <key>LSUIElement</key>
@@ -77,6 +77,7 @@ if ls Assets/*.wav 1> /dev/null 2>&1; then
 fi
 
 echo "Signing binary..."
+find "${APP_DIR}" -name '.DS_Store' -delete || true
 xattr -cr "${APP_DIR}"
 codesign --force --deep --sign - "${APP_DIR}"
 

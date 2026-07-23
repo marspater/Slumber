@@ -1,91 +1,77 @@
-# Slumber 🌙✨
-
-> A minimalist, aesthetic macOS menu bar sleep timer app built with Swift and SwiftUI.
-
-> ⚠️ **Notice**: A major application overhaul is coming soon! This repository currently reflects the functional baseline state of the application.
+<div align="center">
+  <img src="Assets/glass_sleep_art.png" alt="Slumber App Icon" width="200" height="200"/>
+  <h1>Slumber 🌙✨</h1>
+  <p><b>An elegant, aesthetic macOS menu bar sleep timer for macOS 27+</b></p>
+</div>
 
 ---
 
 ## 🌟 Overview
 
-**Slumber** is an elegant menu bar utility for macOS designed to put your Mac to sleep after a customizable countdown timer. Featuring a wide-gamut Display P3 dynamic starfield background, ambient sound effects, and a global hotkey, Slumber ensures your device sleeps when you do.
+**Slumber** is a minimalist menu bar utility designed to put your Mac to sleep after a customizable countdown timer. Featuring a beautiful wide-gamut Display P3 dynamic starfield background, ambient soft sound effects, and a global hotkey, Slumber ensures your device sleeps beautifully.
+
+With our latest overhaul for **macOS 27**, we've integrated Apple's continuous corner curvature (n=5 superellipse), vibrant dark mode popover materials, and extremely soft ambient audio, crafting an intuitive and premium experience.
 
 ---
 
-## ✨ Key Features
+## 📸 Screenshot
 
-- **Menu Bar Integration**: Resides conveniently in your macOS menu bar (`NSStatusItem`) for instant access.
-- **Custom Sleep Countdown**: Quick duration presets (15m, 30m, 45m, 60m) as well as custom minute inputs.
-- **App Nap & Idle Prevention**: Prevents system idle sleep during active countdowns via `ProcessInfo` activity assertions.
-- **System Wake Protection**: Automatically cancels pending timers when the Mac is woken up to prevent accidental late sleep triggers.
-- **Global Hotkey**: Press `Ctrl + Option + S` anytime from any application to toggle the Slumber popover.
-- **Cosmic Aesthetic UI**: Features an animated twinkling starfield with shooting star visual effects and interactive audio feedback.
-- **Standalone Build Script**: Compiles cleanly into a native `.app` bundle via a single command line script using `swiftc`.
+<div align="center">
+  <img src="Assets/glass_sleep_art.png" alt="Slumber UI Screenshot" width="400"/>
+  <br/>
+  <em>(Experience the dynamic cosmic nebula right from your menu bar!)</em>
+</div>
 
 ---
 
-## 🚀 Building & Running
+## ✨ Features
+
+- 🕒 **Custom Sleep Countdown**: Quick duration chips (15m, 30m, 45m, 60m) or precise slider inputs.
+- 🌌 **Cosmic Aesthetic UI**: Twinkling starfield with vector clouds, a sleeping moon, and interactive visual feedback.
+- 🎵 **Ambient Audio**: Extremely soft, ambient sine-wave sounds for a calming bedtime experience.
+- 🛡️ **Wake Protection**: Automatically cancels timers if you wake the Mac, preventing unexpected shutdowns.
+- ⚡ **Global Hotkey**: Press `Ctrl + Option + S` to toggle the Slumber popover anywhere.
+- 🍏 **macOS 27 Native**: Beautiful glass materials, Apple standard typography (SF Pro), and continuous superellipse corners.
+
+---
+
+## 🚀 Easy Installation & Building
+
+No complex Xcode setups required! 
 
 ### Prerequisites
+- **macOS 27.0** or later
+- Swift Command Line Tools
 
-- **macOS**: 15.0 or later recommended.
-- **Swift / Xcode Command Line Tools**: `swiftc`, `sips`, `iconutil`, `codesign`.
+### 1-Click Build
 
-### Build Commands
-
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/marspater/Slumber.git
    cd Slumber
    ```
-
-2. Run the build script:
+2. **Build the app:**
    ```bash
-   chmod +x build.sh
    ./build.sh
    ```
+   *This single command compiles the Swift package and builds the `.app` bundle with the vector icons!*
 
-3. Launch the application:
+3. **Run Slumber:**
    ```bash
    open Slumber.app
    ```
-
----
-
-## 📁 Repository Structure
-
-```text
-.
-├── SlumberApp.swift      # Main application entry point, AppDelegate, status bar item & hotkeys
-├── SlumberTimer.swift    # Timer model, power management assertions & pmset sleep execution
-├── SlumberView.swift     # SwiftUI popover interface, dynamic Starfield canvas & audio handlers
-├── Assets/               # Audio effects (.wav) and app icon resources (.png)
-├── FutureIconAsset.svg   # Vector icon artwork asset
-└── build.sh              # Standalone shell script compiling the app bundle & iconsets
-```
+   *(Or drag `Slumber.app` to your `/Applications` folder for easy access!)*
 
 ---
 
 ## 🛠 Tech Stack
 
 - **Language**: Swift 6
-- **UI Frameworks**: SwiftUI & AppKit (`NSStatusItem`, `NSPopover`, `NSHostingController`)
-- **System APIs**: `Carbon` (Global Hotkeys), `AVFoundation` (Audio Playback), `ProcessInfo` (Activity assertions), `pmset`
-- **Tooling**: `swiftc`, `sips`, `iconutil`, `codesign`
-
----
-
-## 🔮 Upcoming Overhaul
-
-A complete application overhaul is coming soon! Planned enhancements include:
-
-- Modernized UI layout & view transitions optimized for macOS Sequoia and high dynamic range displays.
-- Dedicated Preferences pane with customizable hotkeys and notification triggers.
-- Full Xcode project (`.xcodeproj`) & Swift Package Manager setup.
-- Launch-at-login and menu bar customization controls.
+- **UI Frameworks**: SwiftUI & AppKit
+- **System APIs**: `Carbon` (Global Hotkeys), `AVFoundation`, `ProcessInfo`, `pmset`
 
 ---
 
 ## 👤 Author
 
-Developed by **Mars Pater** ([@marspater](https://github.com/marspater)).
+Developed with ❤️ by **Mars Pater** ([@marspater](https://github.com/marspater)).

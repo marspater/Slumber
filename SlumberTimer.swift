@@ -2,17 +2,19 @@ import Foundation
 import AppKit
 
 @MainActor
-class SlumberTimer: ObservableObject {
-    @Published var timeRemaining: TimeInterval = 0
-    @Published var totalTime: TimeInterval = 0
-    @Published var isRunning: Bool = false
+public class SlumberTimer: ObservableObject {
+    @Published public var timeRemaining: TimeInterval = 0
+    @Published public var totalTime: TimeInterval = 0
+    @Published public var isRunning: Bool = false
     
     private var timer: DispatchSourceTimer?
     private var endTime: Date?
     private var activity: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
     
-    func start(minutes: Double) {
+    public init() {}
+    
+    public func start(minutes: Double) {
         // Guard against double-start — cancel any existing timer first
         if timer != nil {
             stop()
@@ -60,7 +62,7 @@ class SlumberTimer: ObservableObject {
         }
     }
     
-    func stop() {
+    public func stop() {
         timer?.cancel()
         timer = nil
         isRunning = false

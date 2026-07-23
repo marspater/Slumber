@@ -34,9 +34,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let vc = NSHostingController(rootView: SlumberView(timerModel: timerModel))
         vc.view.wantsLayer = true
+        vc.view.appearance = NSAppearance(named: .darkAqua)
         popover.contentViewController = vc
         DispatchQueue.main.async {
-            if #available(macOS 26.0, *) {
+            if #available(macOS 27.0, *) {
                 vc.view.layer?.preferredDynamicRange = .high
             }
         }
@@ -142,7 +143,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 
                 if let layer = popover.contentViewController?.view.layer {
-                    if #available(macOS 26.0, *) {
+                    if #available(macOS 27.0, *) {
                         layer.preferredDynamicRange = .high
                     }
                 }
@@ -183,7 +184,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             let vc = NSHostingController(rootView: SlumberView(timerModel: timerModel))
             vc.view.wantsLayer = true
-            if #available(macOS 26.0, *) {
+            vc.view.appearance = NSAppearance(named: .darkAqua)
+            if #available(macOS 27.0, *) {
                 vc.view.layer?.preferredDynamicRange = .high
             }
             window.contentViewController = vc

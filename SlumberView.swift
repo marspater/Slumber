@@ -412,34 +412,77 @@ struct CuteEye: View {
 // MARK: - Cute Clouds (Visually Distinct)
 // ===================================================================
 
+struct VectorCloudShape1: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        path.move(to: CGPoint(x: w * 0.2, y: h * 0.85))
+        path.addQuadCurve(to: CGPoint(x: w * 0.8, y: h * 0.85), control: CGPoint(x: w * 0.5, y: h * 0.95))
+        path.addCurve(to: CGPoint(x: w * 0.78, y: h * 0.35), control1: CGPoint(x: w * 1.02, y: h * 0.78), control2: CGPoint(x: w * 0.95, y: h * 0.38))
+        path.addCurve(to: CGPoint(x: w * 0.42, y: h * 0.22), control1: CGPoint(x: w * 0.68, y: h * 0.05), control2: CGPoint(x: w * 0.48, y: h * 0.08))
+        path.addCurve(to: CGPoint(x: w * 0.12, y: h * 0.52), control1: CGPoint(x: w * 0.28, y: h * 0.18), control2: CGPoint(x: w * 0.1, y: h * 0.35))
+        path.addCurve(to: CGPoint(x: w * 0.2, y: h * 0.85), control1: CGPoint(x: w * -0.02, y: h * 0.68), control2: CGPoint(x: w * 0.08, y: h * 0.85))
+        path.closeSubpath()
+        return path
+    }
+}
+
+struct VectorCloudShape2: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        
+        path.move(to: CGPoint(x: w * 0.15, y: h * 0.82))
+        path.addQuadCurve(to: CGPoint(x: w * 0.85, y: h * 0.82), control: CGPoint(x: w * 0.5, y: h * 0.92))
+        path.addCurve(to: CGPoint(x: w * 0.72, y: h * 0.32), control1: CGPoint(x: w * 1.0, y: h * 0.72), control2: CGPoint(x: w * 0.9, y: h * 0.32))
+        path.addCurve(to: CGPoint(x: w * 0.32, y: h * 0.22), control1: CGPoint(x: w * 0.58, y: h * 0.08), control2: CGPoint(x: w * 0.42, y: h * 0.12))
+        path.addCurve(to: CGPoint(x: w * 0.15, y: h * 0.82), control1: CGPoint(x: w * 0.1, y: h * 0.32), control2: CGPoint(x: w * -0.02, y: h * 0.65))
+        path.closeSubpath()
+        return path
+    }
+}
+
 struct CuteCloud1: View {
     let scale: CGFloat
     @State private var bob = false
 
     var body: some View {
         ZStack {
-            Ellipse().fill(cloudGrad).frame(width: 50 * scale, height: 30 * scale)
-            Circle().fill(cloudGrad).frame(width: 28 * scale, height: 28 * scale).offset(x: -12 * scale, y: -12 * scale)
-            Circle().fill(cloudGrad).frame(width: 22 * scale, height: 22 * scale).offset(x: 10 * scale, y: -10 * scale)
-            Circle().fill(cloudGrad).frame(width: 18 * scale, height: 18 * scale).offset(x: -20 * scale, y: -4 * scale)
-            Circle().fill(cloudGrad).frame(width: 16 * scale, height: 16 * scale).offset(x: 22 * scale, y: -2 * scale)
+            VectorCloudShape1()
+                .fill(Color.black.opacity(0.2))
+                .blur(radius: 4 * scale)
+                .offset(y: 3 * scale)
 
-            HStack(spacing: 4 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale)
-            Circle().fill(Color.pink.opacity(0.35)).frame(width: 5 * scale, height: 5 * scale).offset(x: -10 * scale, y: 4 * scale)
-            Circle().fill(Color.pink.opacity(0.35)).frame(width: 5 * scale, height: 5 * scale).offset(x: 10 * scale, y: 4 * scale)
+            VectorCloudShape1()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.p3(r: 0.95, g: 0.95, b: 0.98, a: 0.92), Color.p3(h: 0.72, s: 0.25, b: 0.82, a: 0.85)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                )
+
+            VectorCloudShape1()
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.9), Color.white.opacity(0.1)],
+                        startPoint: .top, endPoint: .bottom
+                    ),
+                    lineWidth: 1.2 * scale
+                )
+
+            HStack(spacing: 5 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale).offset(y: -1 * scale)
+            Circle().fill(Color.pink.opacity(0.40)).frame(width: 5 * scale, height: 5 * scale).offset(x: -11 * scale, y: 4 * scale)
+            Circle().fill(Color.pink.opacity(0.40)).frame(width: 5 * scale, height: 5 * scale).offset(x: 11 * scale, y: 4 * scale)
         }
-        .offset(y: bob ? -4 : 4)
+        .frame(width: 64 * scale, height: 40 * scale)
+        .offset(y: bob ? -5 : 4)
         .rotationEffect(.degrees(bob ? 2 : -2))
         .onAppear {
             withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { bob = true }
         }
-    }
-
-    private var cloudGrad: LinearGradient {
-        LinearGradient(
-            colors: [Color.p3(r: 0.92, g: 0.92, b: 0.94, a: 0.85), Color.p3(h: 0.6, s: 0.15, b: 0.85, a: 0.75)],
-            startPoint: .top, endPoint: .bottom
-        )
     }
 }
 
@@ -447,37 +490,40 @@ struct CuteCloud2: View {
     let scale: CGFloat
     @State private var bob = false
 
-// Second cloud style: fluffy natural cloud using overlapping ellipses
     var body: some View {
         ZStack {
-            // Base wide shape
-            Ellipse().fill(cloudGrad).frame(width: 55 * scale, height: 22 * scale).offset(y: 2 * scale)
-            // Left puff
-            Ellipse().fill(cloudGrad).frame(width: 28 * scale, height: 24 * scale).offset(x: -14 * scale, y: -6 * scale)
-            // Center-left tall puff
-            Ellipse().fill(cloudGrad).frame(width: 24 * scale, height: 28 * scale).offset(x: -2 * scale, y: -12 * scale)
-            // Center-right puff
-            Ellipse().fill(cloudGrad).frame(width: 26 * scale, height: 22 * scale).offset(x: 12 * scale, y: -8 * scale)
-            // Right soft edge
-            Ellipse().fill(cloudGrad).frame(width: 20 * scale, height: 18 * scale).offset(x: 22 * scale, y: -2 * scale)
+            VectorCloudShape2()
+                .fill(Color.black.opacity(0.18))
+                .blur(radius: 3 * scale)
+                .offset(y: 2 * scale)
 
-            // Sleepy face
-            HStack(spacing: 5 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale).offset(y: 0)
-            Circle().fill(Color.pink.opacity(0.35)).frame(width: 4 * scale, height: 4 * scale).offset(x: -10 * scale, y: 5 * scale)
-            Circle().fill(Color.pink.opacity(0.35)).frame(width: 4 * scale, height: 4 * scale).offset(x: 10 * scale, y: 5 * scale)
+            VectorCloudShape2()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.p3(r: 0.96, g: 0.96, b: 0.99, a: 0.88), Color.p3(h: 0.65, s: 0.22, b: 0.88, a: 0.75)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                )
+
+            VectorCloudShape2()
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.8), Color.white.opacity(0.15)],
+                        startPoint: .top, endPoint: .bottom
+                    ),
+                    lineWidth: 1.0 * scale
+                )
+
+            HStack(spacing: 5 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale).offset(y: -1 * scale)
+            Circle().fill(Color.pink.opacity(0.38)).frame(width: 4 * scale, height: 4 * scale).offset(x: -10 * scale, y: 4 * scale)
+            Circle().fill(Color.pink.opacity(0.38)).frame(width: 4 * scale, height: 4 * scale).offset(x: 10 * scale, y: 4 * scale)
         }
+        .frame(width: 58 * scale, height: 34 * scale)
         .offset(y: bob ? -6 : 4)
         .rotationEffect(.degrees(bob ? -1.5 : 2))
         .onAppear {
             withAnimation(.easeInOut(duration: 5.5).repeatForever(autoreverses: true).delay(0.5)) { bob = true }
         }
-    }
-
-    private var cloudGrad: LinearGradient {
-        LinearGradient(
-            colors: [Color.p3(r: 0.95, g: 0.95, b: 0.98, a: 0.8), Color.p3(h: 0.55, s: 0.2, b: 0.9, a: 0.65)],
-            startPoint: .topLeading, endPoint: .bottomTrailing
-        )
     }
 }
 
@@ -658,21 +704,18 @@ struct AnimatedScene: View {
     var body: some View {
         ZStack {
             if isVisible {
-                let sceneDim = colorScheme == .dark ? 1.0 : 0.15
-                ConstellationOverlay().opacity(sceneDim)
-                AuroraEffect().opacity(colorScheme == .dark ? 1.0 : 0.25)
-                StarField(count: 45).opacity(sceneDim)
-                FireflyField(count: 8).opacity(colorScheme == .dark ? 1.0 : 0.3)
+                ConstellationOverlay().opacity(1.0)
+                AuroraEffect().opacity(1.0)
+                StarField(count: 45).opacity(1.0)
+                FireflyField(count: 8).opacity(1.0)
 
-                if colorScheme == .dark {
-                    ShootingStar(angle: 32,  cycleDuration: 4.0, initialDelay:  1.0, length: 50, startX: -60, startY:  20)
-                    ShootingStar(angle: 45,  cycleDuration: 5.5, initialDelay:  4.0, length: 35, startX:  80, startY: -30)
-                    ShootingStar(angle: 25,  cycleDuration: 3.8, initialDelay:  7.0, length: 45, startX: -20, startY: -50)
-                    ShootingStar(angle: 38,  cycleDuration: 6.0, initialDelay: 10.5, length: 40, startX:  40, startY:  60)
-                    ShootingStar(angle: 18,  cycleDuration: 4.5, initialDelay: 14.0, length: 55, startX: -90, startY: -80)
-                }
+                ShootingStar(angle: 32,  cycleDuration: 4.0, initialDelay:  1.0, length: 50, startX: -60, startY:  20)
+                ShootingStar(angle: 45,  cycleDuration: 5.5, initialDelay:  4.0, length: 35, startX:  80, startY: -30)
+                ShootingStar(angle: 25,  cycleDuration: 3.8, initialDelay:  7.0, length: 45, startX: -20, startY: -50)
+                ShootingStar(angle: 38,  cycleDuration: 6.0, initialDelay: 10.5, length: 40, startX:  40, startY:  60)
+                ShootingStar(angle: 18,  cycleDuration: 4.5, initialDelay: 14.0, length: 55, startX: -90, startY: -80)
 
-                CuteMoon().offset(x: moonX, y: moonY).opacity(colorScheme == .dark ? 1.0 : 0.45)
+                CuteMoon().offset(x: moonX, y: moonY).opacity(1.0)
 
                 // Kept at Y: 170 so companion rests perfectly on top when idle
                 CuteCloud1(scale: 1.00).offset(x: cloudX, y: 170)
@@ -846,12 +889,14 @@ struct VisualEffectView: NSViewRepresentable {
         view.material = material
         view.blendingMode = blendingMode
         view.state = .active
+        view.appearance = NSAppearance(named: .vibrantDark)
         return view
     }
     
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
         nsView.material = material
         nsView.blendingMode = blendingMode
+        nsView.appearance = NSAppearance(named: .vibrantDark)
     }
 }
 
