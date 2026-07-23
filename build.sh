@@ -67,19 +67,21 @@ if [ -d "Assets/Main_Icon.icon" ]; then
     # Copy raw .icon bundle
     cp -R "Assets/Main_Icon.icon" "${RESOURCES_DIR}/"
     
-    # 2. Generate fallback AppIcon.icns from Main_Icon.icon preview with no white borders
+    # 2. Generate borderless AppIcon.icns from Main_Icon.icon using Apple continuous corner squircle mask (n=5 superellipse)
     if [ -f "Assets/Main_Icon.icon/Assets/preview.png" ]; then
+        swift scratch/clip_icon.swift "Assets/Main_Icon.icon/Assets/preview.png" "Assets/icon_preview.png" > /dev/null 2>&1 || true
+        
         mkdir -p MyIcon.iconset
-        sips -s format png -z 16 16     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_16x16.png > /dev/null
-        sips -s format png -z 32 32     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_16x16@2x.png > /dev/null
-        sips -s format png -z 32 32     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_32x32.png > /dev/null
-        sips -s format png -z 64 64     "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_32x32@2x.png > /dev/null
-        sips -s format png -z 128 128   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_128x128.png > /dev/null
-        sips -s format png -z 256 256   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_128x128@2x.png > /dev/null
-        sips -s format png -z 256 256   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_256x256.png > /dev/null
-        sips -s format png -z 512 512   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_256x256@2x.png > /dev/null
-        sips -s format png -z 512 512   "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_512x512.png > /dev/null
-        sips -s format png -z 1024 1024 "Assets/Main_Icon.icon/Assets/preview.png" --out MyIcon.iconset/icon_512x512@2x.png > /dev/null
+        sips -s format png -z 16 16     "Assets/icon_preview.png" --out MyIcon.iconset/icon_16x16.png > /dev/null
+        sips -s format png -z 32 32     "Assets/icon_preview.png" --out MyIcon.iconset/icon_16x16@2x.png > /dev/null
+        sips -s format png -z 32 32     "Assets/icon_preview.png" --out MyIcon.iconset/icon_32x32.png > /dev/null
+        sips -s format png -z 64 64     "Assets/icon_preview.png" --out MyIcon.iconset/icon_32x32@2x.png > /dev/null
+        sips -s format png -z 128 128   "Assets/icon_preview.png" --out MyIcon.iconset/icon_128x128.png > /dev/null
+        sips -s format png -z 256 256   "Assets/icon_preview.png" --out MyIcon.iconset/icon_128x128@2x.png > /dev/null
+        sips -s format png -z 256 256   "Assets/icon_preview.png" --out MyIcon.iconset/icon_256x256.png > /dev/null
+        sips -s format png -z 512 512   "Assets/icon_preview.png" --out MyIcon.iconset/icon_256x256@2x.png > /dev/null
+        sips -s format png -z 512 512   "Assets/icon_preview.png" --out MyIcon.iconset/icon_512x512.png > /dev/null
+        sips -s format png -z 1024 1024 "Assets/icon_preview.png" --out MyIcon.iconset/icon_512x512@2x.png > /dev/null
         iconutil -c icns MyIcon.iconset
         cp MyIcon.icns "${RESOURCES_DIR}/AppIcon.icns"
         rm -r MyIcon.iconset MyIcon.icns
