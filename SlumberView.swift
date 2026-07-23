@@ -1469,14 +1469,11 @@ struct SlumberView: View {
             Spacer()
 
             QuitButton(action: {
-                playSound("cancel")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    NSApp.terminate(nil)
-                }
+                NSApp.terminate(nil)
             })
             .padding(.bottom, 12)
 
-            Text("Slumber v2.0")
+            Text("Slumber v2.7")
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(.white.opacity(0.2))
                 .frame(maxWidth: .infinity, alignment: .center)

@@ -21,6 +21,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
 
+        // Load custom app icon from bundle resources or New_Icon.icon asset artwork
+        let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns")
+            ?? Bundle.main.urls(forResourcesWithExtension: "png", subdirectory: "Assets/New_Icon.icon/Assets")?.first
+            ?? Bundle.main.urls(forResourcesWithExtension: "png", subdirectory: nil)?.first(where: { $0.path.contains(".icon") })
+        if let url = iconURL, let customIcon = NSImage(contentsOf: url) {
+            NSApp.applicationIconImage = customIcon
+        }
+
         popover = NSPopover()
         popover.contentSize = NSSize(width: 320, height: 440)
         popover.animates = true

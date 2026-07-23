@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "Slumber",
     platforms: [
-        .macOS(.v26)
+        .macOS(.v14)
     ],
     products: [
         .executable(name: "Slumber", targets: ["Slumber"])
@@ -13,6 +13,11 @@ let package = Package(
         .executableTarget(
             name: "Slumber",
             path: ".",
+            exclude: [
+                "build.sh",
+                "README.md",
+                "LICENSE"
+            ],
             sources: [
                 "SlumberApp.swift",
                 "SlumberTimer.swift",
