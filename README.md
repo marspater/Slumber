@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="Assets/icon_preview.png" alt="Slumber App Icon" width="220" height="220"/>
   <h1>Slumber 🌙✨</h1>
   <p><b>An aesthetic macOS 26 & 27 menu bar sleep timer with vector graphics, companion animations, and P3 wide-gamut visuals.</b></p>
 
