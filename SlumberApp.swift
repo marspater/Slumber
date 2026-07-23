@@ -25,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 320, height: 440)
         popover.animates = true
         popover.behavior = .applicationDefined
+        popover.appearance = NSAppearance(named: .vibrantDark)
 
         setupGlobalMonitor()
         setupGlobalHotkey()

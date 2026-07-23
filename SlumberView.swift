@@ -1489,6 +1489,7 @@ struct SlumberView: View {
         }
         .padding(.horizontal, 24)
         .allowsHitTesting(currentTab == 1)
+        .preferredColorScheme(.dark)
     }
 
     private func fmt(_ t: TimeInterval) -> String {
