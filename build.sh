@@ -32,7 +32,7 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
     <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
+    <string>Main_Icon</string>
     <key>CFBundleShortVersionString</key>
     <string>2.6</string>
     <key>CFBundleVersion</key>

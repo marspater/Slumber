@@ -51,7 +51,7 @@ Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic
 
 ### Prerequisites
 - **macOS 26.0** or later.
-- Swift Command Line Tools (`swiftc`, `sips`, `iconutil`).
+- Xcode Command Line Tools (`swiftc`).
 
 ### 1-Click Build & Install
 

@@ -1506,10 +1506,6 @@ struct SlumberView: View {
     private func applyDock(_ show: Bool) {
         DispatchQueue.main.async {
             NSApp.setActivationPolicy(show ? .regular : .accessory)
-            if show, let url = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
-               let icon = NSImage(contentsOf: url) {
-                NSApp.applicationIconImage = icon
-            }
             if show {
                 NSApp.activate(ignoringOtherApps: true)
             }
