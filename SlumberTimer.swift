@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import IOKit.pwr_mgt
 
 @MainActor
 public class SlumberTimer: ObservableObject {
@@ -92,15 +93,14 @@ public class SlumberTimer: ObservableObject {
     }
     
     private func executeSleep() {
-        // Force sleep using pmset to override any active power assertions (like playing media)
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
-        process.arguments = ["sleepnow"]
-        
-        do {
-            try process.run()
-        } catch {
-            NSLog("Slumber Error: Failed to execute sleep command - \(error.localizedDescription)")
+        // Native macOS IOKit C API for putting the system to sleep directly without spawning subprocesses
+        let port = IOPMFindPowerManagement(mach_port_t(MACH_PORT_NULL))
+        if port != 0 {
+            IOPMSleepSystem(port)
+            IOServiceClose(port)
+        } else {
+            let script = NSAppleScript(source: "tell application \"System Events\" to sleep")
+            script?.executeAndReturnError(nil)
         }
     }
 }
