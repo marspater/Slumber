@@ -5,8 +5,8 @@
 
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
   [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
-  [![Version](https://img.shields.io/badge/Version-3.0-orange.svg)](https://github.com/marspater/Slumber/releases/latest)
-  [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)
+  [![Version](https://img.shields.io/badge/Version-3.0-orange.svg)](https://github.com/marspater/Slumber/tags)
+  [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)
 </div>
 
 ---
@@ -22,11 +22,11 @@ Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic
 ## 📦 Download & Quick Install
 
 ### Option 1: Direct Download (Signed & Verified)
-1. Download **[Slumber.zip](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)**.
+1. Download **[Slumber.zip (v3.0)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)**.
 2. Unzip and move `Slumber.app` to your `/Applications` folder:
    ```bash
-   # Quick one-liner to install and remove download quarantine:
-   unzip -q Slumber.zip -d /Applications/ && xattr -cr /Applications/Slumber.app
+   # Quick one-liner to download, install and remove download quarantine:
+   curl -L -o /tmp/Slumber.zip "https://github.com/marspater/Slumber/raw/main/Slumber.zip" && unzip -q /tmp/Slumber.zip -d /Applications/ && xattr -cr /Applications/Slumber.app
    ```
 3. Open Slumber from Spotlight or Launchpad!
 
