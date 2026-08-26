@@ -48,9 +48,9 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.8</string>
+    <string>3.0</string>
     <key>CFBundleVersion</key>
-    <string>2.8</string>
+    <string>3.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>MinimumOSVersion</key>
@@ -74,7 +74,15 @@ fi
 echo "Signing binary..."
 find "${APP_DIR}" -name '.DS_Store' -delete || true
 xattr -cr "${APP_DIR}"
-codesign --force --deep --sign - "${APP_DIR}"
+
+SIGN_IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | grep -E 'Developer ID Application|Apple Development' | head -n 1 | awk -F '"' '{print $2}' || true)"
+if [ -n "${SIGN_IDENTITY}" ]; then
+    echo "Signing with Identity: ${SIGN_IDENTITY}"
+    codesign --force --deep --options runtime --sign "${SIGN_IDENTITY}" "${APP_DIR}"
+else
+    echo "Signing ad-hoc with hardened runtime..."
+    codesign --force --deep --options runtime --sign - "${APP_DIR}"
+fi
 
 touch "${APP_DIR}"
 

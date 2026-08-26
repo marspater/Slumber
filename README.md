@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="Assets/app_icon.png" alt="Slumber App Icon" width="128"/>
+  <img src="Assets/screenshot.png" alt="Slumber Sleep Timer Preview" width="340"/>
   <h1>Slumber 🌙✨</h1>
   <p><b>An aesthetic macOS menu bar sleep timer with vector graphics, companion animations, and P3 wide-gamut visuals.</b></p>
 
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
   [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
-  [![Version](https://img.shields.io/badge/Version-2.8-orange.svg)](https://github.com/marspater/Slumber/releases/latest)
+  [![Version](https://img.shields.io/badge/Version-3.0-orange.svg)](https://github.com/marspater/Slumber/releases/latest)
   [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)
 </div>
 
@@ -21,10 +21,14 @@ Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic
 
 ## 📦 Download & Quick Install
 
-### Option 1: Direct Download (Recommended)
-1. Download the latest **[Slumber.zip](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)**.
-2. Unzip and drag `Slumber.app` into your `/Applications` folder.
-3. Open Slumber from Spotlight or `/Applications`!
+### Option 1: Direct Download (Signed & Verified)
+1. Download **[Slumber.zip](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)**.
+2. Unzip and move `Slumber.app` to your `/Applications` folder:
+   ```bash
+   # Quick one-liner to install and remove download quarantine:
+   unzip -q Slumber.zip -d /Applications/ && xattr -cr /Applications/Slumber.app
+   ```
+3. Open Slumber from Spotlight or Launchpad!
 
 ### Option 2: Build from Source
 ```bash
@@ -38,33 +42,32 @@ open /Applications/Slumber.app
 
 ---
 
-## 📝 Recent Changes (v2.8)
+## 📝 Recent Changes (v3.0)
 
-- **🎨 Apple Icon Composer Pipeline**:
-  - Direct compilation of canonical `Assets/AppIcon.icon` into `Assets.car` via `actool` targeting modern macOS 26.0+.
-  - Clean `Info.plist` configuration utilizing `CFBundleIconName: AppIcon` with zero legacy fallbacks.
+- **🏗️ Modular Architecture (`SlumberCore`)**:
+  - Decoupled business logic and timer state into standalone `SlumberCore` module.
+  - Comprehensive 12-test deterministic test suite powered by injectable `@MainActor MockClock`.
 
-- **⏱️ Robust Timer State Machine**:
-  - Implemented explicit `TimerState` (`.idle`, `.running`, `.wakingCancelled`, `.sleepFailed`, `.completed`).
-  - Clear user feedback if a timer is cancelled due to machine wake or if sleep dispatch encounters permission issues.
-  - Direct main-queue dispatch without redundant `Task` wrapper overhead.
+- **⏱️ Smart Wake Resumption**:
+  - When your Mac wakes while a timer is active, Slumber recalculates the exact remaining time from the stored deadline and resumes the countdown seamlessly.
+
+- **🪟 Non-Shifting Error Banner Overlay & Retry UX**:
+  - Converted error reporting into a floating frosted glass overlay, keeping the countdown dial and controls perfectly anchored without layout shifts.
+  - Added one-click **Retry** button for immediate recovery if sleep dispatch is blocked.
+
+- **🎨 Apple Icon Composer Pipeline (macOS 26.0+)**:
+  - Direct compilation of canonical `Assets/AppIcon.icon` into `Assets.car` via `actool` targeting modern macOS 26.0+ wide-gamut Display P3 displays.
 
 - **🦤 3rd Companion: Sleeping Dodo Bird**:
-  - Added the **Sleeping Dodo** (`SleepingDodo`) with celestial turquoise plumage, hooked amber beak, fluffy tail tufts, breathing animations, and sleepy `"zzz"` particles.
+  - Added the **Sleeping Dodo** (`SleepingDodo`) with celestial turquoise plumage, hooked amber beak, and sleepy `"zzz"` particles.
   - The app randomly selects from all 3 companions (**Fox**, **Cat**, **Dodo**) on launch and timer start.
 
 - **🛰️ Zero-Gravity 360° Space Somersault & Floating Physics**:
-  - Orbiting companions perform continuous, playful 360° axial somersaults and Lissajous floating micro-drifts simulating cartoon space weightlessness.
-  - Idle mode completely pauses 60fps trigonometric math for zero idle GPU footprint.
+  - Orbiting companions perform continuous, playful 360° axial somersaults and Lissajous floating micro-drifts.
 
-- **🧪 Unit Test Suite & SwiftPM Integration**:
-  - Comprehensive unit test suite covering state transitions and lifecycle validation (`swift test`).
-  - Unified build system: `Package.swift` compiles release binaries with SwiftPM, which `build.sh` packages into `Slumber.app`.
-
-- **✨ UI Polish & Design System Tokens**:
-  - Unified corner radii tokens (`20pt` popover, `14pt` cards, `12pt` buttons, `10pt` chips).
-  - Exact slider drag alignment with integer minute selection.
-  - Interactive liquid glass sliding indicator tab bar with audio cues.
+- **💎 UI Polish & Refined Tokens**:
+  - Enhanced slider track & thumb proportions with P3 glow.
+  - Improved preset chip contrast and spacing.
   - Frosted glass keycap badge (`[ ⌃⌥S ]`) for the global hotkey.
 
 ---
