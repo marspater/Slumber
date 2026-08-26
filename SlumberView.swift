@@ -1001,184 +1001,56 @@ struct GlowingSlider: View {
     }
 }
 
-struct CustomToggle: View {
-    @Binding var isOn: Bool
-    let tint: Color
-    @Environment(\.colorScheme) var colorScheme
-    @State private var isHovered = false
-
-    var body: some View {
-        let trackWidth: CGFloat = 42.0
-        let trackHeight: CGFloat = 24.0
-        let thumbDiameter: CGFloat = 18.0
-        let thumbTravel: CGFloat = (trackWidth - thumbDiameter - 6) / 2 // ±9.0 pt
-
-        ZStack {
-            // 1. Frosted Liquid Glass Track Background
-            if isOn {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                tint.opacity(0.85),
-                                tint.opacity(0.68)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.black.opacity(0.25))
-                    )
-                    .frame(width: trackWidth, height: trackHeight)
-            } else {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.08),
-                                Color.white.opacity(0.03)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.black.opacity(0.25))
-                    )
-                    .frame(width: trackWidth, height: trackHeight)
-            }
-
-            // 2. Liquid Glass Track Specular Edge & Refractive Rim
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(isOn ? 0.55 : 0.24),
-                            Color.white.opacity(isOn ? 0.20 : 0.06),
-                            Color.black.opacity(0.25)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.75
-                )
-                .frame(width: trackWidth, height: trackHeight)
-
-            // 3. Liquid Glass Thumb Orb
-            ZStack {
-                // Ambient drop shadow
-                Circle()
-                    .fill(Color.black.opacity(0.22))
-                    .frame(width: thumbDiameter, height: thumbDiameter)
-                    .blur(radius: 1.5)
-                    .offset(y: 1)
-
-                // High-specular spherical gradient body
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white,
-                                Color(red: 0.94, green: 0.95, blue: 0.98),
-                                Color(red: 0.88, green: 0.90, blue: 0.95)
-                            ],
-                            center: .topLeading,
-                            startRadius: 1,
-                            endRadius: thumbDiameter
-                        )
-                    )
-                    .frame(width: thumbDiameter, height: thumbDiameter)
-
-                // Top-left specular gloss sheen
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.95),
-                                Color.white.opacity(0.20)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.75
-                    )
-                    .frame(width: thumbDiameter - 0.75, height: thumbDiameter - 0.75)
-            }
-            .scaleEffect(isHovered ? 1.06 : 1.0)
-            .shadow(color: tint.opacity(isOn ? 0.40 : 0), radius: 6, x: 0, y: 0)
-            .offset(x: isOn ? thumbTravel : -thumbTravel)
-        }
-        .contentShape(Rectangle())
-        .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.18)) {
-                isHovered = hovering
-            }
-        }
-        .onTapGesture {
-            playSound("space_button")
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
-                isOn.toggle()
-            }
-        }
-    }
-}
-
 struct TabButton: View {
     let title: String
     let icon: String
     let tag: Int
     @Binding var currentTab: Int
+    var animationNamespace: Namespace.ID
     @State private var isHovered = false
     
     var body: some View {
         let active = currentTab == tag
         Button {
-            withAnimation(.easeInOut(duration: 0.25)) {
+            playSound("space_button")
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
                 currentTab = tag
             }
         } label: {
-            HStack(spacing: 5) {
+            HStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.system(size: 11, weight: .semibold))
                 Text(title)
-                    .font(.system(size: 13, weight: active ? .bold : .medium))
+                    .font(.system(size: 13, weight: active ? .bold : .medium, design: .rounded))
             }
-            .foregroundColor(active ? .white : (isHovered ? .white.opacity(0.85) : .white.opacity(0.4)))
+            .foregroundColor(active ? .white : (isHovered ? .white.opacity(0.85) : .white.opacity(0.45)))
             .padding(.vertical, 7)
-            .padding(.horizontal, 14)
-            .background(
-                ZStack {
-                    if active {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.white.opacity(0.08))
-                        VStack {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(LinearGradient(colors: [Color.white.opacity(0.1), Color.clear], startPoint: .top, endPoint: .bottom))
-                                .frame(height: 10)
-                            Spacer()
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    } else if isHovered {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.white.opacity(0.03))
-                    }
+            .padding(.horizontal, 16)
+            .background {
+                if active {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.white.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.25), Color.white.opacity(0.05)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.75
+                                )
+                        )
+                        .matchedGeometryEffect(id: "activeTabIndicator", in: animationNamespace)
+                } else if isHovered {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.white.opacity(0.04))
                 }
-            )
-            .scaleEffect(isHovered ? 1.02 : 1.0)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(
-                        active ? LinearGradient(colors: [Color.white.opacity(0.15), Color.white.opacity(0.03)], startPoint: .topLeading, endPoint: .bottomTrailing) : LinearGradient(colors: [Color.clear, Color.clear], startPoint: .top, endPoint: .bottom),
-                        lineWidth: 0.5
-                    )
-            )
+            }
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(.easeOut(duration: 0.18)) {
                 isHovered = hovering
             }
         }
@@ -1194,49 +1066,49 @@ struct PresetChip: View {
     
     var body: some View {
         let selected = selectedMinutes == value
-        return Button {
+        Button {
             if !selected { playSound("space_button") }
-            withAnimation(.snappy(duration: 0.25)) { selectedMinutes = value }
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) { selectedMinutes = value }
         } label: {
             Text(label)
-                .font(.system(size: 12, weight: selected ? .bold : .medium))
-                .frame(width: 44, height: 30)
+                .font(.system(size: 12, weight: selected ? .bold : .medium, design: .rounded))
+                .frame(width: 46, height: 32)
                 .background(
                     ZStack {
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(selected ? accent.opacity(0.4) : (isHovered ? Color.white.opacity(0.08) : Color.white.opacity(0.03)))
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(selected ? accent.opacity(0.42) : (isHovered ? Color.white.opacity(0.08) : Color.white.opacity(0.035)))
                         
                         if selected {
                             VStack {
-                                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                                    .fill(LinearGradient(colors: [Color.white.opacity(0.15), Color.clear], startPoint: .top, endPoint: .bottom))
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(LinearGradient(colors: [Color.white.opacity(0.20), Color.clear], startPoint: .top, endPoint: .bottom))
                                     .frame(height: 10)
                                 Spacer()
                             }
-                            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         }
                     }
                 )
                 .foregroundColor(selected ? .white : (isHovered ? .white : .white.opacity(0.55)))
-                .scaleEffect(selected ? 1.05 : (isHovered ? 1.02 : 1.0))
+                .scaleEffect(selected ? 1.04 : (isHovered ? 1.02 : 1.0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(selected ? 0.3 : (isHovered ? 0.15 : 0.08)),
+                                    Color.white.opacity(selected ? 0.35 : (isHovered ? 0.18 : 0.08)),
                                     Color.white.opacity(0.02)
                                 ],
                                 startPoint: .topLeading, endPoint: .bottomTrailing
                             ),
-                            lineWidth: 0.5
+                            lineWidth: 0.75
                         )
                 )
-                .shadow(color: selected ? accent.opacity(0.2) : .clear, radius: 6)
+                .shadow(color: selected ? accent.opacity(0.25) : .clear, radius: 6)
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(.easeOut(duration: 0.18)) {
                 isHovered = hovering
             }
         }
@@ -1251,24 +1123,24 @@ struct StartButton: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: "bed.double.fill").font(.system(size: 12))
-                Text("Start Sleep Timer").font(.system(size: 13, weight: .bold))
+            HStack(spacing: 7) {
+                Image(systemName: "bed.double.fill").font(.system(size: 13, weight: .semibold))
+                Text("Start Sleep Timer").font(.system(size: 14, weight: .bold, design: .rounded))
             }
-            .frame(width: 172, height: 38)
+            .frame(width: 210, height: 42)
             .background(
                 LinearGradient(
                     colors: [
-                        accent.opacity(isHovered ? 1.0 : 0.9),
-                        cyan.opacity(isHovered ? 1.0 : 0.9)
+                        accent.opacity(isHovered ? 1.0 : 0.92),
+                        cyan.opacity(isHovered ? 1.0 : 0.92)
                     ],
                     startPoint: .leading, endPoint: .trailing
                 )
             )
             .foregroundColor(.white)
-            .cornerRadius(10)
+            .cornerRadius(12)
             .scaleEffect(isHovered ? 1.03 : 1.0)
-            .shadow(color: accent.opacity(isHovered ? 0.6 : 0.4), radius: isHovered ? 14 : 10, x: 0, y: isHovered ? 5 : 3)
+            .shadow(color: accent.opacity(isHovered ? 0.55 : 0.35), radius: isHovered ? 14 : 10, x: 0, y: isHovered ? 4 : 2)
         }
         .buttonStyle(.plain)
         .onHover { hovering in
@@ -1282,21 +1154,22 @@ struct StartButton: View {
 struct CancelButton: View {
     let action: () -> Void
     @State private var isHovered = false
+    private let coral = Color.p3(h: 0.98, s: 0.60, b: 0.95)
     
     var body: some View {
         Button(action: action) {
             Text("Cancel")
-                .font(.system(size: 14, weight: .semibold))
-                .frame(width: 120, height: 36)
-                .background(Color.red.opacity(isHovered ? 0.28 : 0.18))
-                .foregroundColor(Color(red: 1.0, green: 0.4, blue: 0.4))
-                .cornerRadius(10)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .frame(width: 120, height: 38)
+                .background(coral.opacity(isHovered ? 0.25 : 0.15))
+                .foregroundColor(coral)
+                .cornerRadius(12)
                 .scaleEffect(isHovered ? 1.03 : 1.0)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.red.opacity(isHovered ? 0.5 : 0.3), lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(coral.opacity(isHovered ? 0.45 : 0.25), lineWidth: 0.75)
                 )
-                .shadow(color: Color.red.opacity(isHovered ? 0.15 : 0), radius: 6)
+                .shadow(color: coral.opacity(isHovered ? 0.20 : 0), radius: 8)
         }
         .buttonStyle(.plain)
         .onHover { hovering in
@@ -1310,22 +1183,23 @@ struct CancelButton: View {
 struct QuitButton: View {
     let action: () -> Void
     @State private var isHovered = false
+    private let coral = Color.p3(h: 0.98, s: 0.60, b: 0.95)
     
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: "power").font(.system(size: 11, weight: .semibold))
-                Text("Quit Slumber").font(.system(size: 13, weight: .medium))
+                Image(systemName: "power").font(.system(size: 12, weight: .semibold))
+                Text("Quit Slumber").font(.system(size: 13, weight: .medium, design: .rounded))
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 36)
-            .background(Color.red.opacity(isHovered ? 0.18 : 0.08))
-            .foregroundColor(Color(red: 1.0, green: 0.4, blue: 0.4))
-            .cornerRadius(10)
+            .frame(height: 38)
+            .background(coral.opacity(isHovered ? 0.18 : 0.08))
+            .foregroundColor(coral)
+            .cornerRadius(12)
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.red.opacity(isHovered ? 0.28 : 0.14), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(coral.opacity(isHovered ? 0.30 : 0.16), lineWidth: 0.75)
             )
         }
         .buttonStyle(.plain)
@@ -1349,24 +1223,24 @@ struct SettingsCard<Content: View>: View {
         content
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(isHovered ? 0.08 : 0.04))
-            .cornerRadius(12)
+            .background(Color.white.opacity(isHovered ? 0.06 : 0.035))
+            .cornerRadius(14)
             .scaleEffect(isHovered ? 1.01 : 1.0)
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(isHovered ? 0.16 : 0.10),
-                                Color.white.opacity(0.02)
+                                Color.white.opacity(isHovered ? 0.20 : 0.12),
+                                Color.white.opacity(0.03)
                             ],
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         ),
-                        lineWidth: 0.5
+                        lineWidth: 0.75
                     )
             )
             .onHover { hovering in
-                withAnimation(.easeOut(duration: 0.2)) {
+                withAnimation(.easeOut(duration: 0.18)) {
                     isHovered = hovering
                 }
             }
@@ -1383,6 +1257,7 @@ struct SlumberView: View {
     @State private var selectedMinutes: Double = 15
     @State private var currentTab = 0
     @State private var companionType: Int = 0
+    @Namespace private var tabNamespace
 
     private let accent = Color.p3(h: 0.75, s: 0.65, b: 0.92)
     private let cyan   = Color.p3(h: 0.53, s: 0.55, b: 0.97)
@@ -1432,10 +1307,19 @@ struct SlumberView: View {
 
             VStack(spacing: 0) {
                 HStack(spacing: 4) {
-                    TabButton(title: "Timer", icon: "moon.zzz", tag: 0, currentTab: $currentTab)
-                    TabButton(title: "Settings", icon: "gearshape", tag: 1, currentTab: $currentTab)
+                    TabButton(title: "Timer", icon: "moon.zzz", tag: 0, currentTab: $currentTab, animationNamespace: tabNamespace)
+                    TabButton(title: "Settings", icon: "gearshape", tag: 1, currentTab: $currentTab, animationNamespace: tabNamespace)
                 }
-                .padding(.top, 18)
+                .padding(3)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.white.opacity(0.05))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+                )
+                .padding(.top, 16)
                 .padding(.horizontal, 16)
 
                 ZStack {
@@ -1473,14 +1357,14 @@ struct SlumberView: View {
                             .foregroundColor(.white)
                             .contentTransition(.numericText())
                         Text("drifting off...")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.5))
                     }
                 }
                 .padding(.bottom, 10)
 
                 CancelButton(action: {
-                    playSound("cancel") // Corrected sound cue
+                    playSound("cancel")
                     timerModel.stop()
                 })
             } else {
@@ -1508,12 +1392,12 @@ struct SlumberView: View {
                     HStack {
                         Text("1 min"); Spacer(); Text("120 min")
                     }
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundColor(.white.opacity(0.3))
-                    .padding(.horizontal, 28)
+                    .padding(.horizontal, 24)
                 }
 
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     PresetChip(label: "15m", value: 15, selectedMinutes: $selectedMinutes, accent: accent)
                     PresetChip(label: "30m", value: 30, selectedMinutes: $selectedMinutes, accent: accent)
                     PresetChip(label: "45m", value: 45, selectedMinutes: $selectedMinutes, accent: accent)
@@ -1537,20 +1421,20 @@ struct SlumberView: View {
 
     private var settingsPage: some View {
         VStack(spacing: 0) {
-            Text("Preferences")
+            Text("Settings")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 28)
+                .padding(.top, 24)
                 .padding(.bottom, 20)
 
             SettingsCard {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Show in Dock")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
-                        Text("Display dock icon alongside\nthe menu bar.")
+                        Text("Display dock icon alongside the menu bar.")
                             .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.45))
                             .lineSpacing(2)
@@ -1568,15 +1452,40 @@ struct SlumberView: View {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Global Shortcut")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
-                        Text("Press ⌃⌥S to toggle the popover from anywhere, even if hidden by the notch.")
+                        Text("Toggle the popover from anywhere, even if hidden by the notch.")
                             .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.45))
                             .lineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
+                    HStack(spacing: 2) {
+                        Text("⌃")
+                        Text("⌥")
+                        Text("S")
+                    }
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.85))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color.white.opacity(0.10))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.30), Color.white.opacity(0.08)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.75
+                            )
+                    )
+                    .shadow(color: Color.black.opacity(0.2), radius: 2, y: 1)
                 }
             }
             .padding(.top, 10)
@@ -1589,7 +1498,7 @@ struct SlumberView: View {
             .padding(.bottom, 12)
 
             Text("Slumber v2.7")
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.2))
                 .frame(maxWidth: .infinity, alignment: .center)
             Text("Made with love")
