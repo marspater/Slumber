@@ -1644,7 +1644,7 @@ struct SlumberView: View {
             })
             .padding(.bottom, 12)
 
-            Text("Slumber v2.7")
+            Text("Slumber v2.8")
                 .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.2))
                 .frame(maxWidth: .infinity, alignment: .center)

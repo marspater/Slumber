@@ -26,6 +26,31 @@ cp -R "Assets/New_Icon.icon" "${TMP_ICON_DIR}"
 xcrun actool --compile "${RESOURCES_DIR}" --platform macosx --minimum-deployment-target 14.0 "${TMP_ICON_DIR}" > /dev/null 2>&1 || true
 rm -rf "$(dirname "${TMP_ICON_DIR}")"
 
+# Render 1024x1024 vector artwork from New_Icon.icon layers if needed
+if [ ! -f "Assets/app_icon.png" ] && [ -d "Assets/New_Icon.icon/Assets" ]; then
+    echo "Rendering app_icon.png from New_Icon.icon vector layers..."
+    swift - << 'SWIFTEOF'
+import AppKit
+let size = NSSize(width: 1024, height: 1024)
+let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+let face1URL = URL(fileURLWithPath: "Assets/New_Icon.icon/Assets/face_1.svg")
+let face1DepthURL = URL(fileURLWithPath: "Assets/New_Icon.icon/Assets/face_1_depth 2.svg")
+let main3URL = URL(fileURLWithPath: "Assets/New_Icon.icon/Assets/main_3.svg")
+if let mainImg = NSImage(contentsOf: main3URL), let depthImg = NSImage(contentsOf: face1DepthURL), let faceImg = NSImage(contentsOf: face1URL) {
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    let rect = NSRect(origin: .zero, size: size)
+    mainImg.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
+    depthImg.draw(in: rect, from: .zero, operation: .softLight, fraction: 0.9)
+    faceImg.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
+    NSGraphicsContext.restoreGraphicsState()
+    if let png = rep.representation(using: .png, properties: [:]) {
+        try? png.write(to: URL(fileURLWithPath: "Assets/app_icon.png"))
+    }
+}
+SWIFTEOF
+fi
+
 # Build AppIcon.icns from rendered artwork
 echo "Building multi-resolution AppIcon.icns..."
 ICON_SRC="Assets/app_icon.png"
@@ -61,9 +86,9 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.7</string>
+    <string>2.8</string>
     <key>CFBundleVersion</key>
-    <string>2.7</string>
+    <string>2.8</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>MinimumOSVersion</key>

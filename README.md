@@ -5,47 +5,58 @@
 
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
   [![macOS 14+](https://img.shields.io/badge/macOS-14.0%2B-purple.svg)]()
-  [![Version](https://img.shields.io/badge/Version-2.7-orange.svg)]()
+  [![Version](https://img.shields.io/badge/Version-2.8-orange.svg)](https://github.com/marspater/Slumber/releases/latest)
+  [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)
 </div>
 
 ---
 
 ## 🌟 Overview
 
-**Slumber** is an ambient, minimalist menu bar application for macOS. Built with native Swift and SwiftUI, it puts your Mac to sleep after a customizable countdown timer while providing a relaxing visual experience.
+**Slumber** is an ambient, minimalist menu bar application for macOS. Built with native Swift 6 and SwiftUI, it puts your Mac to sleep after a customizable countdown timer while providing a relaxing visual experience.
 
-Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic shooting stars, and orbiting **animal companions** (like the sleeping fox and purple kitten) that accompany you as you drift off to sleep.
-
----
-
-## 📸 Screenshots & UI
-
-<div align="center">
-  <img src="Assets/app_screenshot.png" alt="Slumber App UI Screenshot" width="380"/>
-  <br/>
-  <em>(Experience peaceful bedtime timers right from your macOS menu bar!)</em>
-</div>
+Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic shooting stars, and orbiting **animal companions** (the sleeping fox, purple kitten, and sleeping dodo bird) that somersault and float around the moon in zero-gravity as you drift off to sleep.
 
 ---
 
-## 📝 Recent Changes (v2.7)
+## 📦 Download & Quick Install
 
-- **🎨 App Icon Pipeline Overhaul**:
-  - Processed `Assets/New_Icon.icon` artwork into a 1024x1024 full-bleed canvas (`fullbleed_icon.png`).
-  - Allowed native macOS system squircle masking to render clean, smooth corners with **zero double-borders or white ring artifacts**.
-  - Generated multi-resolution `AppIcon.icns` (`16x16` through `512x512@2x`).
-  - Added automatic LaunchServices registration (`lsregister`) and Finder/Dock icon cache invalidation (`qlmanage -r cache`, `killall Dock`, `killall Finder`) in `build.sh`.
+### Option 1: Direct Download (Recommended)
+1. Download the latest **[Slumber.zip](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)**.
+2. Unzip and drag `Slumber.app` into your `/Applications` folder.
+3. Open Slumber from Spotlight or `/Applications`!
 
-- **⚙️ Preferences & Version Sync**:
-  - Bumped app bundle version to **v2.7** in `Info.plist` (`CFBundleShortVersionString` and `CFBundleVersion`) and updated Preferences view footer text (`Slumber v2.7`).
-  - Cleaned up Preferences page layout (removed in-app icon reflection from Preferences header).
+### Option 2: Build from Source
+```bash
+git clone https://github.com/marspater/Slumber.git
+cd Slumber
+chmod +x build.sh
+./build.sh
+cp -R Slumber.app /Applications/
+open /Applications/Slumber.app
+```
 
-- **🔇 Audio & Quit Experience**:
-  - Removed unwanted `cancel.wav` sound trigger on app termination (`QuitButton` now quits immediately and silently).
+---
 
-- **🛠️ SwiftPM & Build Integrity**:
-  - Added root exclude list (`build.sh`, `README.md`, `LICENSE`) in [Package.swift](file:///Users/marspater/Projects/Sleeper/Package.swift) to resolve Xcode Analyze membership errors.
-  - Standardized target deployment to `macos14.0`.
+## 📝 Recent Changes (v2.8)
+
+- **🎨 Apple Icon Composer Artwork**:
+  - Implemented the official Apple Icon Composer bundle format (`New_Icon.icon`) with multi-layer SVG vector depth, translucency, refractivity, and Display P3 wide-gamut rendering.
+  - Native generation of multi-resolution `AppIcon.icns` (`16x16` through `1024x1024`).
+
+- **🦤 3rd Companion: Sleeping Dodo Bird**:
+  - Added the **Sleeping Dodo** (`SleepingDodo`) with celestial turquoise plumage, hooked amber beak, fluffy tail tufts, breathing animations, and sleepy `"zzz"` particles.
+  - The app randomly selects from all 3 companions (**Fox**, **Cat**, **Dodo**) on launch and timer start.
+
+- **🛰️ Zero-Gravity 360° Space Somersault & Floating Physics**:
+  - Orbiting companions perform continuous, playful 360° axial somersaults and Lissajous floating micro-drifts simulating cartoon space weightlessness.
+
+- **✨ UI Polish & Design System Tokens**:
+  - Unified corner radii tokens (`20pt` popover, `14pt` cards, `12pt` buttons, `10pt` chips).
+  - Perfect track alignment for the min/max slider labels.
+  - Interactive liquid glass sliding indicator tab bar with audio cues.
+  - Frosted glass keycap badge (`[ ⌃⌥S ]`) for the global hotkey.
+  - Shifted destructive actions to a luminous, bedtime-friendly coral tone.
 
 ---
 
@@ -56,44 +67,17 @@ Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic
 - Display P3 wide-gamut color definitions (`Color.p3(...)`) for vibrant colors across both Light & Dark OS themes.
 
 ### 🦊 2. Animated Animal Companions
-- **Sleeping Fox & Kitten**: Interactive companions resting on soft clouds during idle state, smoothly transitioning to orbit around the sleeping moon when a countdown starts.
-- **Keplerian Orbital Motion & Physics**: Continuous wall-clock time math using `TimelineView` for smooth floating, breathing sine-wave motions, and spring-interpolated position lerping.
+- **Sleeping Fox, Kitten & Dodo**: Interactive companions resting on soft clouds during idle state, smoothly transitioning to orbit and somersault around the sleeping moon when a countdown starts.
+- **Keplerian Orbital Motion & Zero-G Physics**: Continuous wall-clock time math using `TimelineView` for zero-g floating, breathing sine-wave motions, and spring-interpolated position lerping.
 
 ### 🖥️ 3. Native macOS Support
-- Native `.icon` bundle format support (`New_Icon.icon`) with full-bleed squircle rendering and zero white borders.
+- Native `.icon` bundle format support (`New_Icon.icon`) compiled with Apple standard `actool` and `iconutil`.
 - Display parameter change listener for SDR & HDR display adaptation.
 - System wake notifications automatically cancel pending timers if the Mac is opened.
+- Native macOS `Toggle` switch style with system accessibility.
 
 ### 🎵 4. Soft Ambient Bedtime Audio
-- Synthesized low-volume sine-wave audio cues for timer start and button presses.
-
----
-
-## 🚀 Installation & Building
-
-### Prerequisites
-- **macOS 14.0** or later.
-- Xcode Command Line Tools (`swiftc`).
-
-### 1-Click Build & Install
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/marspater/Slumber.git
-   cd Slumber
-   ```
-
-2. **Build & install:**
-   ```bash
-   chmod +x build.sh
-   ./build.sh
-   cp -R Slumber.app /Applications/
-   ```
-
-3. **Launch Slumber:**
-   ```bash
-   open /Applications/Slumber.app
-   ```
+- Synthesized low-volume sine-wave audio cues for timer start, preset selection, and button presses.
 
 ---
 
