@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import SlumberCore
 
 // ===================================================================
 // MARK: - Audio Helper
@@ -1483,32 +1484,7 @@ struct SlumberView: View {
         VStack(spacing: 14) {
             Spacer()
 
-            if timerModel.state == .wakingCancelled {
-                HStack(spacing: 8) {
-                    Image(systemName: "moon.fill")
-                        .font(.system(size: 11))
-                        .foregroundColor(Color.p3(h: 0.75, s: 0.65, b: 0.95))
-                    Text("Timer cancelled when Mac woke up.")
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.9))
-                    Spacer()
-                    Button {
-                        timerModel.dismissStatus()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.4))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.white.opacity(0.08))
-                )
-                .padding(.horizontal, 24)
-            } else if case let .sleepFailed(reason) = timerModel.state {
+            if case let .sleepFailed(reason) = timerModel.state {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 12))
@@ -1519,7 +1495,7 @@ struct SlumberView: View {
                         .lineLimit(2)
                     Spacer()
                     Button {
-                        timerModel.dismissStatus()
+                        timerModel.clearStatus()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 13))

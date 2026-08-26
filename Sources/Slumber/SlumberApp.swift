@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Carbon
+import SlumberCore
 
 extension Notification.Name {
     static let slumberOpening = Notification.Name("SlumberOpening")
@@ -21,11 +22,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
-
-        // Load application icon
-        if let icon = NSImage(named: "AppIcon") ?? NSImage(named: NSImage.applicationIconName) {
-            NSApp.applicationIconImage = icon
-        }
 
         popover = NSPopover()
         popover.contentSize = NSSize(width: 320, height: 440)

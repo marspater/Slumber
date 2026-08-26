@@ -5,13 +5,20 @@ import IOKit.pwr_mgt
 public enum TimerState: Equatable, Sendable {
     case idle
     case running
-    case wakingCancelled
+    case requestingSleep
     case sleepFailed(reason: String)
     case completed
 }
 
+public enum SleepResult: Sendable, Equatable {
+    case success
+    case failure(reason: String)
+}
+
 @MainActor
 public class SlumberTimer: ObservableObject {
+    public typealias SleepAction = @MainActor () -> SleepResult
+
     @Published public private(set) var state: TimerState = .idle
     @Published public private(set) var timeRemaining: TimeInterval = 0
     @Published public private(set) var totalTime: TimeInterval = 0
@@ -31,8 +38,11 @@ public class SlumberTimer: ObservableObject {
     private var endTime: Date?
     private var activity: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
+    private let customSleepAction: SleepAction?
     
-    public init() {}
+    public init(sleepAction: SleepAction? = nil) {
+        self.customSleepAction = sleepAction
+    }
     
     public func start(minutes: Double) {
         guard minutes > 0, minutes.isFinite else {
@@ -40,8 +50,7 @@ public class SlumberTimer: ObservableObject {
             return
         }
 
-        // Clean up any existing timer/activity before starting
-        stopInternal(newState: .running)
+        resetTimerResources()
         
         let seconds = minutes * 60
         self.totalTime = seconds
@@ -49,7 +58,7 @@ public class SlumberTimer: ObservableObject {
         self.endTime = Date().addingTimeInterval(seconds)
         self.state = .running
         
-        // DispatchSourceTimer on main queue: fires directly on MainActor without Task scheduling
+        // DispatchSourceTimer on main queue
         let source = DispatchSource.makeTimerSource(queue: .main)
         source.schedule(deadline: .now() + 1, repeating: 1.0)
         source.setEventHandler { [weak self] in
@@ -67,35 +76,47 @@ public class SlumberTimer: ObservableObject {
         }
         
         // Register for system wake notifications: if system wakes while timer is active,
-        // transition explicitly to .wakingCancelled so the user knows why the timer stopped.
+        // recalculate remaining time from the original deadline and resume seamlessly.
         if wakeObserver == nil {
             wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
                 forName: NSWorkspace.didWakeNotification,
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    guard let self = self, self.state == .running else { return }
-                    self.stopInternal(newState: .wakingCancelled)
+                MainActor.assumeIsolated {
+                    self?.handleSystemWake()
                 }
             }
         }
     }
     
     public func stop() {
-        stopInternal(newState: .idle)
+        resetTimerResources()
+        state = .idle
     }
     
-    public func dismissStatus() {
-        stopInternal(newState: .idle)
+    public func clearStatus() {
+        resetTimerResources()
+        state = .idle
     }
     
-    private func stopInternal(newState: TimerState) {
+    public func handleSystemWake() {
+        guard state == .running, let deadline = endTime else { return }
+        let remaining = deadline.timeIntervalSinceNow
+        if remaining <= 0 {
+            NSLog("[SlumberTimer] System woke but timer deadline passed. Triggering sleep.")
+            tick()
+        } else {
+            NSLog("[SlumberTimer] System woke. Resuming countdown with %.0f seconds remaining.", remaining)
+            self.timeRemaining = remaining
+        }
+    }
+    
+    private func resetTimerResources() {
         timer?.cancel()
         timer = nil
         endTime = nil
         timeRemaining = 0
-        state = newState
         
         if let currentActivity = activity {
             ProcessInfo.processInfo.endActivity(currentActivity)
@@ -108,11 +129,12 @@ public class SlumberTimer: ObservableObject {
         }
     }
     
-    private func tick() {
+    public func tick() {
         guard state == .running, let endTime = endTime else { return }
         let remaining = endTime.timeIntervalSinceNow
         
         if remaining <= 0 {
+            state = .requestingSleep
             executeSleep()
         } else {
             self.timeRemaining = remaining
@@ -120,18 +142,16 @@ public class SlumberTimer: ObservableObject {
     }
     
     private func executeSleep() {
-        // Stop timer machinery before triggering system sleep
-        timer?.cancel()
-        timer = nil
-        endTime = nil
-        timeRemaining = 0
-        if let currentActivity = activity {
-            ProcessInfo.processInfo.endActivity(currentActivity)
-            activity = nil
-        }
-        if let observer = wakeObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-            wakeObserver = nil
+        resetTimerResources()
+        
+        if let customAction = customSleepAction {
+            switch customAction() {
+            case .success:
+                self.state = .completed
+            case .failure(let reason):
+                self.state = .sleepFailed(reason: reason)
+            }
+            return
         }
         
         // Native macOS IOKit C API for putting the system to sleep directly

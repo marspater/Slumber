@@ -4,40 +4,35 @@ import PackageDescription
 let package = Package(
     name: "Slumber",
     platforms: [
-        .macOS(.v14)
+        .macOS("26.0")
     ],
     products: [
         .executable(name: "Slumber", targets: ["Slumber"])
     ],
     targets: [
+        .target(
+            name: "SlumberCore",
+            path: "Sources/SlumberCore",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
         .executableTarget(
             name: "Slumber",
-            path: ".",
-            exclude: [
-                "build.sh",
-                "README.md",
-                "LICENSE",
-                "Tests"
+            dependencies: [
+                "SlumberCore"
             ],
-            sources: [
-                "SlumberApp.swift",
-                "SlumberTimer.swift",
-                "SlumberView.swift"
-            ],
-            resources: [
-                .copy("Assets")
-            ],
+            path: "Sources/Slumber",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
         ),
         .testTarget(
             name: "SlumberTests",
-            path: "Tests/SlumberTests",
-            sources: [
-                "SlumberTimer.swift",
-                "SlumberTimerTests.swift"
+            dependencies: [
+                "SlumberCore"
             ],
+            path: "Tests/SlumberTests",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
