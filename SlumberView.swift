@@ -1059,8 +1059,8 @@ struct VisualEffectView: NSViewRepresentable {
 // ===================================================================
 
 struct GlowingSlider: View {
-    @Binding var value: Double
-    let bounds: ClosedRange<Double>
+    @Binding var value: Int
+    let bounds: ClosedRange<Int>
     let onEditingChanged: (Bool) -> Void
     @Environment(\.colorScheme) var colorScheme
     private var chrome: Color { colorScheme == .dark ? .white : .black }
@@ -1072,9 +1072,11 @@ struct GlowingSlider: View {
     private let sliderWidth: CGFloat = 272.0
     
     var body: some View {
-        let percentage = max(0, min(1.0, CGFloat((value - bounds.lowerBound) / (bounds.upperBound - bounds.lowerBound))))
-        let thumbOffset = percentage * (sliderWidth - 14)
-        let trackFillWidth = max(0, min(sliderWidth, thumbOffset + 7))
+        let totalRange = Double(bounds.upperBound - bounds.lowerBound)
+        let percentage = totalRange > 0 ? max(0, min(1.0, CGFloat(Double(value - bounds.lowerBound) / totalRange))) : 0
+        let trackTravel: CGFloat = sliderWidth - 14.0
+        let thumbOffset = percentage * trackTravel
+        let trackFillWidth = max(0, min(sliderWidth, thumbOffset + 7.0))
         
         ZStack(alignment: .leading) {
             // Background Track
@@ -1115,11 +1117,11 @@ struct GlowingSlider: View {
                         }
                         onEditingChanged(true)
                     }
-                    let trackTravel: CGFloat = sliderWidth - 14.0
                     let clampedX = max(7.0, min(sliderWidth - 7.0, gesture.location.x))
-                    let newFraction = Double((clampedX - 7.0) / trackTravel)
-                    let rawMinutes = bounds.lowerBound + newFraction * (bounds.upperBound - bounds.lowerBound)
-                    value = min(max(round(rawMinutes), bounds.lowerBound), bounds.upperBound)
+                    let fraction = Double((clampedX - 7.0) / trackTravel)
+                    let rawVal = Double(bounds.lowerBound) + fraction * totalRange
+                    let computed = Int(round(rawVal))
+                    value = min(max(computed, bounds.lowerBound), bounds.upperBound)
                 }
                 .onEnded { _ in
                     withAnimation(.spring(response: 0.15, dampingFraction: 0.8)) {
@@ -1195,13 +1197,13 @@ struct TabButton: View {
 
 struct PresetChip: View {
     let label: String
-    let value: Double
-    @Binding var selectedMinutes: Double
+    let value: Int
+    @Binding var selectedMinutes: Int
     let accent: Color
     @State private var isHovered = false
     
     var body: some View {
-        let selected = abs(selectedMinutes - value) < 0.5
+        let selected = selectedMinutes == value
         Button {
             if !selected { playSound("space_button") }
             withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) { selectedMinutes = value }
@@ -1384,13 +1386,13 @@ struct SettingsCard<Content: View>: View {
 }
 
 // ===================================================================
-// MARK: - Main View
+// MARK: - Main Slumber Container View
 // ===================================================================
 
 struct SlumberView: View {
     @ObservedObject var timerModel: SlumberTimer
     @AppStorage("showInDock") private var showInDock: Bool = false
-    @State private var selectedMinutes: Double = 15
+    @State private var selectedMinutes: Int = 15
     @State private var currentTab = 0
     @State private var companionType: Int = Int.random(in: 0...2)
     @Namespace private var tabNamespace
@@ -1399,7 +1401,7 @@ struct SlumberView: View {
     private let cyan   = Color.p3(h: 0.53, s: 0.55, b: 0.97)
 
     private var skyPhase: Int {
-        let m = timerModel.isRunning ? timerModel.totalTime / 60.0 : selectedMinutes
+        let m = timerModel.isRunning ? Int(timerModel.totalTime / 60.0) : selectedMinutes
         if m <= 20 { return 0 }     // Sunset Glow (1-20 min)
         if m <= 38 { return 1 }     // Evening Twilight (21-38 min)
         if m <= 50 { return 2 }     // Late Dusk (39-50 min)
@@ -1481,21 +1483,54 @@ struct SlumberView: View {
         VStack(spacing: 14) {
             Spacer()
 
-            if let err = timerModel.sleepError {
-                HStack(spacing: 6) {
+            if timerModel.state == .wakingCancelled {
+                HStack(spacing: 8) {
+                    Image(systemName: "moon.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color.p3(h: 0.75, s: 0.65, b: 0.95))
+                    Text("Timer cancelled when Mac woke up.")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                    Spacer()
+                    Button {
+                        timerModel.dismissStatus()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                )
+                .padding(.horizontal, 24)
+            } else if case let .sleepFailed(reason) = timerModel.state {
+                HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(Color.p3(h: 0.08, s: 0.85, b: 0.98))
-                    Text(err)
+                        .foregroundColor(.orange)
+                    Text(reason)
                         .font(.system(size: 10, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.9))
                         .lineLimit(2)
-                        .multilineTextAlignment(.leading)
+                    Spacer()
+                    Button {
+                        timerModel.dismissStatus()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
                 .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(Color.red.opacity(0.25))
                 )
                 .padding(.horizontal, 24)
@@ -1525,7 +1560,7 @@ struct SlumberView: View {
                 })
             } else {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(Int(selectedMinutes))")
+                    Text("\(selectedMinutes)")
                         .font(.system(size: 58, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
                         .contentTransition(.numericText())
@@ -1558,7 +1593,7 @@ struct SlumberView: View {
                 StartButton(action: {
                     playSound("space_timer_start")
                     companionType = Int.random(in: 0...2)
-                    timerModel.start(minutes: selectedMinutes)
+                    timerModel.start(minutes: Double(selectedMinutes))
                 }, accent: accent, cyan: cyan)
                 .padding(.top, 6)
             }

@@ -21,21 +21,17 @@ echo "Compiling Swift release binary with SwiftPM..."
 swift build -c release
 cp ".build/release/${APP_NAME}" "${MACOS_DIR}/${APP_NAME}"
 
-# Compile Apple Icon Composer .icon package into Assets.car and AppIcon.icns via actool
+# Compile Apple Icon Composer .icon package into Assets.car via actool
 echo "Compiling Icon Composer icon with actool..."
-TMP_ICON_DIR="$(mktemp -d)"
-mkdir -p "${TMP_ICON_DIR}/AppIcon.icon"
-cp -R "Assets/New_Icon.icon/"* "${TMP_ICON_DIR}/AppIcon.icon/"
-
+TMP_PLIST="$(mktemp)"
 xcrun actool \
     --compile "${RESOURCES_DIR}" \
     --platform macosx \
     --minimum-deployment-target 26.0 \
     --app-icon AppIcon \
-    --output-partial-info-plist "${TMP_ICON_DIR}/partial.plist" \
-    "${TMP_ICON_DIR}/AppIcon.icon"
-
-rm -rf "${TMP_ICON_DIR}"
+    --output-partial-info-plist "${TMP_PLIST}" \
+    "Assets/AppIcon.icon"
+rm -f "${TMP_PLIST}"
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
@@ -50,8 +46,6 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
     <key>CFBundleIconName</key>
-    <string>AppIcon</string>
-    <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
     <string>2.8</string>

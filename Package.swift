@@ -16,7 +16,8 @@ let package = Package(
             exclude: [
                 "build.sh",
                 "README.md",
-                "LICENSE"
+                "LICENSE",
+                "Tests"
             ],
             sources: [
                 "SlumberApp.swift",
@@ -25,6 +26,17 @@ let package = Package(
             ],
             resources: [
                 .copy("Assets")
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
+        .testTarget(
+            name: "SlumberTests",
+            path: "Tests/SlumberTests",
+            sources: [
+                "SlumberTimer.swift",
+                "SlumberTimerTests.swift"
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6)

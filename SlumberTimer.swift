@@ -2,12 +2,30 @@ import Foundation
 import AppKit
 import IOKit.pwr_mgt
 
+public enum TimerState: Equatable, Sendable {
+    case idle
+    case running
+    case wakingCancelled
+    case sleepFailed(reason: String)
+    case completed
+}
+
 @MainActor
 public class SlumberTimer: ObservableObject {
-    @Published public var timeRemaining: TimeInterval = 0
-    @Published public var totalTime: TimeInterval = 0
-    @Published public var isRunning: Bool = false
-    @Published public var sleepError: String? = nil
+    @Published public private(set) var state: TimerState = .idle
+    @Published public private(set) var timeRemaining: TimeInterval = 0
+    @Published public private(set) var totalTime: TimeInterval = 0
+    
+    public var isRunning: Bool {
+        state == .running
+    }
+    
+    public var sleepError: String? {
+        if case let .sleepFailed(reason) = state {
+            return reason
+        }
+        return nil
+    }
     
     private var timer: DispatchSourceTimer?
     private var endTime: Date?
@@ -22,32 +40,25 @@ public class SlumberTimer: ObservableObject {
             return
         }
 
-        // Guard against double-start — cancel any existing timer first
-        if timer != nil {
-            stop()
-        }
+        // Clean up any existing timer/activity before starting
+        stopInternal(newState: .running)
         
-        self.sleepError = nil
         let seconds = minutes * 60
         self.totalTime = seconds
         self.timeRemaining = seconds
         self.endTime = Date().addingTimeInterval(seconds)
-        self.isRunning = true
+        self.state = .running
         
-        // DispatchSourceTimer is more reliable than Timer.publish:
-        // it doesn't depend on RunLoop mode and fires correctly even
-        // when the popover is closed and reopened.
+        // DispatchSourceTimer on main queue: fires directly on MainActor without Task scheduling
         let source = DispatchSource.makeTimerSource(queue: .main)
         source.schedule(deadline: .now() + 1, repeating: 1.0)
         source.setEventHandler { [weak self] in
-            Task { @MainActor in
-                self?.tick()
-            }
+            self?.tick()
         }
         source.resume()
         self.timer = source
         
-        // Prevent macOS App Nap and system idle sleep from throttling/sleeping prematurely
+        // Prevent macOS App Nap and system idle sleep while countdown is active
         if activity == nil {
             activity = ProcessInfo.processInfo.beginActivity(
                 options: [.userInitiated, .idleSystemSleepDisabled],
@@ -55,27 +66,36 @@ public class SlumberTimer: ObservableObject {
             )
         }
         
-        // Register for system wake notifications to cancel the timer on wake.
-        // If the user wakes the computer, they are active; we shouldn't trigger an overdue sleep command.
+        // Register for system wake notifications: if system wakes while timer is active,
+        // transition explicitly to .wakingCancelled so the user knows why the timer stopped.
         if wakeObserver == nil {
             wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
                 forName: NSWorkspace.didWakeNotification,
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
-                    self?.stop()
+                Task { @MainActor [weak self] in
+                    guard let self = self, self.state == .running else { return }
+                    self.stopInternal(newState: .wakingCancelled)
                 }
             }
         }
     }
     
     public func stop() {
+        stopInternal(newState: .idle)
+    }
+    
+    public func dismissStatus() {
+        stopInternal(newState: .idle)
+    }
+    
+    private func stopInternal(newState: TimerState) {
         timer?.cancel()
         timer = nil
         endTime = nil
-        isRunning = false
         timeRemaining = 0
+        state = newState
         
         if let currentActivity = activity {
             ProcessInfo.processInfo.endActivity(currentActivity)
@@ -89,19 +109,32 @@ public class SlumberTimer: ObservableObject {
     }
     
     private func tick() {
-        guard isRunning, let endTime = endTime else { return }
+        guard state == .running, let endTime = endTime else { return }
         let remaining = endTime.timeIntervalSinceNow
         
         if remaining <= 0 {
-            self.stop()
-            self.executeSleep()
+            executeSleep()
         } else {
             self.timeRemaining = remaining
         }
     }
     
     private func executeSleep() {
-        // Native macOS IOKit C API for putting the system to sleep directly without spawning subprocesses
+        // Stop timer machinery before triggering system sleep
+        timer?.cancel()
+        timer = nil
+        endTime = nil
+        timeRemaining = 0
+        if let currentActivity = activity {
+            ProcessInfo.processInfo.endActivity(currentActivity)
+            activity = nil
+        }
+        if let observer = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            wakeObserver = nil
+        }
+        
+        // Native macOS IOKit C API for putting the system to sleep directly
         let port = IOPMFindPowerManagement(mach_port_t(MACH_PORT_NULL))
         var sleepSucceeded = false
         if port != 0 {
@@ -120,11 +153,16 @@ public class SlumberTimer: ObservableObject {
             let script = NSAppleScript(source: "tell application \"System Events\" to sleep")
             let result = script?.executeAndReturnError(&errorDict)
             if let error = errorDict {
+                let desc = (error[NSAppleScript.errorMessage] as? String) ?? "AppleScript execution error"
                 NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", error)
-                self.sleepError = "Could not trigger macOS sleep. Please ensure system permissions allow sleep control."
+                self.state = .sleepFailed(reason: "Could not put Mac to sleep: \(desc)")
+                return
             } else if result == nil {
-                self.sleepError = "Could not trigger macOS sleep."
+                self.state = .sleepFailed(reason: "Could not put Mac to sleep.")
+                return
             }
         }
+        
+        self.state = .completed
     }
 }

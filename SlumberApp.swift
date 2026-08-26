@@ -5,7 +5,6 @@ import Carbon
 extension Notification.Name {
     static let slumberOpening = Notification.Name("SlumberOpening")
     static let slumberClosed = Notification.Name("SlumberClosed")
-    static let slumberActuallyClose = Notification.Name("SlumberActuallyClose")
     static let slumberTogglePopover = Notification.Name("SlumberTogglePopover")
 }
 
@@ -37,9 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
         setupGlobalMonitor()
         setupGlobalHotkey()
-        setupDisplayObserver()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleActuallyClose), name: .slumberActuallyClose, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleTogglePopoverNotification), name: .slumberTogglePopover, object: nil)
 
         let vc = NSHostingController(rootView: SlumberView(timerModel: timerModel))
@@ -137,23 +134,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
     }
 
-    private func setupDisplayObserver() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleDisplayModeChange),
-            name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
-        )
-    }
-
-    @objc private func handleDisplayModeChange() {
-        guard let screen = NSScreen.main else { return }
-        let _ = screen.maximumExtendedDynamicRangeColorComponentValue
-        Task { @MainActor in
-            popover?.contentViewController?.view.needsDisplay = true
-        }
-    }
-
     func applicationWillTerminate(_ notification: Notification) {
         if let hk = hotKeyRef {
             UnregisterEventHotKey(hk)
@@ -223,10 +203,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func requestClosePopover() {
-        popover.performClose(nil)
-    }
-
-    @objc private func handleActuallyClose() {
         popover.performClose(nil)
     }
 

@@ -40,9 +40,14 @@ open /Applications/Slumber.app
 
 ## 📝 Recent Changes (v2.8)
 
-- **🎨 Apple Icon Composer Artwork**:
-  - Implemented the official Apple Icon Composer bundle format (`New_Icon.icon`) with multi-layer SVG vector depth, translucency, refractivity, and Display P3 wide-gamut rendering.
-  - Native generation of multi-resolution `AppIcon.icns` (`16x16` through `1024x1024`).
+- **🎨 Apple Icon Composer Pipeline**:
+  - Direct compilation of canonical `Assets/AppIcon.icon` into `Assets.car` via `actool` targeting modern macOS 26.0+.
+  - Clean `Info.plist` configuration utilizing `CFBundleIconName: AppIcon` with zero legacy fallbacks.
+
+- **⏱️ Robust Timer State Machine**:
+  - Implemented explicit `TimerState` (`.idle`, `.running`, `.wakingCancelled`, `.sleepFailed`, `.completed`).
+  - Clear user feedback if a timer is cancelled due to machine wake or if sleep dispatch encounters permission issues.
+  - Direct main-queue dispatch without redundant `Task` wrapper overhead.
 
 - **🦤 3rd Companion: Sleeping Dodo Bird**:
   - Added the **Sleeping Dodo** (`SleepingDodo`) with celestial turquoise plumage, hooked amber beak, fluffy tail tufts, breathing animations, and sleepy `"zzz"` particles.
@@ -50,13 +55,17 @@ open /Applications/Slumber.app
 
 - **🛰️ Zero-Gravity 360° Space Somersault & Floating Physics**:
   - Orbiting companions perform continuous, playful 360° axial somersaults and Lissajous floating micro-drifts simulating cartoon space weightlessness.
+  - Idle mode completely pauses 60fps trigonometric math for zero idle GPU footprint.
+
+- **🧪 Unit Test Suite & SwiftPM Integration**:
+  - Comprehensive unit test suite covering state transitions and lifecycle validation (`swift test`).
+  - Unified build system: `Package.swift` compiles release binaries with SwiftPM, which `build.sh` packages into `Slumber.app`.
 
 - **✨ UI Polish & Design System Tokens**:
   - Unified corner radii tokens (`20pt` popover, `14pt` cards, `12pt` buttons, `10pt` chips).
-  - Perfect track alignment for the min/max slider labels.
+  - Exact slider drag alignment with integer minute selection.
   - Interactive liquid glass sliding indicator tab bar with audio cues.
   - Frosted glass keycap badge (`[ ⌃⌥S ]`) for the global hotkey.
-  - Shifted destructive actions to a luminous, bedtime-friendly coral tone.
 
 ---
 
@@ -71,9 +80,8 @@ open /Applications/Slumber.app
 - **Keplerian Orbital Motion & Zero-G Physics**: Continuous wall-clock time math using `TimelineView` for zero-g floating, breathing sine-wave motions, and spring-interpolated position lerping.
 
 ### 🖥️ 3. Native macOS Support
-- Native `.icon` bundle format support (`New_Icon.icon`) compiled with Apple standard `actool` and `iconutil`.
-- Display parameter change listener for SDR & HDR display adaptation.
-- System wake notifications automatically cancel pending timers if the Mac is opened.
+- Native `.icon` bundle format support (`Assets/AppIcon.icon`) compiled directly with Apple `actool` into `Assets.car`.
+- System wake notifications gracefully communicate state transitions if the Mac is opened.
 - Native macOS `Toggle` switch style with system accessibility.
 
 ### 🎵 4. Soft Ambient Bedtime Audio
