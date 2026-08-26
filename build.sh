@@ -19,9 +19,21 @@ mkdir -p "${RESOURCES_DIR}"
 # Compile Swift files (Swift 6)
 swiftc -swift-version 6 -O -parse-as-library -target $(uname -m)-apple-macos14.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
 
-# Copy native Icon Composer .icon package directly into Resources
-echo "Copying AppIcon.icon into Resources..."
-cp -R "Assets/New_Icon.icon" "${RESOURCES_DIR}/AppIcon.icon"
+# Compile Apple Icon Composer .icon package into Assets.car and AppIcon.icns via actool
+echo "Compiling Icon Composer icon with actool..."
+TMP_ICON_DIR="$(mktemp -d)"
+mkdir -p "${TMP_ICON_DIR}/AppIcon.icon"
+cp -R "Assets/New_Icon.icon/"* "${TMP_ICON_DIR}/AppIcon.icon/"
+
+xcrun actool \
+    --compile "${RESOURCES_DIR}" \
+    --platform macosx \
+    --minimum-deployment-target 14.0 \
+    --app-icon AppIcon \
+    --output-partial-info-plist "${TMP_ICON_DIR}/partial.plist" \
+    "${TMP_ICON_DIR}/AppIcon.icon"
+
+rm -rf "${TMP_ICON_DIR}"
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
@@ -35,9 +47,9 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>com.marspater.slumber2</string>
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
-    <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
     <key>CFBundleIconName</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
     <string>2.8</string>
