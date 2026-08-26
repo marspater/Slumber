@@ -16,6 +16,11 @@ public class SlumberTimer: ObservableObject {
     public init() {}
     
     public func start(minutes: Double) {
+        guard minutes > 0, minutes.isFinite else {
+            NSLog("[SlumberTimer] Invalid timer duration: %f minutes", minutes)
+            return
+        }
+
         // Guard against double-start — cancel any existing timer first
         if timer != nil {
             stop()
@@ -66,6 +71,7 @@ public class SlumberTimer: ObservableObject {
     public func stop() {
         timer?.cancel()
         timer = nil
+        endTime = nil
         isRunning = false
         timeRemaining = 0
         
@@ -81,7 +87,7 @@ public class SlumberTimer: ObservableObject {
     }
     
     private func tick() {
-        guard let endTime = endTime else { return }
+        guard isRunning, let endTime = endTime else { return }
         let remaining = endTime.timeIntervalSinceNow
         
         if remaining <= 0 {
@@ -95,12 +101,25 @@ public class SlumberTimer: ObservableObject {
     private func executeSleep() {
         // Native macOS IOKit C API for putting the system to sleep directly without spawning subprocesses
         let port = IOPMFindPowerManagement(mach_port_t(MACH_PORT_NULL))
+        var sleepSucceeded = false
         if port != 0 {
-            IOPMSleepSystem(port)
+            let result = IOPMSleepSystem(port)
             IOServiceClose(port)
+            sleepSucceeded = (result == kIOReturnSuccess)
+            if !sleepSucceeded {
+                NSLog("[SlumberTimer] IOPMSleepSystem returned error code: %d, falling back to AppleScript.", result)
+            }
         } else {
+            NSLog("[SlumberTimer] IOPMFindPowerManagement returned null port, falling back to AppleScript.")
+        }
+        
+        if !sleepSucceeded {
+            var errorDict: NSDictionary?
             let script = NSAppleScript(source: "tell application \"System Events\" to sleep")
-            script?.executeAndReturnError(nil)
+            script?.executeAndReturnError(&errorDict)
+            if let error = errorDict {
+                NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", error)
+            }
         }
     }
 }

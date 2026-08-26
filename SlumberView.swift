@@ -7,8 +7,9 @@ import AppKit
 
 import AVFoundation
 
-var audioPlayers: [String: AVAudioPlayer] = [:]
+@MainActor private var audioPlayers: [String: AVAudioPlayer] = [:]
 
+@MainActor
 func playSound(_ name: String) {
     if let player = audioPlayers[name] {
         if player.isPlaying { player.currentTime = 0 }
@@ -16,13 +17,17 @@ func playSound(_ name: String) {
         return
     }
     
-    guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else { return }
+    guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
+        NSLog("[SlumberAudio] Audio file '%@.wav' not found in bundle resources.", name)
+        return
+    }
     do {
         let player = try AVAudioPlayer(contentsOf: url)
+        player.prepareToPlay()
         audioPlayers[name] = player
         player.play()
     } catch {
-        // Silently fail if audio system is busy
+        NSLog("[SlumberAudio] Failed to initialize AVAudioPlayer for '%@.wav': %@", name, error.localizedDescription)
     }
 }
 
@@ -144,19 +149,19 @@ struct TwinklingStar: View {
             if isSparkle {
                 SparkleStarShape()
                     .fill(Color.white)
-                    .frame(width: size * 2.8, height: size * 2.8)
+                    .frame(width: size * 2.2, height: size * 2.2)
             } else {
                 Circle()
                     .fill(Color.white)
                     .frame(width: size, height: size)
             }
         }
-        .shadow(color: Color.p3(r: 1.6, g: 1.6, b: 1.8, a: on ? 0.9 : 0), radius: on ? (isSparkle ? 6 : 4) : 0)
-        .opacity(on ? 1.0 : 0.1)
+        .shadow(color: Color.p3(h: 0.75, s: 0.25, b: 1.0, a: on ? 0.35 : 0), radius: on ? (isSparkle ? 4 : 2) : 0)
+        .opacity(on ? 0.75 : 0.12)
         .position(position)
         .onAppear {
             withAnimation(
-                .easeInOut(duration: Double.random(in: 1.5...3.5))
+                .easeInOut(duration: Double.random(in: 1.8...3.8))
                 .repeatForever(autoreverses: true)
                 .delay(delay)
             ) { on = true }
@@ -185,29 +190,30 @@ struct ShootingStar: View {
                 : -1
 
             let rad = angle * .pi / 180
-            let travel: CGFloat = 300
+            let travel: CGFloat = 280
 
             if progress >= 0 {
                 Capsule()
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.p3(r: 1.0, g: 1.0, b: 1.0, a: 0),
-                                Color.p3(r: 1.2, g: 1.2, b: 1.3, a: 0.9)
+                                Color.p3(h: 0.75, s: 0.25, b: 0.95, a: 0),
+                                Color.p3(h: 0.72, s: 0.15, b: 1.0, a: 0.35)
                             ],
                             startPoint: .leading, endPoint: .trailing
                         )
                     )
-                    .frame(width: length, height: 1.5)
+                    .frame(width: length * 0.85, height: 1.0)
+                    .blur(radius: 0.3)
                     .rotationEffect(.degrees(angle))
                     .offset(
                         x: startX + CGFloat(cos(rad)) * travel * CGFloat(progress),
                         y: startY + CGFloat(sin(rad)) * travel * CGFloat(progress)
                     )
                     .opacity(
-                        progress < 0.08
-                             ? progress / 0.08
-                             : (progress > 0.6 ? max(0, (1 - progress) / 0.4) : 0.85)
+                        progress < 0.12
+                             ? (progress / 0.12) * 0.4
+                             : (progress > 0.55 ? max(0, ((1 - progress) / 0.45) * 0.4) : 0.4)
                     )
             }
         }
@@ -323,13 +329,13 @@ struct ConstellationPattern: View {
                         path.addLine(to: CGPoint(x: to.x * w, y: to.y * h))
                     }
                 }
-                .stroke(Color.white.opacity(pulse ? 0.20 : 0.08), lineWidth: 0.8)
+                .stroke(Color.white.opacity(pulse ? 0.09 : 0.04), lineWidth: 0.6)
 
                 ForEach(0..<stars.count, id: \.self) { i in
                     Circle()
-                        .fill(Color.white.opacity(pulse ? 0.65 : 0.35))
-                        .frame(width: 3.5, height: 3.5)
-                        .shadow(color: Color.p3(r: 1.3, g: 1.3, b: 1.4, a: pulse ? 0.8 : 0.4), radius: pulse ? 5 : 3)
+                        .fill(Color.white.opacity(pulse ? 0.30 : 0.15))
+                        .frame(width: 2.5, height: 2.5)
+                        .shadow(color: Color.p3(h: 0.75, s: 0.3, b: 1.0, a: pulse ? 0.35 : 0.1), radius: pulse ? 3 : 1)
                         .position(x: stars[i].x * w, y: stars[i].y * h)
                 }
             }
@@ -493,14 +499,14 @@ struct CuteCloud2: View {
     var body: some View {
         ZStack {
             VectorCloudShape2()
-                .fill(Color.black.opacity(0.18))
+                .fill(Color.black.opacity(0.12))
                 .blur(radius: 3 * scale)
                 .offset(y: 2 * scale)
 
             VectorCloudShape2()
                 .fill(
                     LinearGradient(
-                        colors: [Color.p3(r: 0.96, g: 0.96, b: 0.99, a: 0.88), Color.p3(h: 0.65, s: 0.22, b: 0.88, a: 0.75)],
+                        colors: [Color.p3(r: 0.85, g: 0.85, b: 0.92, a: 0.55), Color.p3(h: 0.65, s: 0.22, b: 0.75, a: 0.40)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
@@ -508,18 +514,18 @@ struct CuteCloud2: View {
             VectorCloudShape2()
                 .stroke(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.8), Color.white.opacity(0.15)],
+                        colors: [Color.white.opacity(0.4), Color.white.opacity(0.08)],
                         startPoint: .top, endPoint: .bottom
                     ),
-                    lineWidth: 1.0 * scale
+                    lineWidth: 0.8 * scale
                 )
 
-            HStack(spacing: 5 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale).offset(y: -1 * scale)
-            Circle().fill(Color.pink.opacity(0.38)).frame(width: 4 * scale, height: 4 * scale).offset(x: -10 * scale, y: 4 * scale)
-            Circle().fill(Color.pink.opacity(0.38)).frame(width: 4 * scale, height: 4 * scale).offset(x: 10 * scale, y: 4 * scale)
+            HStack(spacing: 5 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale).offset(y: -1 * scale).opacity(0.6)
+            Circle().fill(Color.pink.opacity(0.25)).frame(width: 4 * scale, height: 4 * scale).offset(x: -10 * scale, y: 4 * scale)
+            Circle().fill(Color.pink.opacity(0.25)).frame(width: 4 * scale, height: 4 * scale).offset(x: 10 * scale, y: 4 * scale)
         }
         .frame(width: 58 * scale, height: 34 * scale)
-        .offset(y: bob ? -6 : 4)
+        .offset(y: bob ? -4 : 3)
         .rotationEffect(.degrees(bob ? -1.5 : 2))
         .onAppear {
             withAnimation(.easeInOut(duration: 5.5).repeatForever(autoreverses: true).delay(0.5)) { bob = true }
@@ -539,16 +545,16 @@ struct AuroraEffect: View {
 
     var body: some View {
         ZStack {
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.75, s: 0.65, b: 1.25, a: 0.35), Color.p3(h: 0.72, s: 0.5, b: 1.3, a: 0.15)], startPoint: .leading, endPoint: .trailing)).frame(width: 350, height: 120).blur(radius: 40).offset(x: s1 ? 30 : -30, y: s1 ? -20 : 20)
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.55, s: 0.55, b: 1.2, a: 0.28), Color.p3(h: 0.60, s: 0.4, b: 1.3, a: 0.12)], startPoint: .trailing, endPoint: .leading)).frame(width: 280, height: 100).blur(radius: 35).offset(x: s2 ? -40 : 20, y: s2 ? 40 : -10)
-            Ellipse().fill(Color.p3(h: 0.82, s: 0.55, b: 1.15, a: 0.2)).frame(width: 200, height: 80).blur(radius: 30).offset(x: s3 ? 10 : -20, y: s3 ? -40 : 30)
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.93, s: 0.50, b: 1.25, a: 0.2), Color.p3(h: 0.88, s: 0.40, b: 1.25, a: 0.08)], startPoint: .top, endPoint: .bottom)).frame(width: 240, height: 90).blur(radius: 35).offset(x: s4 ? -25 : 35, y: s4 ? 25 : -35)
+            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.75, s: 0.65, b: 0.7, a: 0.08), Color.p3(h: 0.72, s: 0.5, b: 0.7, a: 0.03)], startPoint: .leading, endPoint: .trailing)).frame(width: 320, height: 100).blur(radius: 45).offset(x: s1 ? 20 : -20, y: s1 ? -15 : 15)
+            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.55, s: 0.55, b: 0.7, a: 0.07), Color.p3(h: 0.60, s: 0.4, b: 0.7, a: 0.02)], startPoint: .trailing, endPoint: .leading)).frame(width: 260, height: 80).blur(radius: 40).offset(x: s2 ? -30 : 15, y: s2 ? 30 : -10)
+            Ellipse().fill(Color.p3(h: 0.82, s: 0.55, b: 0.65, a: 0.05)).frame(width: 180, height: 60).blur(radius: 35).offset(x: s3 ? 10 : -15, y: s3 ? -30 : 20)
+            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.93, s: 0.50, b: 0.7, a: 0.05), Color.p3(h: 0.88, s: 0.40, b: 0.7, a: 0.02)], startPoint: .top, endPoint: .bottom)).frame(width: 220, height: 70).blur(radius: 40).offset(x: s4 ? -20 : 25, y: s4 ? 20 : -25)
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true))  { s1 = true }
-            withAnimation(.easeInOut(duration: 7).repeatForever(autoreverses: true))  { s2 = true }
-            withAnimation(.easeInOut(duration: 9).repeatForever(autoreverses: true))  { s3 = true }
-            withAnimation(.easeInOut(duration: 11).repeatForever(autoreverses: true)) { s4 = true }
+            withAnimation(.easeInOut(duration: 6).repeatForever(autoreverses: true))  { s1 = true }
+            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true))  { s2 = true }
+            withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true))  { s3 = true }
+            withAnimation(.easeInOut(duration: 12).repeatForever(autoreverses: true)) { s4 = true }
         }
     }
 }
@@ -789,14 +795,26 @@ struct AnimatedScene: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(
+            for: .slumberOpening)
+        ) { _ in
+            isVisible = true
+            syncSceneState()
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: .slumberClosed)
+        ) { _ in
+            isVisible = false
+        }
+        .onReceive(NotificationCenter.default.publisher(
             for: NSWindow.didChangeOcclusionStateNotification)
         ) { notification in
             if let window = notification.object as? NSWindow {
                 isVisible = window.occlusionState.contains(.visible)
+                if isVisible { syncSceneState() }
             }
         }
         .onAppear   { syncSceneState() }
-        .onChange(of: isVisible)         { _, visible in if visible { syncSceneState() } }
+        .onChange(of: isVisible) { _, visible in if visible { syncSceneState() } }
         .onChange(of: timerModel.isRunning) { _, running in
             if running {
                 let total = timerModel.totalTime
@@ -918,8 +936,9 @@ struct GlowingSlider: View {
     private let sliderWidth: CGFloat = 272.0
     
     var body: some View {
-        let percentage = CGFloat((value - bounds.lowerBound) / (bounds.upperBound - bounds.lowerBound))
-        let filledWidth = percentage * sliderWidth
+        let percentage = max(0, min(1.0, CGFloat((value - bounds.lowerBound) / (bounds.upperBound - bounds.lowerBound))))
+        let thumbOffset = percentage * (sliderWidth - 14)
+        let trackFillWidth = max(0, min(sliderWidth, thumbOffset + 7))
         
         ZStack(alignment: .leading) {
             // Background Track
@@ -938,7 +957,7 @@ struct GlowingSlider: View {
                         startPoint: .leading, endPoint: .trailing
                     )
                 )
-                .frame(width: max(14, filledWidth), height: 6)
+                .frame(width: trackFillWidth, height: 6)
                 .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(isDragging ? 0.6 : (isHovered ? 0.4 : 0.2)), radius: isDragging ? 8 : 4)
             
             // Thumb
@@ -948,7 +967,7 @@ struct GlowingSlider: View {
                 .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
                 .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(0.4), radius: 5)
                 .scaleEffect(isDragging ? 1.3 : (isHovered ? 1.15 : 1.0))
-                .offset(x: max(0, min(sliderWidth - 14, filledWidth - 7)))
+                .offset(x: thumbOffset)
                 // Removed all persistent .animation modifiers here to prevent transition hijacking
         }
         .contentShape(Rectangle())
@@ -986,23 +1005,121 @@ struct CustomToggle: View {
     @Binding var isOn: Bool
     let tint: Color
     @Environment(\.colorScheme) var colorScheme
+    @State private var isHovered = false
 
     var body: some View {
+        let trackWidth: CGFloat = 42.0
+        let trackHeight: CGFloat = 24.0
+        let thumbDiameter: CGFloat = 18.0
+        let thumbTravel: CGFloat = (trackWidth - thumbDiameter - 6) / 2 // ±9.0 pt
+
         ZStack {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isOn ? tint : (colorScheme == .dark ? Color.white : Color.black).opacity(0.2))
-                .frame(width: 36, height: 20)
-            
-            Circle()
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
-                .padding(2)
-                .frame(width: 20, height: 20)
-                .offset(x: isOn ? 8 : -8)
+            // 1. Frosted Liquid Glass Track Background
+            if isOn {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                tint.opacity(0.85),
+                                tint.opacity(0.68)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.black.opacity(0.25))
+                    )
+                    .frame(width: trackWidth, height: trackHeight)
+            } else {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.08),
+                                Color.white.opacity(0.03)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.black.opacity(0.25))
+                    )
+                    .frame(width: trackWidth, height: trackHeight)
+            }
+
+            // 2. Liquid Glass Track Specular Edge & Refractive Rim
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(isOn ? 0.55 : 0.24),
+                            Color.white.opacity(isOn ? 0.20 : 0.06),
+                            Color.black.opacity(0.25)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.75
+                )
+                .frame(width: trackWidth, height: trackHeight)
+
+            // 3. Liquid Glass Thumb Orb
+            ZStack {
+                // Ambient drop shadow
+                Circle()
+                    .fill(Color.black.opacity(0.22))
+                    .frame(width: thumbDiameter, height: thumbDiameter)
+                    .blur(radius: 1.5)
+                    .offset(y: 1)
+
+                // High-specular spherical gradient body
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.white,
+                                Color(red: 0.94, green: 0.95, blue: 0.98),
+                                Color(red: 0.88, green: 0.90, blue: 0.95)
+                            ],
+                            center: .topLeading,
+                            startRadius: 1,
+                            endRadius: thumbDiameter
+                        )
+                    )
+                    .frame(width: thumbDiameter, height: thumbDiameter)
+
+                // Top-left specular gloss sheen
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.95),
+                                Color.white.opacity(0.20)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.75
+                    )
+                    .frame(width: thumbDiameter - 0.75, height: thumbDiameter - 0.75)
+            }
+            .scaleEffect(isHovered ? 1.06 : 1.0)
+            .shadow(color: tint.opacity(isOn ? 0.40 : 0), radius: 6, x: 0, y: 0)
+            .offset(x: isOn ? thumbTravel : -thumbTravel)
         }
         .contentShape(Rectangle())
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.18)) {
+                isHovered = hovering
+            }
+        }
         .onTapGesture {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+            playSound("space_button")
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
                 isOn.toggle()
             }
         }
@@ -1338,12 +1455,6 @@ struct SlumberView: View {
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .preferredColorScheme(.dark)
         .onChange(of: showInDock) { _, v in applyDock(v) }
-        .onChange(of: timerModel.isRunning) { _, isRunning in
-            if !isRunning {
-                // Randomize companion type for the next idle cloud run
-                companionType = Int.random(in: 0...1)
-            }
-        }
     }
 
     private var timerPage: some View {
@@ -1411,7 +1522,8 @@ struct SlumberView: View {
                 }
 
                 StartButton(action: {
-                    playSound("space_timer_start") // Corrected sound cue
+                    playSound("space_timer_start")
+                    companionType = Int.random(in: 0...1)
                     timerModel.start(minutes: selectedMinutes)
                 }, accent: accent, cyan: cyan)
                 .padding(.top, 6)
@@ -1445,7 +1557,10 @@ struct SlumberView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
-                    CustomToggle(isOn: $showInDock, tint: accent)
+                    Toggle("", isOn: $showInDock)
+                        .toggleStyle(.switch)
+                        .tint(accent)
+                        .labelsHidden()
                 }
             }
 

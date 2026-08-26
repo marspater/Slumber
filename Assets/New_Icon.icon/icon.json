@@ -1,19 +1,75 @@
 {
   "color-space-for-untagged-svg-colors" : "display-p3",
+  "features" : [
+    "refractivity"
+  ],
   "fill" : {
-    "automatic-gradient" : "display-p3:0.00994,0.12845,0.73601,1.00000"
+    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
   },
   "groups" : [
     {
+      "blur-material" : null,
       "layers" : [
         {
-          "image-name" : "Generate_image_in_squircle_202607232148.png",
-          "name" : "Generate_image_in_squircle_202607232148",
+          "glass" : true,
+          "image-name" : "face_1.svg",
+          "name" : "face_1",
           "position-specializations" : [
             {
               "idiom" : "square",
               "value" : {
-                "scale" : 1.4,
+                "scale" : 0.75,
+                "translation-in-points" : [
+                  0,
+                  0
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "hidden" : true,
+          "image-name" : "main_3.svg",
+          "name" : "main_3"
+        }
+      ],
+      "refractivity" : {
+        "depth" : 0,
+        "enabled" : true,
+        "strength" : 0.5
+      },
+      "shadow-specializations" : [
+        {
+          "value" : {
+            "kind" : "layer-color",
+            "opacity" : 1
+          }
+        },
+        {
+          "appearance" : "dark",
+          "value" : {
+            "kind" : "neutral",
+            "opacity" : 1
+          }
+        }
+      ],
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    },
+    {
+      "layers" : [
+        {
+          "glass" : true,
+          "image-name" : "transform-this-purple-gradient-into-an-apple-liqui.png",
+          "name" : "transform-this-purple-gradient-into-an-apple-liqui",
+          "position-specializations" : [
+            {
+              "idiom" : "square",
+              "value" : {
+                "scale" : 1.25,
                 "translation-in-points" : [
                   0,
                   0
@@ -23,10 +79,21 @@
           ]
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.6
-      },
+      "shadow-specializations" : [
+        {
+          "value" : {
+            "kind" : "layer-color",
+            "opacity" : 0.6
+          }
+        },
+        {
+          "appearance" : "dark",
+          "value" : {
+            "kind" : "neutral",
+            "opacity" : 0.6
+          }
+        }
+      ],
       "translucency" : {
         "enabled" : true,
         "value" : 0.2

@@ -4,25 +4,27 @@ import Carbon
 
 extension Notification.Name {
     static let slumberOpening = Notification.Name("SlumberOpening")
+    static let slumberClosed = Notification.Name("SlumberClosed")
     static let slumberCloseRequested = Notification.Name("SlumberCloseRequested")
     static let slumberActuallyClose = Notification.Name("SlumberActuallyClose")
     static let slumberTogglePopover = Notification.Name("SlumberTogglePopover")
 }
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     let timerModel = SlumberTimer()
     private var globalMonitor: Any?
-    private var fallbackWindow: NSWindow?
+    private var keyMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
 
-        // Load custom app icon from bundle resources or New_Icon.icon asset artwork
+        // Load custom app icon from bundle resources or asset artwork
         let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns")
+            ?? Bundle.main.url(forResource: "app_icon", withExtension: "png")
             ?? Bundle.main.urls(forResourcesWithExtension: "png", subdirectory: "Assets/New_Icon.icon/Assets")?.first
             ?? Bundle.main.urls(forResourcesWithExtension: "png", subdirectory: nil)?.first(where: { $0.path.contains(".icon") })
         if let url = iconURL, let customIcon = NSImage(contentsOf: url) {
@@ -34,6 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.animates = true
         popover.behavior = .applicationDefined
         popover.appearance = NSAppearance(named: .vibrantDark)
+        popover.delegate = self
 
         setupGlobalMonitor()
         setupGlobalHotkey()
@@ -55,6 +58,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if let img = NSImage(systemSymbolName: "cat.fill", accessibilityDescription: "Slumber") {
                 img.isTemplate = true
                 button.image = img
+            } else if let fallback = NSImage(systemSymbolName: "moon.fill", accessibilityDescription: "Slumber") {
+                fallback.isTemplate = true
+                button.image = fallback
+            } else {
+                button.title = "🌙"
             }
             button.imagePosition = .imageOnly
             button.target = self
@@ -93,7 +101,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return noErr
         }
         
-        InstallEventHandler(
+        let installStatus = InstallEventHandler(
             GetApplicationEventTarget(),
             handlerUPP,
             1,
@@ -101,10 +109,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             nil,
             nil
         )
+        if installStatus != noErr {
+            NSLog("[SlumberApp] Failed to install Carbon event handler: OSStatus %d", installStatus)
+        }
         
         let hotKeyID = EventHotKeyID(signature: 1397443650, id: 1) // 'SLMB'
         var hotKeyRef: EventHotKeyRef?
-        RegisterEventHotKey(
+        let regStatus = RegisterEventHotKey(
             UInt32(1), // 'S' key
             UInt32(controlKey | optionKey),
             hotKeyID,
@@ -112,6 +123,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             0,
             &hotKeyRef
         )
+        if regStatus != noErr {
+            NSLog("[SlumberApp] Failed to register global hotkey (⌃⌥S): OSStatus %d", regStatus)
+        }
     }
 
     private func setupDisplayObserver() {
@@ -136,34 +150,59 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSEvent.removeMonitor(monitor)
             globalMonitor = nil
         }
-    }
-
-    @objc private func handleTogglePopoverNotification(_ notification: Notification) {
-        if let button = statusItem.button {
-            statusBarAction(button)
+        if let kMon = keyMonitor {
+            NSEvent.removeMonitor(kMon)
+            keyMonitor = nil
         }
     }
 
+    // MARK: - NSPopoverDelegate
+    func popoverWillShow(_ notification: Notification) {
+        NotificationCenter.default.post(name: .slumberOpening, object: nil)
+        if keyMonitor == nil {
+            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                if event.keyCode == 53 { // Escape
+                    self?.requestClosePopover()
+                    return nil
+                }
+                return event
+            }
+        }
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        NotificationCenter.default.post(name: .slumberClosed, object: nil)
+        if let kMon = keyMonitor {
+            NSEvent.removeMonitor(kMon)
+            keyMonitor = nil
+        }
+    }
+
+    @objc private func handleTogglePopoverNotification(_ notification: Notification) {
+        togglePopover()
+    }
+
     @objc private func statusBarAction(_ sender: NSStatusBarButton) {
-        guard let event = NSApp.currentEvent else { return }
-        if event.type == .rightMouseUp {
+        if let event = NSApp.currentEvent, event.type == .rightMouseUp {
             let menu = NSMenu()
-            menu.addItem(NSMenuItem(title: "Quit Slumber", action: #selector(quitApp), keyEquivalent: ""))
+            menu.addItem(NSMenuItem(title: "Quit Slumber", action: #selector(quitApp), keyEquivalent: "q"))
             statusItem.menu = menu
             statusItem.button?.performClick(nil)
-            statusItem.menu = nil
-        } else {
-            if popover.isShown {
-                requestClosePopover()
-            } else {
-                guard let button = statusItem.button else { return }
-                
-                // Set initial state for animation
-                NotificationCenter.default.post(name: .slumberOpening, object: nil)
-                
-                // Show popover
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            DispatchQueue.main.async { [weak self] in
+                self?.statusItem.menu = nil
             }
+        } else {
+            togglePopover()
+        }
+    }
+
+    private func togglePopover() {
+        if popover.isShown {
+            requestClosePopover()
+        } else {
+            guard let button = statusItem.button else { return }
+            NotificationCenter.default.post(name: .slumberOpening, object: nil)
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
     }
 
@@ -184,28 +223,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        guard !flag else { return true }
-        if fallbackWindow == nil {
-            let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 320, height: 440),
-                styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
-                backing: .buffered, defer: false)
-            window.center()
-            window.titleVisibility = .hidden
-            window.titlebarAppearsTransparent = true
-            window.isMovableByWindowBackground = true
-            window.isReleasedWhenClosed = false
-            window.isOpaque = false
-            window.backgroundColor = .clear
-            
-            let vc = NSHostingController(rootView: SlumberView(timerModel: timerModel))
-            vc.view.wantsLayer = true
-            vc.view.appearance = NSAppearance(named: .darkAqua)
-            window.contentViewController = vc
-            fallbackWindow = window
-        }
-        fallbackWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        togglePopover()
         return true
     }
 }

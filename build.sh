@@ -16,16 +16,19 @@ rm -rf "${APP_DIR}"
 mkdir -p "${MACOS_DIR}"
 mkdir -p "${RESOURCES_DIR}"
 
-# Compile Swift files
-swiftc -O -parse-as-library -target $(uname -m)-apple-macos14.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
+# Compile Swift files (Swift 6)
+swiftc -swift-version 6 -O -parse-as-library -target $(uname -m)-apple-macos14.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
 
-# Build AppIcon.icns from New_Icon.icon artwork
-echo "Building app icon from New_Icon.icon..."
-ICON_SRC="Assets/New_Icon.icon/Assets/fullbleed_icon.png"
-if [ ! -f "$ICON_SRC" ]; then
-    ICON_SRC=$(ls Assets/New_Icon.icon/Assets/*.png 2>/dev/null | head -n 1)
-fi
-echo "Using icon source: ${ICON_SRC}"
+# Compile New_Icon.icon into Assets.car via actool
+echo "Compiling app icon with actool..."
+TMP_ICON_DIR="$(mktemp -d)/AppIcon.icon"
+cp -R "Assets/New_Icon.icon" "${TMP_ICON_DIR}"
+xcrun actool --compile "${RESOURCES_DIR}" --platform macosx --minimum-deployment-target 14.0 "${TMP_ICON_DIR}" > /dev/null 2>&1 || true
+rm -rf "$(dirname "${TMP_ICON_DIR}")"
+
+# Build AppIcon.icns from rendered artwork
+echo "Building multi-resolution AppIcon.icns..."
+ICON_SRC="Assets/app_icon.png"
 mkdir -p _AppIcon.iconset
 for size in 16 32 128 256 512; do
     sips -z $size $size "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}.png" > /dev/null 2>&1
@@ -49,12 +52,20 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>${APP_NAME}</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
     <string>2.7</string>
     <key>CFBundleVersion</key>
     <string>2.7</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
     <key>MinimumOSVersion</key>
     <string>14.0</string>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
     <key>LSUIElement</key>
     <true/>
 </dict>
