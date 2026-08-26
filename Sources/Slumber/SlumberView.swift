@@ -1071,22 +1071,24 @@ struct GlowingSlider: View {
     
     // Slumber is a fixed 320 width popover, slider has 24 horizontal padding
     private let sliderWidth: CGFloat = 272.0
+    private let thumbSize: CGFloat = 16.0
+    private let trackHeight: CGFloat = 7.0
     
     var body: some View {
         let totalRange = Double(bounds.upperBound - bounds.lowerBound)
         let percentage = totalRange > 0 ? max(0, min(1.0, CGFloat(Double(value - bounds.lowerBound) / totalRange))) : 0
-        let trackTravel: CGFloat = sliderWidth - 14.0
+        let trackTravel: CGFloat = sliderWidth - thumbSize
         let thumbOffset = percentage * trackTravel
-        let trackFillWidth = max(0, min(sliderWidth, thumbOffset + 7.0))
+        let trackFillWidth = max(0, min(sliderWidth, thumbOffset + (thumbSize / 2.0)))
         
         ZStack(alignment: .leading) {
             // Background Track
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(chrome.opacity(0.08))
-                .frame(width: sliderWidth, height: 6)
+            RoundedRectangle(cornerRadius: trackHeight / 2.0, style: .continuous)
+                .fill(chrome.opacity(0.09))
+                .frame(width: sliderWidth, height: trackHeight)
             
             // Filled Track with Glow
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
+            RoundedRectangle(cornerRadius: trackHeight / 2.0, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
@@ -1096,16 +1098,20 @@ struct GlowingSlider: View {
                         startPoint: .leading, endPoint: .trailing
                     )
                 )
-                .frame(width: trackFillWidth, height: 6)
+                .frame(width: trackFillWidth, height: trackHeight)
                 .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(isDragging ? 0.6 : (isHovered ? 0.4 : 0.2)), radius: isDragging ? 8 : 4)
             
             // Thumb
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
+            RoundedRectangle(cornerRadius: thumbSize / 2.0, style: .continuous)
                 .fill(Color.white)
-                .frame(width: 14, height: 14)
-                .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
-                .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(0.4), radius: 5)
-                .scaleEffect(isDragging ? 1.3 : (isHovered ? 1.15 : 1.0))
+                .frame(width: thumbSize, height: thumbSize)
+                .overlay(
+                    RoundedRectangle(cornerRadius: thumbSize / 2.0, style: .continuous)
+                        .stroke(Color.white.opacity(0.8), lineWidth: 0.5)
+                )
+                .shadow(color: Color.black.opacity(0.35), radius: 2.5, x: 0, y: 1)
+                .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(0.45), radius: 6)
+                .scaleEffect(isDragging ? 1.25 : (isHovered ? 1.12 : 1.0))
                 .offset(x: thumbOffset)
         }
         .contentShape(Rectangle())
@@ -1118,8 +1124,9 @@ struct GlowingSlider: View {
                         }
                         onEditingChanged(true)
                     }
-                    let clampedX = max(7.0, min(sliderWidth - 7.0, gesture.location.x))
-                    let fraction = Double((clampedX - 7.0) / trackTravel)
+                    let halfThumb = thumbSize / 2.0
+                    let clampedX = max(halfThumb, min(sliderWidth - halfThumb, gesture.location.x))
+                    let fraction = Double((clampedX - halfThumb) / trackTravel)
                     let rawVal = Double(bounds.lowerBound) + fraction * totalRange
                     let computed = Int(round(rawVal))
                     value = min(max(computed, bounds.lowerBound), bounds.upperBound)
@@ -1131,7 +1138,7 @@ struct GlowingSlider: View {
                     onEditingChanged(false)
                 }
         )
-        .frame(width: sliderWidth, height: 14)
+        .frame(width: sliderWidth, height: thumbSize)
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.2)) {
                 isHovered = hovering
@@ -1168,12 +1175,12 @@ struct TabButton: View {
             .background {
                 if active {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.white.opacity(0.12))
+                        .fill(Color.p3(h: 0.75, s: 0.65, b: 0.92).opacity(0.16))
                         .overlay(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .stroke(
                                     LinearGradient(
-                                        colors: [Color.white.opacity(0.25), Color.white.opacity(0.05)],
+                                        colors: [Color.white.opacity(0.30), Color.white.opacity(0.08)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
@@ -1183,7 +1190,7 @@ struct TabButton: View {
                         .matchedGeometryEffect(id: "activeTabIndicator", in: animationNamespace)
                 } else if isHovered {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.white.opacity(0.04))
+                        .fill(Color.white.opacity(0.05))
                 }
             }
         }
@@ -1211,16 +1218,16 @@ struct PresetChip: View {
         } label: {
             Text(label)
                 .font(.system(size: 12, weight: selected ? .bold : .medium, design: .rounded))
-                .frame(width: 46, height: 32)
+                .frame(width: 44, height: 32)
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(selected ? accent.opacity(0.42) : (isHovered ? Color.white.opacity(0.08) : Color.white.opacity(0.035)))
+                            .fill(selected ? accent.opacity(0.34) : (isHovered ? Color.white.opacity(0.10) : Color.white.opacity(0.065)))
                         
                         if selected {
                             VStack {
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(LinearGradient(colors: [Color.white.opacity(0.20), Color.clear], startPoint: .top, endPoint: .bottom))
+                                    .fill(LinearGradient(colors: [Color.white.opacity(0.22), Color.clear], startPoint: .top, endPoint: .bottom))
                                     .frame(height: 10)
                                 Spacer()
                             }
@@ -1228,15 +1235,15 @@ struct PresetChip: View {
                         }
                     }
                 )
-                .foregroundColor(selected ? .white : (isHovered ? .white : .white.opacity(0.55)))
+                .foregroundColor(selected ? .white : (isHovered ? .white : .white.opacity(0.65)))
                 .scaleEffect(selected ? 1.04 : (isHovered ? 1.02 : 1.0))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(selected ? 0.35 : (isHovered ? 0.18 : 0.08)),
-                                    Color.white.opacity(0.02)
+                                    Color.white.opacity(selected ? 0.38 : (isHovered ? 0.20 : 0.10)),
+                                    Color.white.opacity(0.03)
                                 ],
                                 startPoint: .topLeading, endPoint: .bottomTrailing
                             ),
@@ -1251,6 +1258,79 @@ struct PresetChip: View {
                 isHovered = hovering
             }
         }
+    }
+}
+
+// ===================================================================
+// MARK: - Error Banner Component
+// ===================================================================
+
+struct ErrorBanner: View {
+    let reason: String
+    let onRetry: () -> Void
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Color.p3(h: 0.08, s: 0.85, b: 0.98))
+            
+            Text(reason)
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.92))
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            Spacer()
+            
+            Button(action: onRetry) {
+                Text("Retry")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.p3(h: 0.08, s: 0.75, b: 0.65).opacity(0.35))
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.white.opacity(0.25), lineWidth: 0.75)
+                        }
+                    )
+            }
+            .buttonStyle(.plain)
+            
+            Button(action: onDismiss) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.black.opacity(0.45))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.p3(h: 0.08, s: 0.85, b: 0.98).opacity(0.4),
+                                Color.white.opacity(0.08)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.75
+                    )
+            }
+        )
+        .shadow(color: Color.black.opacity(0.35), radius: 10, y: 4)
     }
 }
 
@@ -1481,116 +1561,91 @@ struct SlumberView: View {
     }
 
     private var timerPage: some View {
-        VStack(spacing: 14) {
-            Spacer()
+        ZStack(alignment: .top) {
+            VStack(spacing: 14) {
+                Spacer()
 
-            if case let .sleepFailed(reason) = timerModel.state {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.orange)
-                    Text(reason)
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.9))
-                        .lineLimit(2)
-                    Spacer()
-                    Button {
-                        timerModel.retrySleep()
-                    } label: {
-                        Text("Retry")
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .fill(Color.white.opacity(0.18))
-                            )
+                if timerModel.isRunning {
+                    let total = timerModel.totalTime
+                    let prog = total > 0 ? CGFloat(timerModel.timeRemaining / total) : 0
+
+                    ZStack {
+                        PulsingRing(progress: prog)
+                        VStack(spacing: 4) {
+                            Text(fmt(timerModel.timeRemaining))
+                                .font(.system(size: 46, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .contentTransition(.numericText())
+                            Text("drifting off...")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(.white.opacity(0.5))
+                        }
                     }
-                    .buttonStyle(.plain)
-                    Button {
-                        timerModel.clearStatus()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.4))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.red.opacity(0.25))
-                )
-                .padding(.horizontal, 24)
-            }
+                    .padding(.bottom, 10)
 
-            if timerModel.isRunning {
-                let total = timerModel.totalTime
-                let prog = total > 0 ? CGFloat(timerModel.timeRemaining / total) : 0
-
-                ZStack {
-                    PulsingRing(progress: prog)
-                    VStack(spacing: 4) {
-                        Text(fmt(timerModel.timeRemaining))
-                            .font(.system(size: 44, weight: .bold, design: .rounded))
+                    CancelButton(action: {
+                        playSound("cancel")
+                        timerModel.stop()
+                    })
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(selectedMinutes)")
+                            .font(.system(size: 54, weight: .heavy, design: .rounded))
                             .foregroundColor(.white)
                             .contentTransition(.numericText())
-                        Text("drifting off...")
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                        Text("min")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.5))
                     }
-                }
-                .padding(.bottom, 10)
 
-                CancelButton(action: {
-                    playSound("cancel")
-                    timerModel.stop()
-                })
-            } else {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(selectedMinutes)")
-                        .font(.system(size: 58, weight: .heavy, design: .rounded))
-                        .foregroundColor(.white)
-                        .contentTransition(.numericText())
-                    Text("min")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
-                }
-
-                VStack(spacing: 6) {
-                    GlowingSlider(value: $selectedMinutes, bounds: 1...120, onEditingChanged: { editing in
-                        if !editing { playSound("space_button") }
-                    })
-                    .padding(.horizontal, 24)
-                    HStack {
-                        Text("1 min"); Spacer(); Text("120 min")
+                    VStack(spacing: 6) {
+                        GlowingSlider(value: $selectedMinutes, bounds: 1...120, onEditingChanged: { editing in
+                            if !editing { playSound("space_button") }
+                        })
+                        .padding(.horizontal, 24)
+                        HStack {
+                            Text("1 min"); Spacer(); Text("120 min")
+                        }
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.3))
+                        .padding(.horizontal, 24)
                     }
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.3))
-                    .padding(.horizontal, 24)
+
+                    HStack(spacing: 8) {
+                        PresetChip(label: "15m", value: 15, selectedMinutes: $selectedMinutes, accent: accent)
+                        PresetChip(label: "30m", value: 30, selectedMinutes: $selectedMinutes, accent: accent)
+                        PresetChip(label: "45m", value: 45, selectedMinutes: $selectedMinutes, accent: accent)
+                        PresetChip(label: "60m", value: 60, selectedMinutes: $selectedMinutes, accent: accent)
+                        PresetChip(label: "90m", value: 90, selectedMinutes: $selectedMinutes, accent: accent)
+                    }
+
+                    StartButton(action: {
+                        playSound("space_timer_start")
+                        companionType = Int.random(in: 0...2)
+                        timerModel.start(minutes: Double(selectedMinutes))
+                    }, accent: accent, cyan: cyan)
+                    .padding(.top, 6)
                 }
 
-                HStack(spacing: 8) {
-                    PresetChip(label: "15m", value: 15, selectedMinutes: $selectedMinutes, accent: accent)
-                    PresetChip(label: "30m", value: 30, selectedMinutes: $selectedMinutes, accent: accent)
-                    PresetChip(label: "45m", value: 45, selectedMinutes: $selectedMinutes, accent: accent)
-                    PresetChip(label: "60m", value: 60, selectedMinutes: $selectedMinutes, accent: accent)
-                    PresetChip(label: "90m", value: 90, selectedMinutes: $selectedMinutes, accent: accent)
-                }
-
-                StartButton(action: {
-                    playSound("space_timer_start")
-                    companionType = Int.random(in: 0...2)
-                    timerModel.start(minutes: Double(selectedMinutes))
-                }, accent: accent, cyan: cyan)
-                .padding(.top, 6)
+                Spacer()
             }
 
-            Spacer()
+            if case let .sleepFailed(reason) = timerModel.state {
+                ErrorBanner(
+                    reason: reason,
+                    onRetry: { timerModel.retrySleep() },
+                    onDismiss: { timerModel.clearStatus() }
+                )
+                .padding(.horizontal, 20)
+                .padding(.top, 6)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: 0.95)),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
+            }
         }
         .allowsHitTesting(currentTab == 0)
+        .animation(.spring(response: 0.38, dampingFraction: 0.8), value: timerModel.state)
         .animation(.spring(response: 0.5, dampingFraction: 0.75), value: timerModel.isRunning)
     }
 
@@ -1629,7 +1684,7 @@ struct SlumberView: View {
                         Text("Global Shortcut")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
-                        Text("Toggle the popover from anywhere, even if hidden by the notch.")
+                        Text("Open Slumber from anywhere.")
                             .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.45))
                             .lineSpacing(2)
@@ -1673,12 +1728,12 @@ struct SlumberView: View {
             .padding(.bottom, 12)
 
             Text("Slumber v2.8")
-                .font(.system(size: 10, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.2))
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundColor(.white.opacity(0.40))
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text("Made with love")
-                .font(.system(size: 9, weight: .regular, design: .rounded))
-                .foregroundColor(.white.opacity(0.15))
+            Text("Made with ❤️ for peaceful nights")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.32))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 2)
                 .padding(.bottom, 12)
