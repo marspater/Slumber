@@ -29,14 +29,20 @@ rm -rf "$(dirname "${TMP_ICON_DIR}")"
 # Build AppIcon.icns from rendered artwork
 echo "Building multi-resolution AppIcon.icns..."
 ICON_SRC="Assets/app_icon.png"
-mkdir -p _AppIcon.iconset
-for size in 16 32 128 256 512; do
-    sips -z $size $size "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}.png" > /dev/null 2>&1
-    double=$((size * 2))
-    sips -z $double $double "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}@2x.png" > /dev/null 2>&1
-done
-iconutil -c icns _AppIcon.iconset -o "${RESOURCES_DIR}/AppIcon.icns"
-rm -rf _AppIcon.iconset
+if [ ! -f "$ICON_SRC" ]; then
+    ICON_SRC=$(ls Assets/New_Icon.icon/Assets/*.png 2>/dev/null | head -n 1)
+fi
+
+if [ -f "$ICON_SRC" ]; then
+    mkdir -p _AppIcon.iconset
+    for size in 16 32 128 256 512; do
+        sips -z $size $size "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}.png" > /dev/null 2>&1
+        double=$((size * 2))
+        sips -z $double $double "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}@2x.png" > /dev/null 2>&1
+    done
+    iconutil -c icns _AppIcon.iconset -o "${RESOURCES_DIR}/AppIcon.icns"
+    rm -rf _AppIcon.iconset
+fi
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
