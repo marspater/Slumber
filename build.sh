@@ -19,55 +19,9 @@ mkdir -p "${RESOURCES_DIR}"
 # Compile Swift files (Swift 6)
 swiftc -swift-version 6 -O -parse-as-library -target $(uname -m)-apple-macos14.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
 
-# Compile New_Icon.icon into Assets.car via actool
-echo "Compiling app icon with actool..."
-TMP_ICON_DIR="$(mktemp -d)/AppIcon.icon"
-cp -R "Assets/New_Icon.icon" "${TMP_ICON_DIR}"
-xcrun actool --compile "${RESOURCES_DIR}" --platform macosx --minimum-deployment-target 14.0 "${TMP_ICON_DIR}" > /dev/null 2>&1 || true
-rm -rf "$(dirname "${TMP_ICON_DIR}")"
-
-# Render 1024x1024 vector artwork from New_Icon.icon layers if needed
-if [ ! -f "Assets/app_icon.png" ] && [ -d "Assets/New_Icon.icon/Assets" ]; then
-    echo "Rendering app_icon.png from New_Icon.icon vector layers..."
-    swift - << 'SWIFTEOF'
-import AppKit
-let size = NSSize(width: 1024, height: 1024)
-let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
-let face1URL = URL(fileURLWithPath: "Assets/New_Icon.icon/Assets/face_1.svg")
-let face1DepthURL = URL(fileURLWithPath: "Assets/New_Icon.icon/Assets/face_1_depth 2.svg")
-let main3URL = URL(fileURLWithPath: "Assets/New_Icon.icon/Assets/main_3.svg")
-if let mainImg = NSImage(contentsOf: main3URL), let depthImg = NSImage(contentsOf: face1DepthURL), let faceImg = NSImage(contentsOf: face1URL) {
-    NSGraphicsContext.saveGraphicsState()
-    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-    let rect = NSRect(origin: .zero, size: size)
-    mainImg.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
-    depthImg.draw(in: rect, from: .zero, operation: .softLight, fraction: 0.9)
-    faceImg.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
-    NSGraphicsContext.restoreGraphicsState()
-    if let png = rep.representation(using: .png, properties: [:]) {
-        try? png.write(to: URL(fileURLWithPath: "Assets/app_icon.png"))
-    }
-}
-SWIFTEOF
-fi
-
-# Build AppIcon.icns from rendered artwork
-echo "Building multi-resolution AppIcon.icns..."
-ICON_SRC="Assets/app_icon.png"
-if [ ! -f "$ICON_SRC" ]; then
-    ICON_SRC=$(ls Assets/New_Icon.icon/Assets/*.png 2>/dev/null | head -n 1)
-fi
-
-if [ -f "$ICON_SRC" ]; then
-    mkdir -p _AppIcon.iconset
-    for size in 16 32 128 256 512; do
-        sips -z $size $size "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}.png" > /dev/null 2>&1
-        double=$((size * 2))
-        sips -z $double $double "$ICON_SRC" --out "_AppIcon.iconset/icon_${size}x${size}@2x.png" > /dev/null 2>&1
-    done
-    iconutil -c icns _AppIcon.iconset -o "${RESOURCES_DIR}/AppIcon.icns"
-    rm -rf _AppIcon.iconset
-fi
+# Copy native Icon Composer .icon package directly into Resources
+echo "Copying AppIcon.icon into Resources..."
+cp -R "Assets/New_Icon.icon" "${RESOURCES_DIR}/AppIcon.icon"
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
