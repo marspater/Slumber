@@ -4,7 +4,7 @@
   <p><b>An aesthetic macOS menu bar sleep timer with vector graphics, companion animations, and P3 wide-gamut visuals.</b></p>
 
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-  [![macOS 14+](https://img.shields.io/badge/macOS-14.0%2B-purple.svg)]()
+  [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
   [![Version](https://img.shields.io/badge/Version-2.8-orange.svg)](https://github.com/marspater/Slumber/releases/latest)
   [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/releases/latest/download/Slumber.zip)
 </div>

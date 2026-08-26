@@ -30,7 +30,7 @@ cp -R "Assets/New_Icon.icon/"* "${TMP_ICON_DIR}/AppIcon.icon/"
 xcrun actool \
     --compile "${RESOURCES_DIR}" \
     --platform macosx \
-    --minimum-deployment-target 14.0 \
+    --minimum-deployment-target 26.0 \
     --app-icon AppIcon \
     --output-partial-info-plist "${TMP_ICON_DIR}/partial.plist" \
     "${TMP_ICON_DIR}/AppIcon.icon"
@@ -58,9 +58,9 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleVersion</key>
     <string>2.8</string>
     <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
+    <string>26.0</string>
     <key>MinimumOSVersion</key>
-    <string>14.0</string>
+    <string>26.0</string>
     <key>CFBundleSupportedPlatforms</key>
     <array>
         <string>MacOSX</string>
