@@ -681,6 +681,147 @@ struct SleepingCat: View {
     }
 }
 
+struct SleepingDodo: View {
+    let isNearEnd: Bool
+    @State private var breathe = false
+    @State private var fidget = false
+    @State private var zzz = false
+
+    private let feather     = Color.p3(r: 0.38, g: 0.68, b: 0.74)
+    private let featherDk   = Color.p3(r: 0.26, g: 0.52, b: 0.60)
+    private let cream       = Color.p3(r: 0.96, g: 0.94, b: 0.88)
+    private let beakAmber   = Color.p3(r: 0.98, g: 0.78, b: 0.38)
+    private let beakTip     = Color.p3(r: 0.42, g: 0.78, b: 0.68)
+    private let dark        = Color.p3(r: 0.14, g: 0.12, b: 0.18)
+
+    var body: some View {
+        ZStack {
+            // Curly Fluffy Tail Tufts
+            Circle().fill(cream.opacity(0.85)).frame(width: 8, height: 8).offset(x: 18, y: -2)
+            Circle().fill(feather.opacity(0.9)).frame(width: 9, height: 9).offset(x: 16, y: 3)
+            Circle().fill(cream.opacity(0.95)).frame(width: 7, height: 7).offset(x: 20, y: 1)
+
+            // Plump Rotund Body
+            Ellipse()
+                .fill(
+                    LinearGradient(
+                        colors: [feather, featherDk],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 36, height: 26)
+                .scaleEffect(y: breathe ? 1.05 : 1.0)
+                .scaleEffect(x: breathe ? 0.98 : 1.0)
+
+            // Creamy Breast & Belly Patch
+            Ellipse()
+                .fill(cream.opacity(0.75))
+                .frame(width: 18, height: 14)
+                .offset(x: -6, y: 5)
+
+            // Little Cute Tucked Wing
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [featherDk, feather],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: 16, height: 10)
+                .rotationEffect(.degrees(-15))
+                .offset(x: 4, y: 3)
+
+            // Wing feather detail line
+            Arc()
+                .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                .frame(width: 10, height: 5)
+                .rotationEffect(.degrees(-15))
+                .offset(x: 3, y: 3)
+
+            // Little Feet tucked in sleep
+            Ellipse().fill(beakAmber).frame(width: 6, height: 4).offset(x: -8, y: 12)
+            Ellipse().fill(beakAmber).frame(width: 6, height: 4).offset(x: 0, y: 12)
+
+            // Cute Head Tuft / Feathers
+            Triangle()
+                .fill(feather)
+                .frame(width: 5, height: 9)
+                .rotationEffect(.degrees(isNearEnd ? (fidget ? -20 : -5) : -12))
+                .offset(x: -18, y: -19)
+            Triangle()
+                .fill(cream)
+                .frame(width: 4, height: 7)
+                .rotationEffect(.degrees(isNearEnd ? (fidget ? 18 : 2) : 8))
+                .offset(x: -14, y: -20)
+
+            // Round Head
+            Circle()
+                .fill(feather)
+                .frame(width: 20, height: 20)
+                .offset(x: -12, y: -7)
+
+            // Bulbous Curved Dodo Beak
+            Ellipse()
+                .fill(beakAmber)
+                .frame(width: 13, height: 8)
+                .rotationEffect(.degrees(12))
+                .offset(x: -24, y: -4)
+
+            // Characteristic Curved Beak Hook (Mint tip)
+            Circle()
+                .fill(beakTip)
+                .frame(width: 7, height: 7)
+                .offset(x: -28, y: -2)
+
+            // Beak nostril dot
+            Circle()
+                .fill(dark.opacity(0.6))
+                .frame(width: 1.5, height: 1.5)
+                .offset(x: -22, y: -5)
+
+            // Sleeping Eye or Alert Eye
+            if isNearEnd {
+                Capsule()
+                    .fill(Color.p3(h: 0.12, s: 0.8, b: 0.9))
+                    .frame(width: 3, height: 1.5)
+                    .offset(x: -14, y: -8)
+            } else {
+                Arc()
+                    .stroke(dark.opacity(0.75), lineWidth: 1.2)
+                    .frame(width: 4.5, height: 2.5)
+                    .rotationEffect(.degrees(180))
+                    .offset(x: -14, y: -8)
+            }
+
+            // Rosy Cheek Blush
+            Circle()
+                .fill(Color.pink.opacity(0.35))
+                .frame(width: 4.5, height: 4.5)
+                .offset(x: -18, y: -2)
+
+            // Sleeping 'z' bubbles
+            Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
+                .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -26 : -16).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
+            Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
+                .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 18 : 6, y: zzz ? -32 : -22).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.35))
+
+            // Near-End Alert '?'
+            if isNearEnd {
+                Text("?").font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundColor(Color.p3(h: 0.50, s: 0.7, b: 1.0, a: 0.75)).offset(x: -6, y: -23)
+            }
+        }
+        .animation(.easeInOut(duration: 0.6), value: isNearEnd)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.9).repeatForever(autoreverses: true)) { breathe = true }
+            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
+            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: false)) { zzz = true }
+        }
+    }
+}
+
 // ===================================================================
 // MARK: - Animated Scene with Orbiting Companions
 // ===================================================================
@@ -694,7 +835,7 @@ struct AnimatedScene: View {
     @State private var orbitProgress:  CGFloat = 0.0
     @State private var isVisible:      Bool = true
 
-    // 90 s per full lap
+    // 90 s per full lap around the moon
     private let orbitDuration: Double = 90.0
 
     // Elliptical orbit — wider than tall gives a natural tilted-plane feel
@@ -728,53 +869,59 @@ struct AnimatedScene: View {
                 CuteCloud2(scale: 0.75).offset(x: 105, y: -30)
             }
 
-            // Companion — position, lean, depth & bob all driven by
-            // real time inside TimelineView so values are continuous.
+            // Companion — position, 360° space somersault tumble, depth & floating drift
+            // all driven by real time inside TimelineView so values are continuous.
             if isVisible {
-                TimelineView(.animation) { timeline in
+                TimelineView(.animation(paused: !isVisible)) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
-
-                    // --- Angle (advances continuously with wall clock) ---
-                    // Keplerian speed adjustment: speeds up at front (closest/bottom) and slows down at back (farthest/top)
-                    let baseAngle: Double = {
+                    let elapsed: Double = {
                         guard let start = orbitStartTime else { return 0 }
-                        let elapsed = t - start.timeIntervalSinceReferenceDate
-                        return (elapsed / orbitDuration) * 360
+                        return max(0, t - start.timeIntervalSinceReferenceDate)
                     }()
-                    let baseRad = baseAngle * .pi / 180
-                    let angle = baseAngle - 10.0 * cos(baseRad)
-                    let rad = angle * .pi / 180
 
-                    // --- Elliptical orbit target position ---
+                    // --- Keplerian Orbital Path around Moon ---
+                    let baseAngle = (elapsed / orbitDuration) * 360.0
+                    let baseRad = baseAngle * .pi / 180.0
+                    // Keplerian speed adjustment: speeds up in front / slows down behind
+                    let angle = baseAngle - 12.0 * cos(baseRad)
+                    let rad = angle * .pi / 180.0
+
+                    // Orbit target position around moon
                     let orbitX = moonX + CGFloat(cos(rad)) * orbitRadiusX
                     let orbitY = moonY + CGFloat(sin(rad)) * orbitRadiusY
 
-                    // --- Lerp: cloud (idle) → orbit position (running) ---
-                    let finalX = cloudX + (orbitX - cloudX) * orbitProgress
-                    let finalY = cloudY + (orbitY - cloudY) * orbitProgress
+                    // Smooth transition between idle (cloud) and orbit target
+                    let targetX = cloudX + (orbitX - cloudX) * orbitProgress
+                    let targetY = cloudY + (orbitY - cloudY) * orbitProgress
 
-                    // --- Depth scale: bigger at "front" (bottom), smaller at "back" (top) ---
-                    // sin(rad) = +1 at bottom (near), −1 at top (far)
-                    // Fades in with orbitProgress so it only applies during orbit
-                    let depthMod = 1.0 + 0.12 * CGFloat(sin(rad)) * orbitProgress
+                    // --- Zero-Gravity Harmonic Space Float & Micro-Drift ---
+                    let idleBobY = CGFloat(sin(t * 1.2)) * 1.5 * (1.0 - orbitProgress)
+                    let zeroGDriftX = CGFloat(cos(t * 1.3 + 0.4)) * 5.0 * orbitProgress
+                    let zeroGDriftY = CGFloat(sin(t * 1.8)) * 6.5 * orbitProgress
+                    let finalX = targetX + zeroGDriftX
+                    let finalY = targetY + idleBobY + zeroGDriftY
 
-                    // Base scale shrinks a little when orbiting (companion looks smaller near moon)
-                    let baseScale: CGFloat = companionType == 0
-                        ? (0.65 - 0.15 * orbitProgress)   // Fox  0.65 → 0.50
-                        : (0.82 - 0.12 * orbitProgress)   // Cat  0.82 → 0.70
+                    // --- Zero-Gravity 360° Axis Somersault Tumble Physics ---
+                    // In orbit, companion does a slow, playful 360° cartoon space tumble (~6.5s per rotation)
+                    let tumbleSpeed = 360.0 / 6.5
+                    let continuousTumble = (elapsed * tumbleSpeed).truncatingRemainder(dividingBy: 360.0)
+                    let spaceWobble = sin(elapsed * 2.2) * 12.0
+                    let zeroGRotation = continuousTumble + spaceWobble
 
+                    // When idle on cloud: gentle subtle breathing tilt
+                    let idleTilt = sin(t * 1.0) * 2.0
+                    let finalRotation = idleTilt * (1.0 - Double(orbitProgress)) + zeroGRotation * Double(orbitProgress)
+
+                    // --- Depth Scale (Perspective & Orbit Scaling) ---
+                    let depthMod = 1.0 + 0.15 * CGFloat(sin(rad)) * orbitProgress
+                    let baseScale: CGFloat = {
+                        switch companionType {
+                        case 0:  return (0.65 - 0.15 * orbitProgress) // Fox
+                        case 1:  return (0.82 - 0.12 * orbitProgress) // Cat
+                        default: return (0.75 - 0.14 * orbitProgress) // Dodo
+                        }
+                    }()
                     let finalScale = baseScale * depthMod
-
-                    // --- Tangential lean ---
-                    // −sin(angle) makes the companion rock left going up, right going down.
-                    // Capped at ±18° so it never looks weird; fades in with orbitProgress.
-                    let leanDegrees = -sin(rad) * 18.0 * Double(orbitProgress)
-
-                    // --- Organic float bob ---
-                    // Slow breathing bob on the cloud, blending to a faster float bob in orbit
-                    let idleBob = CGFloat(sin(t * 1.0) * 1.5) * (1.0 - orbitProgress)
-                    let orbitBob = CGFloat(sin(t * 1.8) * 2.8) * orbitProgress
-                    let bobY = idleBob + orbitBob
 
                     // --- Near-end alert ---
                     let nearEnd = timerModel.isRunning
@@ -782,15 +929,15 @@ struct AnimatedScene: View {
                         && timerModel.timeRemaining > 0
 
                     Group {
-                        if companionType == 0 {
-                            SleepingFox(isNearEnd: nearEnd)
-                        } else {
-                            SleepingCat(isNearEnd: nearEnd)
+                        switch companionType {
+                        case 0:  SleepingFox(isNearEnd: nearEnd)
+                        case 1:  SleepingCat(isNearEnd: nearEnd)
+                        default: SleepingDodo(isNearEnd: nearEnd)
                         }
                     }
                     .scaleEffect(finalScale)
-                    .rotationEffect(.degrees(leanDegrees))
-                    .offset(x: finalX, y: finalY + bobY)
+                    .rotationEffect(.degrees(finalRotation))
+                    .offset(x: finalX, y: finalY)
                 }
             }
         }
@@ -1256,7 +1403,7 @@ struct SlumberView: View {
     @AppStorage("showInDock") private var showInDock: Bool = false
     @State private var selectedMinutes: Double = 15
     @State private var currentTab = 0
-    @State private var companionType: Int = 0
+    @State private var companionType: Int = Int.random(in: 0...2)
     @Namespace private var tabNamespace
 
     private let accent = Color.p3(h: 0.75, s: 0.65, b: 0.92)
@@ -1407,7 +1554,7 @@ struct SlumberView: View {
 
                 StartButton(action: {
                     playSound("space_timer_start")
-                    companionType = Int.random(in: 0...1)
+                    companionType = Int.random(in: 0...2)
                     timerModel.start(minutes: selectedMinutes)
                 }, accent: accent, cyan: cyan)
                 .padding(.top, 6)
