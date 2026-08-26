@@ -16,8 +16,10 @@ rm -rf "${APP_DIR}"
 mkdir -p "${MACOS_DIR}"
 mkdir -p "${RESOURCES_DIR}"
 
-# Compile Swift files (Swift 6)
-swiftc -swift-version 6 -O -parse-as-library -target $(uname -m)-apple-macos14.0 SlumberApp.swift SlumberTimer.swift SlumberView.swift -o "${MACOS_DIR}/${APP_NAME}"
+# Compile Swift release binary via Swift Package Manager
+echo "Compiling Swift release binary with SwiftPM..."
+swift build -c release
+cp ".build/release/${APP_NAME}" "${MACOS_DIR}/${APP_NAME}"
 
 # Compile Apple Icon Composer .icon package into Assets.car and AppIcon.icns via actool
 echo "Compiling Icon Composer icon with actool..."

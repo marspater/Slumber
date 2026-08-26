@@ -5,7 +5,6 @@ import Carbon
 extension Notification.Name {
     static let slumberOpening = Notification.Name("SlumberOpening")
     static let slumberClosed = Notification.Name("SlumberClosed")
-    static let slumberCloseRequested = Notification.Name("SlumberCloseRequested")
     static let slumberActuallyClose = Notification.Name("SlumberActuallyClose")
     static let slumberTogglePopover = Notification.Name("SlumberTogglePopover")
 }
@@ -17,6 +16,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     let timerModel = SlumberTimer()
     private var globalMonitor: Any?
     private var keyMonitor: Any?
+    private var hotKeyRef: EventHotKeyRef?
+    private var eventHandlerRef: EventHandlerRef?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
@@ -93,8 +94,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         )
         
         let handlerUPP: EventHandlerUPP = { (nextHandler, theEvent, userData) -> OSStatus in
-            NotificationCenter.default.post(name: .slumberTogglePopover, object: nil)
-            return noErr
+            var hotKeyID = EventHotKeyID()
+            let status = GetEventParameter(
+                theEvent,
+                EventParamName(kEventParamDirectObject),
+                EventParamType(typeEventHotKeyID),
+                nil,
+                MemoryLayout<EventHotKeyID>.size,
+                nil,
+                &hotKeyID
+            )
+            if status == noErr && hotKeyID.signature == 1397443650 && hotKeyID.id == 1 {
+                NotificationCenter.default.post(name: .slumberTogglePopover, object: nil)
+                return noErr
+            }
+            return CallNextEventHandler(nextHandler, theEvent)
         }
         
         let installStatus = InstallEventHandler(
@@ -103,14 +117,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             1,
             &eventSpec,
             nil,
-            nil
+            &eventHandlerRef
         )
         if installStatus != noErr {
             NSLog("[SlumberApp] Failed to install Carbon event handler: OSStatus %d", installStatus)
         }
         
         let hotKeyID = EventHotKeyID(signature: 1397443650, id: 1) // 'SLMB'
-        var hotKeyRef: EventHotKeyRef?
         let regStatus = RegisterEventHotKey(
             UInt32(1), // 'S' key
             UInt32(controlKey | optionKey),
@@ -142,6 +155,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        if let hk = hotKeyRef {
+            UnregisterEventHotKey(hk)
+            hotKeyRef = nil
+        }
+        if let eh = eventHandlerRef {
+            RemoveEventHandler(eh)
+            eventHandlerRef = nil
+        }
         if let monitor = globalMonitor {
             NSEvent.removeMonitor(monitor)
             globalMonitor = nil
@@ -197,7 +218,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             requestClosePopover()
         } else {
             guard let button = statusItem.button else { return }
-            NotificationCenter.default.post(name: .slumberOpening, object: nil)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
     }
@@ -219,7 +239,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        togglePopover()
+        if !popover.isShown {
+            guard let button = statusItem.button else { return false }
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        }
         return true
     }
 }

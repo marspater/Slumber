@@ -11,6 +11,7 @@ MyIcon.iconset/
 *.dSYM/
 *.o
 *.out
+Slumber.zip
 
 # Xcode / Swift PM
 .build/

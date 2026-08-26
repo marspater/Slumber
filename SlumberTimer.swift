@@ -7,6 +7,7 @@ public class SlumberTimer: ObservableObject {
     @Published public var timeRemaining: TimeInterval = 0
     @Published public var totalTime: TimeInterval = 0
     @Published public var isRunning: Bool = false
+    @Published public var sleepError: String? = nil
     
     private var timer: DispatchSourceTimer?
     private var endTime: Date?
@@ -26,6 +27,7 @@ public class SlumberTimer: ObservableObject {
             stop()
         }
         
+        self.sleepError = nil
         let seconds = minutes * 60
         self.totalTime = seconds
         self.timeRemaining = seconds
@@ -116,9 +118,12 @@ public class SlumberTimer: ObservableObject {
         if !sleepSucceeded {
             var errorDict: NSDictionary?
             let script = NSAppleScript(source: "tell application \"System Events\" to sleep")
-            script?.executeAndReturnError(&errorDict)
+            let result = script?.executeAndReturnError(&errorDict)
             if let error = errorDict {
                 NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", error)
+                self.sleepError = "Could not trigger macOS sleep. Please ensure system permissions allow sleep control."
+            } else if result == nil {
+                self.sleepError = "Could not trigger macOS sleep."
             }
         }
     }

@@ -16,8 +16,7 @@ let package = Package(
             exclude: [
                 "build.sh",
                 "README.md",
-                "LICENSE",
-                "working resources"
+                "LICENSE"
             ],
             sources: [
                 "SlumberApp.swift",

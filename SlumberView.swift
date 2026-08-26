@@ -872,7 +872,7 @@ struct AnimatedScene: View {
             // Companion — position, 360° space somersault tumble, depth & floating drift
             // all driven by real time inside TimelineView so values are continuous.
             if isVisible {
-                TimelineView(.animation(paused: !isVisible)) { timeline in
+                TimelineView(.animation(paused: !isVisible || !timerModel.isRunning)) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
                     let elapsed: Double = {
                         guard let start = orbitStartTime else { return 0 }
@@ -952,14 +952,6 @@ struct AnimatedScene: View {
         ) { _ in
             isVisible = false
         }
-        .onReceive(NotificationCenter.default.publisher(
-            for: NSWindow.didChangeOcclusionStateNotification)
-        ) { notification in
-            if let window = notification.object as? NSWindow {
-                isVisible = window.occlusionState.contains(.visible)
-                if isVisible { syncSceneState() }
-            }
-        }
         .onAppear   { syncSceneState() }
         .onChange(of: isVisible) { _, visible in if visible { syncSceneState() } }
         .onChange(of: timerModel.isRunning) { _, running in
@@ -999,44 +991,42 @@ struct AnimatedScene: View {
 struct PulsingRing: View {
     let progress: CGFloat
     @State private var pulse = false
-    @State private var colorShift = false
 
     var body: some View {
         ZStack {
+            // Background track
             Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.p3(h: colorShift ? 0.58 : 0.72, s: 0.6, b: 0.9), Color.p3(h: colorShift ? 0.72 : 0.58, s: 0.5, b: 0.95)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 3
-                )
+                .stroke(Color.white.opacity(0.08), lineWidth: 4)
                 .frame(width: 170, height: 170)
-                .scaleEffect(pulse ? 1.06 : 1.0)
-                .opacity(pulse ? 0.35 : 0.15)
 
+            // Progress ring with glowing gradient
             Circle()
-                .trim(from: 0, to: progress)
+                .trim(from: 0, to: max(0.001, progress))
                 .stroke(
-                    AngularGradient(colors: [Color.p3(h: 0.75, s: 0.7, b: 0.95), Color.p3(h: 0.55, s: 0.65, b: 1.0), Color.p3(h: 0.75, s: 0.7, b: 0.95)], center: .center),
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round)
+                    AngularGradient(
+                        gradient: Gradient(colors: [
+                            Color.p3(h: 0.53, s: 0.70, b: 0.98),
+                            Color.p3(h: 0.75, s: 0.75, b: 0.95),
+                            Color.p3(h: 0.88, s: 0.65, b: 0.92),
+                            Color.p3(h: 0.53, s: 0.70, b: 0.98)
+                        ]),
+                        center: .center,
+                        startAngle: .degrees(-90),
+                        endAngle: .degrees(270)
+                    ),
+                    style: StrokeStyle(lineWidth: 4.5, lineCap: .round)
                 )
-                .frame(width: 160, height: 160)
                 .rotationEffect(.degrees(-90))
-                .shadow(color: Color.p3(h: colorShift ? 0.55 : 0.72, s: 0.8, b: 1.1, a: 0.5), radius: 8)
+                .frame(width: 170, height: 170)
+                .shadow(color: Color.p3(h: 0.55, s: 0.6, b: 0.98).opacity(0.4), radius: 6)
 
-            if progress > 0.01 {
-                Circle()
-                    .fill(Color.p3(r: 0.6, g: 1.1, b: 1.2))
-                    .frame(width: 6, height: 6)
-                    .shadow(color: Color.p3(r: 0.5, g: 1.0, b: 1.15), radius: 5)
-                    .offset(y: -80)
-                    .rotationEffect(.degrees(360 * Double(progress)))
-            }
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) { pulse = true }
-            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) { colorShift = true }
+            // Glow dot at leading edge
+            Circle()
+                .fill(Color.p3(h: 0.53, s: 0.40, b: 1.0))
+                .frame(width: 7, height: 7)
+                .shadow(color: Color.p3(h: 0.53, s: 0.6, b: 1.0).opacity(0.8), radius: 4)
+                .offset(y: -85)
+                .rotationEffect(.degrees(Double(progress) * 360))
         }
     }
 }
@@ -1059,9 +1049,8 @@ struct VisualEffectView: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
-        nsView.material = material
-        nsView.blendingMode = blendingMode
-        nsView.appearance = NSAppearance(named: .vibrantDark)
+        if nsView.material != material { nsView.material = material }
+        if nsView.blendingMode != blendingMode { nsView.blendingMode = blendingMode }
     }
 }
 
@@ -1115,7 +1104,6 @@ struct GlowingSlider: View {
                 .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(0.4), radius: 5)
                 .scaleEffect(isDragging ? 1.3 : (isHovered ? 1.15 : 1.0))
                 .offset(x: thumbOffset)
-                // Removed all persistent .animation modifiers here to prevent transition hijacking
         }
         .contentShape(Rectangle())
         .gesture(
@@ -1127,10 +1115,11 @@ struct GlowingSlider: View {
                         }
                         onEditingChanged(true)
                     }
-                    let locationX = gesture.location.x
-                    let relativeX = max(0, min(sliderWidth, locationX))
-                    let newFraction = Double(relativeX / sliderWidth)
-                    value = bounds.lowerBound + newFraction * (bounds.upperBound - bounds.lowerBound)
+                    let trackTravel: CGFloat = sliderWidth - 14.0
+                    let clampedX = max(7.0, min(sliderWidth - 7.0, gesture.location.x))
+                    let newFraction = Double((clampedX - 7.0) / trackTravel)
+                    let rawMinutes = bounds.lowerBound + newFraction * (bounds.upperBound - bounds.lowerBound)
+                    value = min(max(round(rawMinutes), bounds.lowerBound), bounds.upperBound)
                 }
                 .onEnded { _ in
                     withAnimation(.spring(response: 0.15, dampingFraction: 0.8)) {
@@ -1212,7 +1201,7 @@ struct PresetChip: View {
     @State private var isHovered = false
     
     var body: some View {
-        let selected = selectedMinutes == value
+        let selected = abs(selectedMinutes - value) < 0.5
         Button {
             if !selected { playSound("space_button") }
             withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) { selectedMinutes = value }
@@ -1411,11 +1400,11 @@ struct SlumberView: View {
 
     private var skyPhase: Int {
         let m = timerModel.isRunning ? timerModel.totalTime / 60.0 : selectedMinutes
-        if m <= 20 { return 0 }     // Sunset (for 15m preset)
-        if m <= 38 { return 1 }     // Evening Twilight (for 30m preset)
-        if m <= 50 { return 2 }     // Late Dusk (for 45m preset)
-        if m <= 75 { return 3 }     // Midnight Blue (for 60m preset)
-        return 4                    // Cosmic Space (for 90m preset)
+        if m <= 20 { return 0 }     // Sunset Glow (1-20 min)
+        if m <= 38 { return 1 }     // Evening Twilight (21-38 min)
+        if m <= 50 { return 2 }     // Late Dusk (39-50 min)
+        if m <= 75 { return 3 }     // Midnight Blue (51-75 min)
+        return 4                    // Deep Cosmic Space (76-120 min)
     }
 
     private var skyTop: Color {
@@ -1492,6 +1481,26 @@ struct SlumberView: View {
         VStack(spacing: 14) {
             Spacer()
 
+            if let err = timerModel.sleepError {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.p3(h: 0.08, s: 0.85, b: 0.98))
+                    Text(err)
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.red.opacity(0.25))
+                )
+                .padding(.horizontal, 24)
+            }
+
             if timerModel.isRunning {
                 let total = timerModel.totalTime
                 let prog = total > 0 ? CGFloat(timerModel.timeRemaining / total) : 0
@@ -1530,12 +1539,6 @@ struct SlumberView: View {
                         if !editing { playSound("space_button") }
                     })
                     .padding(.horizontal, 24)
-                    .onChange(of: selectedMinutes) { _, newValue in
-                        let rounded = round(newValue)
-                        if selectedMinutes != rounded {
-                            selectedMinutes = rounded
-                        }
-                    }
                     HStack {
                         Text("1 min"); Spacer(); Text("120 min")
                     }
