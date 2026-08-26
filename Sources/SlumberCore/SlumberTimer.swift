@@ -18,7 +18,7 @@ public enum SleepResult: Sendable, Equatable {
 @MainActor
 public class SlumberTimer: ObservableObject {
     public typealias SleepAction = @MainActor () -> SleepResult
-    public typealias DateProvider = @Sendable () -> Date
+    public typealias DateProvider = @MainActor () -> Date
 
     @Published public private(set) var state: TimerState = .idle
     @Published public private(set) var timeRemaining: TimeInterval = 0
@@ -106,6 +106,8 @@ public class SlumberTimer: ObservableObject {
         state = .idle
     }
     
+    /// Retries immediate system sleep execution after a previous attempt failed.
+    /// Note: This triggers the sleep action directly without restarting a countdown timer.
     public func retrySleep() {
         guard case .sleepFailed = state else { return }
         state = .requestingSleep

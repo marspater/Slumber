@@ -1,7 +1,8 @@
 import XCTest
 import SlumberCore
 
-final class MockClock: @unchecked Sendable {
+@MainActor
+final class MockClock {
     var currentDate: Date
     
     init(initialDate: Date = Date(timeIntervalSince1970: 1000000)) {
