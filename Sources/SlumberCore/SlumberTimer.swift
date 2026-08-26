@@ -18,6 +18,7 @@ public enum SleepResult: Sendable, Equatable {
 @MainActor
 public class SlumberTimer: ObservableObject {
     public typealias SleepAction = @MainActor () -> SleepResult
+    public typealias DateProvider = @Sendable () -> Date
 
     @Published public private(set) var state: TimerState = .idle
     @Published public private(set) var timeRemaining: TimeInterval = 0
@@ -39,9 +40,14 @@ public class SlumberTimer: ObservableObject {
     private var activity: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
     private let customSleepAction: SleepAction?
+    private let dateProvider: DateProvider
     
-    public init(sleepAction: SleepAction? = nil) {
+    public init(
+        sleepAction: SleepAction? = nil,
+        dateProvider: @escaping DateProvider = { Date() }
+    ) {
         self.customSleepAction = sleepAction
+        self.dateProvider = dateProvider
     }
     
     public func start(minutes: Double) {
@@ -55,7 +61,7 @@ public class SlumberTimer: ObservableObject {
         let seconds = minutes * 60
         self.totalTime = seconds
         self.timeRemaining = seconds
-        self.endTime = Date().addingTimeInterval(seconds)
+        self.endTime = dateProvider().addingTimeInterval(seconds)
         self.state = .running
         
         // DispatchSourceTimer on main queue
@@ -100,9 +106,15 @@ public class SlumberTimer: ObservableObject {
         state = .idle
     }
     
+    public func retrySleep() {
+        guard case .sleepFailed = state else { return }
+        state = .requestingSleep
+        executeSleep()
+    }
+    
     public func handleSystemWake() {
         guard state == .running, let deadline = endTime else { return }
-        let remaining = deadline.timeIntervalSinceNow
+        let remaining = deadline.timeIntervalSince(dateProvider())
         if remaining <= 0 {
             NSLog("[SlumberTimer] System woke but timer deadline passed. Triggering sleep.")
             tick()
@@ -131,7 +143,7 @@ public class SlumberTimer: ObservableObject {
     
     public func tick() {
         guard state == .running, let endTime = endTime else { return }
-        let remaining = endTime.timeIntervalSinceNow
+        let remaining = endTime.timeIntervalSince(dateProvider())
         
         if remaining <= 0 {
             state = .requestingSleep

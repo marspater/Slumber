@@ -1495,6 +1495,20 @@ struct SlumberView: View {
                         .lineLimit(2)
                     Spacer()
                     Button {
+                        timerModel.retrySleep()
+                    } label: {
+                        Text("Retry")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                    .fill(Color.white.opacity(0.18))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    Button {
                         timerModel.clearStatus()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
