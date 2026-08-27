@@ -33,31 +33,8 @@ func playSound(_ name: String) {
 }
 
 // ===================================================================
-// MARK: - Display P3 Wide-Gamut + HDR Color Helpers
+// MARK: - Layout Constants
 // ===================================================================
-
-extension Color {
-    static func p3(h: Double, s: Double, b: Double, a: Double = 1) -> Color {
-        let c = b * s
-        let hp = abs(h).truncatingRemainder(dividingBy: 1) * 6
-        let x = c * (1 - abs(hp.truncatingRemainder(dividingBy: 2) - 1))
-        let m = b - c
-        let r: Double, g: Double, bl: Double
-        switch Int(hp) % 6 {
-        case 0:  r = c;  g = x;  bl = 0
-        case 1:  r = x;  g = c;  bl = 0
-        case 2:  r = 0;  g = c;  bl = x
-        case 3:  r = 0;  g = x;  bl = c
-        case 4:  r = x;  g = 0;  bl = c
-        default: r = c;  g = 0;  bl = x
-        }
-        return Color(.displayP3, red: r + m, green: g + m, blue: bl + m, opacity: a)
-    }
-
-    static func p3(r: Double, g: Double, b: Double, a: Double = 1) -> Color {
-        Color(.displayP3, red: r, green: g, blue: b, opacity: a)
-    }
-}
 
 private let slumberLightFg = Color(red: 0.12, green: 0.10, blue: 0.22)
 
@@ -157,7 +134,10 @@ struct TwinklingStar: View {
                     .frame(width: size, height: size)
             }
         }
-        .shadow(color: Color.p3(h: 0.75, s: 0.25, b: 1.0, a: on ? 0.35 : 0), radius: on ? (isSparkle ? 4 : 2) : 0)
+        .shadow(
+            color: Color.p3(h: 0.75, s: 0.25, b: 1.0, a: on ? 0.35 : 0, level: isSparkle ? .rimHighlight : .sdr),
+            radius: on ? (isSparkle ? 4 : 2) : 0
+        )
         .opacity(on ? 0.75 : 0.12)
         .position(position)
         .onAppear {
@@ -194,18 +174,33 @@ struct ShootingStar: View {
             let travel: CGFloat = 280
 
             if progress >= 0 {
+                let headPhase = max(0.0, 1.0 - progress * 2.0)
                 Capsule()
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.p3(h: 0.75, s: 0.25, b: 0.95, a: 0),
-                                Color.p3(h: 0.72, s: 0.15, b: 1.0, a: 0.35)
+                                Color.p3(h: 0.75, s: 0.25, b: 0.95, a: 0, level: .subtleHighlight),
+                                Color.p3(
+                                    h: 0.72, s: 0.15, b: 1.0, a: 0.85,
+                                    headroomBetween: .subtleHighlight,
+                                    and: .effect,
+                                    phase: headPhase
+                                )
                             ],
                             startPoint: .leading, endPoint: .trailing
                         )
                     )
                     .frame(width: length * 0.85, height: 1.0)
                     .blur(radius: 0.3)
+                    .shadow(
+                        color: Color.p3(
+                            h: 0.72, s: 0.15, b: 1.0, a: 0.45,
+                            headroomBetween: .subtleHighlight,
+                            and: .effect,
+                            phase: headPhase
+                        ),
+                        radius: 2
+                    )
                     .rotationEffect(.degrees(angle))
                     .offset(
                         x: startX + CGFloat(cos(rad)) * travel * CGFloat(progress),
@@ -213,8 +208,8 @@ struct ShootingStar: View {
                     )
                     .opacity(
                         progress < 0.12
-                             ? (progress / 0.12) * 0.4
-                             : (progress > 0.55 ? max(0, ((1 - progress) / 0.45) * 0.4) : 0.4)
+                             ? (progress / 0.12) * 0.6
+                             : (progress > 0.55 ? max(0, ((1 - progress) / 0.45) * 0.6) : 0.6)
                     )
             }
         }
@@ -240,7 +235,6 @@ struct FireflyField: View {
 struct Firefly: View {
     let seed: Int
     let bounds: CGSize
-    @State private var drift = false
 
     private var hue: Double {
         switch seed % 3 {
@@ -250,11 +244,11 @@ struct Firefly: View {
         }
     }
 
-    private var glowColor: Color {
+    private var baseRGB: (Double, Double, Double) {
         switch seed % 3 {
-        case 0: return Color.p3(r: 1.4, g: 1.0, b: 0.35, a: 0.85) // High-HDR Gold
-        case 1: return Color.p3(r: 1.2, g: 0.8, b: 1.4, a: 0.85)  // High-HDR Violet
-        default: return Color.p3(r: 0.45, g: 1.3, b: 1.4, a: 0.85) // High-HDR Cyan
+        case 0: return (1.0, 0.85, 0.25) // Gold
+        case 1: return (0.85, 0.55, 0.95) // Violet
+        default: return (0.35, 0.85, 0.95) // Cyan
         }
     }
 
@@ -264,22 +258,39 @@ struct Firefly: View {
     private var driftDY: CGFloat { seededRandom(seed: seed * 13, max: 20) - 10 }
 
     var body: some View {
-        Circle()
-            .fill(Color.p3(h: hue, s: 0.5, b: 1.0))
-            .frame(width: 2.5, height: 2.5)
-            .shadow(color: glowColor, radius: drift ? 8 : 2)
-            .opacity(drift ? 0.7 : 0.15)
-            .position(
-                x: baseX + (drift ? driftDX : 0),
-                y: baseY + (drift ? driftDY : 0)
+        TimelineView(.animation) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            let period = Double(4 + (seed % 3))
+            let phaseOffset = Double(seed) * 1.2
+            let phaseInfo = computePhase(t: t, period: period, offset: phaseOffset)
+
+            let rgb = baseRGB
+            let glowColor = Color.p3(
+                r: rgb.0, g: rgb.1, b: rgb.2, a: 0.85,
+                headroomBetween: .visibleGlow,
+                and: .effect,
+                phase: phaseInfo.normPhase
             )
-            .onAppear {
-                withAnimation(
-                    .easeInOut(duration: Double(4 + seed % 3))
-                    .repeatForever(autoreverses: true)
-                    .delay(Double(seed) * 0.6)
-                ) { drift = true }
-            }
+            let dotColor = Color.p3(h: hue, s: 0.5, b: 1.0, level: .rimHighlight)
+            let currentX: CGFloat = baseX + driftDX * CGFloat(phaseInfo.cycle)
+            let currentY: CGFloat = baseY + driftDY * CGFloat(phaseInfo.cosTerm)
+            let glowRadius: CGFloat = 2.0 + 6.0 * CGFloat(phaseInfo.normPhase)
+            let currentOpacity: Double = 0.15 + 0.55 * phaseInfo.normPhase
+
+            Circle()
+                .fill(dotColor)
+                .frame(width: 2.5, height: 2.5)
+                .shadow(color: glowColor, radius: glowRadius)
+                .opacity(currentOpacity)
+                .position(x: currentX, y: currentY)
+        }
+    }
+
+    private func computePhase(t: Double, period: Double, offset: Double) -> (cycle: Double, cosTerm: Double, normPhase: Double) {
+        let cycle = sin((t + offset) * (2.0 * .pi / period))
+        let cosVal = cos((t + offset * 0.7) * (2.0 * .pi / (period * 1.3)))
+        let norm = (cycle + 1.0) / 2.0
+        return (cycle, cosVal, norm)
     }
 
     private func seededRandom(seed: Int, max: CGFloat) -> CGFloat {
@@ -336,7 +347,7 @@ struct ConstellationPattern: View {
                     Circle()
                         .fill(Color.white.opacity(pulse ? 0.30 : 0.15))
                         .frame(width: 2.5, height: 2.5)
-                        .shadow(color: Color.p3(h: 0.75, s: 0.3, b: 1.0, a: pulse ? 0.35 : 0.1), radius: pulse ? 3 : 1)
+                        .shadow(color: Color.p3(h: 0.75, s: 0.3, b: 1.0, a: pulse ? 0.35 : 0.1, level: .subtleHighlight), radius: pulse ? 3 : 1)
                         .position(x: stars[i].x * w, y: stars[i].y * h)
                 }
             }
@@ -362,7 +373,7 @@ struct CuteMoon: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color.p3(h: 0.75, s: 0.4, b: 1.0, a: 0.3), .clear],
+                        colors: [Color.p3(h: 0.75, s: 0.4, b: 1.0, a: 0.3, level: .visibleGlow), .clear],
                         center: .center, startRadius: 10, endRadius: 40
                     )
                 )
@@ -373,7 +384,10 @@ struct CuteMoon: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [Color.p3(h: 0.73, s: 0.35, b: 0.95), Color.p3(h: 0.78, s: 0.45, b: 0.80)],
+                            colors: [
+                                Color.p3(h: 0.73, s: 0.35, b: 0.95, level: .strongGlow),
+                                Color.p3(h: 0.78, s: 0.45, b: 0.80, level: .strongGlow)
+                            ],
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         )
                     )
@@ -474,7 +488,7 @@ struct CuteCloud1: View {
             VectorCloudShape1()
                 .stroke(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.9), Color.white.opacity(0.1)],
+                        colors: [Color.p3(1.0, 1.0, 1.0, 0.9, level: .rimHighlight), Color.p3(1.0, 1.0, 1.0, 0.1, level: .sdr)],
                         startPoint: .top, endPoint: .bottom
                     ),
                     lineWidth: 1.2 * scale
@@ -515,7 +529,7 @@ struct CuteCloud2: View {
             VectorCloudShape2()
                 .stroke(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.4), Color.white.opacity(0.08)],
+                        colors: [Color.p3(1.0, 1.0, 1.0, 0.45, level: .rimHighlight), Color.p3(1.0, 1.0, 1.0, 0.08, level: .sdr)],
                         startPoint: .top, endPoint: .bottom
                     ),
                     lineWidth: 0.8 * scale
@@ -546,10 +560,10 @@ struct AuroraEffect: View {
 
     var body: some View {
         ZStack {
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.75, s: 0.65, b: 0.7, a: 0.08), Color.p3(h: 0.72, s: 0.5, b: 0.7, a: 0.03)], startPoint: .leading, endPoint: .trailing)).frame(width: 320, height: 100).blur(radius: 45).offset(x: s1 ? 20 : -20, y: s1 ? -15 : 15)
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.55, s: 0.55, b: 0.7, a: 0.07), Color.p3(h: 0.60, s: 0.4, b: 0.7, a: 0.02)], startPoint: .trailing, endPoint: .leading)).frame(width: 260, height: 80).blur(radius: 40).offset(x: s2 ? -30 : 15, y: s2 ? 30 : -10)
-            Ellipse().fill(Color.p3(h: 0.82, s: 0.55, b: 0.65, a: 0.05)).frame(width: 180, height: 60).blur(radius: 35).offset(x: s3 ? 10 : -15, y: s3 ? -30 : 20)
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.93, s: 0.50, b: 0.7, a: 0.05), Color.p3(h: 0.88, s: 0.40, b: 0.7, a: 0.02)], startPoint: .top, endPoint: .bottom)).frame(width: 220, height: 70).blur(radius: 40).offset(x: s4 ? -20 : 25, y: s4 ? 20 : -25)
+            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.75, s: 0.65, b: 0.7, a: 0.08, level: .subtleHighlight), Color.p3(h: 0.72, s: 0.5, b: 0.7, a: 0.03, level: .subtleHighlight)], startPoint: .leading, endPoint: .trailing)).frame(width: 320, height: 100).blur(radius: 45).offset(x: s1 ? 20 : -20, y: s1 ? -15 : 15)
+            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.55, s: 0.55, b: 0.7, a: 0.07, level: .subtleHighlight), Color.p3(h: 0.60, s: 0.4, b: 0.7, a: 0.02, level: .subtleHighlight)], startPoint: .trailing, endPoint: .leading)).frame(width: 260, height: 80).blur(radius: 40).offset(x: s2 ? -30 : 15, y: s2 ? 30 : -10)
+            Ellipse().fill(Color.p3(h: 0.82, s: 0.55, b: 0.65, a: 0.05, level: .subtleHighlight)).frame(width: 180, height: 60).blur(radius: 35).offset(x: s3 ? 10 : -15, y: s3 ? -30 : 20)
+            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.93, s: 0.50, b: 0.7, a: 0.05, level: .subtleHighlight), Color.p3(h: 0.88, s: 0.40, b: 0.7, a: 0.02, level: .subtleHighlight)], startPoint: .top, endPoint: .bottom)).frame(width: 220, height: 70).blur(radius: 40).offset(x: s4 ? -20 : 25, y: s4 ? 20 : -25)
         }
         .onAppear {
             withAnimation(.easeInOut(duration: 6).repeatForever(autoreverses: true))  { s1 = true }
@@ -595,8 +609,8 @@ struct SleepingFox: View {
             Circle().fill(dark).frame(width: 3, height: 3).offset(x: -28, y: -5)
 
             if isNearEnd {
-                Capsule().fill(Color.p3(h: 0.10, s: 0.8, b: 0.85)).frame(width: 3, height: 1.5).offset(x: -18, y: -9)
-                Capsule().fill(Color.p3(h: 0.10, s: 0.8, b: 0.85)).frame(width: 3, height: 1.5).offset(x: -12, y: -9)
+                Capsule().fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight)).frame(width: 3, height: 1.5).offset(x: -18, y: -9)
+                Capsule().fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight)).frame(width: 3, height: 1.5).offset(x: -12, y: -9)
             } else {
                 Arc().stroke(dark.opacity(0.7), lineWidth: 1.2).frame(width: 5, height: 2.5).rotationEffect(.degrees(180)).offset(x: -18, y: -9)
                 Arc().stroke(dark.opacity(0.7), lineWidth: 1.2).frame(width: 5, height: 2.5).rotationEffect(.degrees(180)).offset(x: -12, y: -9)
@@ -611,7 +625,7 @@ struct SleepingFox: View {
 
             if isNearEnd {
                 Text("?").font(.system(size: 8, weight: .bold, design: .rounded))
-                    .foregroundColor(Color.p3(h: 0.08, s: 0.6, b: 1.0, a: 0.65)).offset(x: -5, y: -23)
+                    .foregroundColor(Color.p3(h: 0.08, s: 0.6, b: 1.0, a: 0.75, level: .rimHighlight)).offset(x: -5, y: -23)
             }
         }
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
@@ -646,8 +660,8 @@ struct SleepingCat: View {
             Triangle().fill(Color.pink.opacity(0.7)).frame(width: 3, height: 2).rotationEffect(.degrees(180)).offset(x: -12, y: -4)
 
             if isNearEnd {
-                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85)).frame(width: 2.5, height: 1.5).offset(x: -12, y: -7)
-                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85)).frame(width: 2.5, height: 1.5).offset(x: -7, y: -7)
+                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -12, y: -7)
+                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -7, y: -7)
             } else {
                 Arc().stroke(Color.white.opacity(0.7), lineWidth: 1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -12, y: -7)
                 Arc().stroke(Color.white.opacity(0.7), lineWidth: 1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -7, y: -7)
@@ -669,7 +683,7 @@ struct SleepingCat: View {
 
             if isNearEnd {
                 Text("?").font(.system(size: 7, weight: .bold, design: .rounded))
-                    .foregroundColor(Color.p3(h: 0.72, s: 0.45, b: 1.0, a: 0.6)).offset(x: 0, y: -21)
+                    .foregroundColor(Color.p3(h: 0.72, s: 0.45, b: 1.0, a: 0.7, level: .rimHighlight)).offset(x: 0, y: -21)
             }
         }
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
@@ -785,7 +799,7 @@ struct SleepingDodo: View {
             // Sleeping Eye or Alert Eye
             if isNearEnd {
                 Capsule()
-                    .fill(Color.p3(h: 0.12, s: 0.8, b: 0.9))
+                    .fill(Color.p3(h: 0.12, s: 0.8, b: 0.9, level: .rimHighlight))
                     .frame(width: 3, height: 1.5)
                     .offset(x: -14, y: -8)
             } else {
@@ -811,7 +825,7 @@ struct SleepingDodo: View {
             // Near-End Alert '?'
             if isNearEnd {
                 Text("?").font(.system(size: 8, weight: .bold, design: .rounded))
-                    .foregroundColor(Color.p3(h: 0.50, s: 0.7, b: 1.0, a: 0.75)).offset(x: -6, y: -23)
+                    .foregroundColor(Color.p3(h: 0.50, s: 0.7, b: 1.0, a: 0.8, level: .rimHighlight)).offset(x: -6, y: -23)
             }
         }
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
@@ -1006,10 +1020,10 @@ struct PulsingRing: View {
                 .stroke(
                     AngularGradient(
                         gradient: Gradient(colors: [
-                            Color.p3(h: 0.53, s: 0.70, b: 0.98),
-                            Color.p3(h: 0.75, s: 0.75, b: 0.95),
-                            Color.p3(h: 0.88, s: 0.65, b: 0.92),
-                            Color.p3(h: 0.53, s: 0.70, b: 0.98)
+                            Color.p3(h: 0.53, s: 0.70, b: 0.98, level: .subtleHighlight),
+                            Color.p3(h: 0.75, s: 0.75, b: 0.95, level: .subtleHighlight),
+                            Color.p3(h: 0.88, s: 0.65, b: 0.92, level: .subtleHighlight),
+                            Color.p3(h: 0.53, s: 0.70, b: 0.98, level: .subtleHighlight)
                         ]),
                         center: .center,
                         startAngle: .degrees(-90),
@@ -1019,13 +1033,13 @@ struct PulsingRing: View {
                 )
                 .rotationEffect(.degrees(-90))
                 .frame(width: 170, height: 170)
-                .shadow(color: Color.p3(h: 0.55, s: 0.6, b: 0.98).opacity(0.4), radius: 6)
+                .shadow(color: Color.p3(h: 0.55, s: 0.6, b: 0.98, level: .subtleHighlight).opacity(0.4), radius: 6)
 
             // Glow dot at leading edge
             Circle()
-                .fill(Color.p3(h: 0.53, s: 0.40, b: 1.0))
+                .fill(Color.p3(h: 0.53, s: 0.40, b: 1.0, level: .subtleHighlight))
                 .frame(width: 7, height: 7)
-                .shadow(color: Color.p3(h: 0.53, s: 0.6, b: 1.0).opacity(0.8), radius: 4)
+                .shadow(color: Color.p3(h: 0.53, s: 0.6, b: 1.0, level: .subtleHighlight).opacity(0.8), radius: 4)
                 .offset(y: -85)
                 .rotationEffect(.degrees(Double(progress) * 360))
         }
@@ -1092,14 +1106,14 @@ struct GlowingSlider: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.p3(h: 0.75, s: 0.65, b: 0.92),
-                            Color.p3(h: 0.53, s: 0.55, b: 0.97)
+                            Color.p3(h: 0.75, s: 0.65, b: 0.92, level: .sdr),
+                            Color.p3(h: 0.53, s: 0.55, b: 0.97, level: .sdr)
                         ],
                         startPoint: .leading, endPoint: .trailing
                     )
                 )
                 .frame(width: trackFillWidth, height: trackHeight)
-                .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(isDragging ? 0.6 : (isHovered ? 0.4 : 0.2)), radius: isDragging ? 8 : 4)
+                .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95, level: isDragging ? .subtleHighlight : .sdr).opacity(isDragging ? 0.6 : (isHovered ? 0.4 : 0.2)), radius: isDragging ? 8 : 4)
             
             // Thumb
             RoundedRectangle(cornerRadius: thumbSize / 2.0, style: .continuous)
@@ -1110,7 +1124,7 @@ struct GlowingSlider: View {
                         .stroke(Color.white.opacity(0.8), lineWidth: 0.5)
                 )
                 .shadow(color: Color.black.opacity(0.35), radius: 2.5, x: 0, y: 1)
-                .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95).opacity(0.45), radius: 6)
+                .shadow(color: Color.p3(h: 0.65, s: 0.6, b: 0.95, level: isDragging ? .subtleHighlight : .rimHighlight).opacity(0.45), radius: 6)
                 .scaleEffect(isDragging ? 1.25 : (isHovered ? 1.12 : 1.0))
                 .offset(x: thumbOffset)
         }
@@ -1557,6 +1571,7 @@ struct SlumberView: View {
         .fixedSize()
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .preferredColorScheme(.dark)
+        .allowedDynamicRange(.high)
         .onChange(of: showInDock) { _, v in applyDock(v) }
     }
 
