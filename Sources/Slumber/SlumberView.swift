@@ -575,54 +575,209 @@ struct AuroraEffect: View {
 }
 
 // ===================================================================
-// MARK: - Characters
+// MARK: - Characters & Companion Vector Shapes
 // ===================================================================
+
+struct FoxTailShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: 2, y: rect.height * 0.72))
+        p.addCurve(
+            to: CGPoint(x: rect.width - 2, y: rect.height * 0.18),
+            control1: CGPoint(x: rect.width * 0.40, y: rect.height * 1.05),
+            control2: CGPoint(x: rect.width + 5, y: rect.height * 0.62)
+        )
+        p.addCurve(
+            to: CGPoint(x: 2, y: rect.height * 0.72),
+            control1: CGPoint(x: rect.width * 0.68, y: -rect.height * 0.10),
+            control2: CGPoint(x: rect.width * 0.15, y: rect.height * 0.22)
+        )
+        p.closeSubpath()
+        return p
+    }
+}
+
+struct FoxTailTipShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.width * 0.52, y: 0))
+        p.addCurve(
+            to: CGPoint(x: rect.width - 2, y: rect.height * 0.18),
+            control1: CGPoint(x: rect.width * 0.75, y: -rect.height * 0.05),
+            control2: CGPoint(x: rect.width + 2, y: rect.height * 0.06)
+        )
+        p.addCurve(
+            to: CGPoint(x: rect.width * 0.48, y: rect.height * 0.62),
+            control1: CGPoint(x: rect.width + 3, y: rect.height * 0.45),
+            control2: CGPoint(x: rect.width * 0.70, y: rect.height * 0.60)
+        )
+        p.addCurve(
+            to: CGPoint(x: rect.width * 0.40, y: rect.height * 0.32),
+            control1: CGPoint(x: rect.width * 0.42, y: rect.height * 0.48),
+            control2: CGPoint(x: rect.width * 0.40, y: rect.height * 0.38)
+        )
+        p.addCurve(
+            to: CGPoint(x: rect.width * 0.52, y: 0),
+            control1: CGPoint(x: rect.width * 0.42, y: rect.height * 0.20),
+            control2: CGPoint(x: rect.width * 0.46, y: rect.height * 0.08)
+        )
+        p.closeSubpath()
+        return p
+    }
+}
+
+struct CatTailShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        // Starts at right rear of sleeping cat, sweeps downward and curls back up gracefully in a J-hook
+        p.move(to: CGPoint(x: 2, y: rect.height * 0.55))
+        p.addCurve(
+            to: CGPoint(x: rect.width - 3, y: 4),
+            control1: CGPoint(x: rect.width * 0.42, y: rect.height + 6),
+            control2: CGPoint(x: rect.width + 5, y: rect.height * 0.48)
+        )
+        return p
+    }
+}
 
 struct SleepingFox: View {
     let isNearEnd: Bool
     @State private var breathe = false
     @State private var fidget = false
+    @State private var tailSway = false
     @State private var zzz = false
 
-    private let fur     = Color.p3(r: 0.93, g: 0.50, b: 0.15)
-    private let furDk   = Color.p3(r: 0.78, g: 0.35, b: 0.10)
-    private let cream   = Color.p3(r: 0.98, g: 0.93, b: 0.85)
+    private let fur     = Color.p3(r: 0.94, g: 0.50, b: 0.15)
+    private let furDk   = Color.p3(r: 0.76, g: 0.32, b: 0.08)
+    private let cream   = Color.p3(r: 0.98, g: 0.94, b: 0.88)
     private let dark    = Color.p3(r: 0.12, g: 0.08, b: 0.06)
 
     var body: some View {
         ZStack {
-            Capsule().fill(LinearGradient(colors: [fur, furDk], startPoint: .leading, endPoint: .trailing)).frame(width: 38, height: 11).rotationEffect(.degrees(-22)).offset(x: 20, y: 3)
-            Ellipse().fill(fur.opacity(0.9)).frame(width: 16, height: 13).offset(x: 34, y: -3)
-            Ellipse().fill(cream.opacity(0.9)).frame(width: 10, height: 8).offset(x: 38, y: -5)
-            Ellipse().fill(LinearGradient(colors: [fur, furDk], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 38, height: 22).scaleEffect(y: breathe ? 1.04 : 1.0)
-            Ellipse().fill(cream.opacity(0.65)).frame(width: 18, height: 10).offset(x: -5, y: 4)
-            Ellipse().fill(fur.opacity(0.85)).frame(width: 6, height: 5).offset(x: -9, y: 7)
-            Ellipse().fill(fur.opacity(0.85)).frame(width: 6, height: 5).offset(x: -3, y: 8)
-            Circle().fill(fur).frame(width: 22, height: 22).offset(x: -14, y: -7)
-            Triangle().fill(fur).frame(width: 9, height: 15).rotationEffect(.degrees(isNearEnd ? (fidget ? -22 : 0) : -8)).offset(x: -22, y: -20)
-            Triangle().fill(Color.pink.opacity(0.40)).frame(width: 5, height: 9).rotationEffect(.degrees(-8)).offset(x: -22, y: -18)
-            Triangle().fill(dark.opacity(0.5)).frame(width: 5, height: 4).rotationEffect(.degrees(-8)).offset(x: -22, y: -25)
-            Triangle().fill(fur).frame(width: 9, height: 15).rotationEffect(.degrees(isNearEnd ? (fidget ? 16 : -2) : 6)).offset(x: -9, y: -21)
-            Triangle().fill(Color.pink.opacity(0.40)).frame(width: 5, height: 9).rotationEffect(.degrees(6)).offset(x: -9, y: -19)
-            Triangle().fill(dark.opacity(0.5)).frame(width: 5, height: 4).rotationEffect(.degrees(6)).offset(x: -9, y: -26)
-            Ellipse().fill(cream).frame(width: 13, height: 7).offset(x: -23, y: -4)
-            Circle().fill(dark).frame(width: 3, height: 3).offset(x: -28, y: -5)
+            // Big Fluffy Fox Tail with Snowy Tip
+            ZStack {
+                FoxTailShape()
+                    .fill(
+                        LinearGradient(
+                            colors: [fur, furDk],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                FoxTailTipShape()
+                    .fill(cream)
+                
+                // Fluffy tip highlight
+                Circle()
+                    .fill(cream.opacity(0.95))
+                    .frame(width: 7, height: 7)
+                    .offset(x: 14, y: -6)
+            }
+            .frame(width: 38, height: 26)
+            .offset(x: 17, y: -2)
+            .rotationEffect(.degrees(tailSway ? 3.5 : -2), anchor: .bottomLeading)
 
+            // Curled Fox Body
+            Ellipse()
+                .fill(
+                    LinearGradient(
+                        colors: [fur, furDk],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 38, height: 23)
+                .scaleEffect(y: breathe ? 1.04 : 1.0)
+                .scaleEffect(x: breathe ? 0.99 : 1.0)
+
+            // Fluffy Cream Chest / Belly Ruff
+            Ellipse()
+                .fill(cream.opacity(0.85))
+                .frame(width: 18, height: 12)
+                .offset(x: -6, y: 5)
+
+            // Tucked Little Paws with Dark Fox Socks
+            Ellipse().fill(dark.opacity(0.75)).frame(width: 6, height: 4.5).offset(x: -10, y: 8)
+            Ellipse().fill(fur).frame(width: 6, height: 4.5).offset(x: -9, y: 7.5)
+            Ellipse().fill(dark.opacity(0.75)).frame(width: 6, height: 4.5).offset(x: -4, y: 9)
+            Ellipse().fill(fur).frame(width: 6, height: 4.5).offset(x: -3, y: 8.5)
+
+            // Fox Head
+            Circle()
+                .fill(fur)
+                .frame(width: 22, height: 22)
+                .offset(x: -14, y: -7)
+
+            // Fox Ears
+            // Left Ear
+            ZStack {
+                Triangle().fill(dark.opacity(0.85)).frame(width: 9, height: 16)
+                Triangle().fill(fur).frame(width: 8, height: 14).offset(y: 1)
+                Triangle().fill(cream).frame(width: 5, height: 10).offset(y: 2)
+                Triangle().fill(Color.pink.opacity(0.35)).frame(width: 3.5, height: 7).offset(y: 3)
+            }
+            .rotationEffect(.degrees(isNearEnd ? (fidget ? -22 : 0) : -10))
+            .offset(x: -22, y: -20)
+
+            // Right Ear
+            ZStack {
+                Triangle().fill(dark.opacity(0.85)).frame(width: 9, height: 16)
+                Triangle().fill(fur).frame(width: 8, height: 14).offset(y: 1)
+                Triangle().fill(cream).frame(width: 5, height: 10).offset(y: 2)
+                Triangle().fill(Color.pink.opacity(0.35)).frame(width: 3.5, height: 7).offset(y: 3)
+            }
+            .rotationEffect(.degrees(isNearEnd ? (fidget ? 16 : -2) : 6))
+            .offset(x: -9, y: -21)
+
+            // Cream Pointed Snout & Cheeks
+            Ellipse()
+                .fill(cream)
+                .frame(width: 14, height: 8)
+                .offset(x: -24, y: -4)
+
+            // Dark Button Nose
+            Circle()
+                .fill(dark)
+                .frame(width: 3, height: 3)
+                .offset(x: -29, y: -5)
+
+            // Sleeping Eye or Alert Eye
             if isNearEnd {
-                Capsule().fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight)).frame(width: 3, height: 1.5).offset(x: -18, y: -9)
-                Capsule().fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight)).frame(width: 3, height: 1.5).offset(x: -12, y: -9)
+                Capsule()
+                    .fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight))
+                    .frame(width: 3, height: 1.5)
+                    .offset(x: -18, y: -9)
+                Capsule()
+                    .fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight))
+                    .frame(width: 3, height: 1.5)
+                    .offset(x: -12, y: -9)
             } else {
-                Arc().stroke(dark.opacity(0.7), lineWidth: 1.2).frame(width: 5, height: 2.5).rotationEffect(.degrees(180)).offset(x: -18, y: -9)
-                Arc().stroke(dark.opacity(0.7), lineWidth: 1.2).frame(width: 5, height: 2.5).rotationEffect(.degrees(180)).offset(x: -12, y: -9)
+                Arc()
+                    .stroke(dark.opacity(0.75), lineWidth: 1.2)
+                    .frame(width: 4.5, height: 2.5)
+                    .rotationEffect(.degrees(180))
+                    .offset(x: -18, y: -9)
+                Arc()
+                    .stroke(dark.opacity(0.75), lineWidth: 1.2)
+                    .frame(width: 4.5, height: 2.5)
+                    .rotationEffect(.degrees(180))
+                    .offset(x: -12, y: -9)
             }
 
-            Circle().fill(Color.pink.opacity(0.30)).frame(width: 5, height: 5).offset(x: -24, y: -1)
+            // Rosy Cheek Blush
+            Circle()
+                .fill(Color.pink.opacity(0.30))
+                .frame(width: 5, height: 5)
+                .offset(x: -24, y: -1)
 
+            // Sleeping 'z' particles
             Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 14 : 2, y: zzz ? -28 : -18).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
             Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 20 : 8, y: zzz ? -34 : -24).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.35))
 
+            // Near-End Alert '?'
             if isNearEnd {
                 Text("?").font(.system(size: 8, weight: .bold, design: .rounded))
                     .foregroundColor(Color.p3(h: 0.08, s: 0.6, b: 1.0, a: 0.75, level: .rimHighlight)).offset(x: -5, y: -23)
@@ -632,6 +787,7 @@ struct SleepingFox: View {
         .onAppear {
             withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { breathe = true }
             withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
+            withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) { tailSway = true }
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: false)) { zzz = true }
         }
     }
@@ -642,45 +798,122 @@ struct SleepingCat: View {
     @State private var breathe = false
     @State private var fidget = false
     @State private var purr = false
+    @State private var tailSway = false
     @State private var zzz = false
 
-    private let fur   = Color.p3(r: 0.52, g: 0.46, b: 0.68)
-    private let furDk = Color.p3(r: 0.38, g: 0.33, b: 0.52)
+    private let fur     = Color.p3(r: 0.54, g: 0.48, b: 0.70)
+    private let furDk   = Color.p3(r: 0.36, g: 0.30, b: 0.50)
+    private let furLt   = Color.p3(r: 0.74, g: 0.68, b: 0.86)
 
     var body: some View {
         ZStack {
-            Capsule().fill(LinearGradient(colors: [fur, furDk], startPoint: .leading, endPoint: .trailing)).frame(width: 22, height: 6).rotationEffect(.degrees(35)).offset(x: 14, y: 8)
-            Capsule().fill(furDk).frame(width: 10, height: 5).rotationEffect(.degrees(80)).offset(x: 20, y: 3)
-            Ellipse().fill(LinearGradient(colors: [fur, furDk], startPoint: .top, endPoint: .bottom)).frame(width: 30, height: 22).scaleEffect(y: breathe ? 1.04 : 1.0).scaleEffect(x: purr ? 1.01 : 0.99)
-            Circle().fill(fur).frame(width: 16, height: 16).offset(x: -9, y: -6)
-            Triangle().fill(fur).frame(width: 6, height: 10).rotationEffect(.degrees(isNearEnd ? (fidget ? -18 : -2) : -10)).offset(x: -15, y: -14)
-            Triangle().fill(Color.pink.opacity(0.35)).frame(width: 3.5, height: 6).rotationEffect(.degrees(-10)).offset(x: -15, y: -13)
-            Triangle().fill(fur).frame(width: 6, height: 10).rotationEffect(.degrees(isNearEnd ? (fidget ? 12 : -2) : 5)).offset(x: -5, y: -15)
-            Triangle().fill(Color.pink.opacity(0.35)).frame(width: 3.5, height: 6).rotationEffect(.degrees(5)).offset(x: -5, y: -14)
-            Triangle().fill(Color.pink.opacity(0.7)).frame(width: 3, height: 2).rotationEffect(.degrees(180)).offset(x: -12, y: -4)
+            // Graceful Curved Vector Cat Tail
+            ZStack {
+                CatTailShape()
+                    .stroke(
+                        LinearGradient(
+                            colors: [fur, furDk],
+                            startPoint: .leading,
+                            endPoint: .topTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 5.0, lineCap: .round, lineJoin: .round)
+                    )
+                
+                // Dark tail tip cap
+                Circle()
+                    .fill(furDk)
+                    .frame(width: 5, height: 5)
+                    .offset(x: 9, y: -8)
+            }
+            .frame(width: 24, height: 20)
+            .offset(x: 17, y: 1)
+            .rotationEffect(.degrees(tailSway ? 6 : -3), anchor: .bottomLeading)
 
+            // Curled Sleeping Kitten Body
+            Ellipse()
+                .fill(
+                    LinearGradient(
+                        colors: [fur, furDk],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 32, height: 23)
+                .scaleEffect(y: breathe ? 1.04 : 1.0)
+                .scaleEffect(x: purr ? 1.01 : 0.99)
+
+            // Soft Lavender Belly Patch
+            Ellipse()
+                .fill(furLt.opacity(0.40))
+                .frame(width: 14, height: 10)
+                .offset(x: -4, y: 4)
+
+            // Kitten Head
+            Circle()
+                .fill(fur)
+                .frame(width: 18, height: 18)
+                .offset(x: -11, y: -6)
+
+            // Cat Ears
+            // Left Ear
+            ZStack {
+                Triangle().fill(furDk).frame(width: 7, height: 11)
+                Triangle().fill(fur).frame(width: 6, height: 9.5).offset(y: 1)
+                Triangle().fill(Color.pink.opacity(0.40)).frame(width: 3.5, height: 6.5).offset(y: 2)
+            }
+            .rotationEffect(.degrees(isNearEnd ? (fidget ? -18 : -2) : -12))
+            .offset(x: -16, y: -14)
+
+            // Right Ear
+            ZStack {
+                Triangle().fill(furDk).frame(width: 7, height: 11)
+                Triangle().fill(fur).frame(width: 6, height: 9.5).offset(y: 1)
+                Triangle().fill(Color.pink.opacity(0.40)).frame(width: 3.5, height: 6.5).offset(y: 2)
+            }
+            .rotationEffect(.degrees(isNearEnd ? (fidget ? 12 : -2) : 6))
+            .offset(x: -6, y: -15)
+
+            // Tiny Pink Nose
+            Triangle()
+                .fill(Color.pink.opacity(0.80))
+                .frame(width: 3, height: 2)
+                .rotationEffect(.degrees(180))
+                .offset(x: -14, y: -4)
+
+            // Sleeping Eye or Alert Eye
             if isNearEnd {
-                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -12, y: -7)
-                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -7, y: -7)
+                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -13, y: -7)
+                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -8, y: -7)
             } else {
-                Arc().stroke(Color.white.opacity(0.7), lineWidth: 1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -12, y: -7)
-                Arc().stroke(Color.white.opacity(0.7), lineWidth: 1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -7, y: -7)
+                Arc().stroke(Color.white.opacity(0.80), lineWidth: 1.1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -13, y: -7)
+                Arc().stroke(Color.white.opacity(0.80), lineWidth: 1.1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -8, y: -7)
             }
 
+            // Fine Whiskers
             ForEach(0..<3, id: \.self) { i in
-                Capsule().fill(Color.white.opacity(0.25)).frame(width: 8, height: 0.5).rotationEffect(.degrees(Double(i - 1) * 12 - 5)).offset(x: -18, y: -3 + CGFloat(i) * 2)
+                Capsule()
+                    .fill(Color.white.opacity(0.35))
+                    .frame(width: 8, height: 0.6)
+                    .rotationEffect(.degrees(Double(i - 1) * 12 - 5))
+                    .offset(x: -20, y: -3 + CGFloat(i) * 2)
             }
 
-            Ellipse().fill(fur.opacity(0.8)).frame(width: 5, height: 4).offset(x: -4, y: 5)
-            Ellipse().fill(fur.opacity(0.8)).frame(width: 5, height: 4).offset(x: 3, y: 5)
-            Circle().fill(Color.pink.opacity(0.25)).frame(width: 2.5, height: 2.5).offset(x: -4, y: 5.5)
-            Circle().fill(Color.pink.opacity(0.25)).frame(width: 2.5, height: 2.5).offset(x: 3, y: 5.5)
+            // Tucked Paws with Cute Pink Toe Beans
+            Ellipse().fill(fur).frame(width: 5.5, height: 4.5).offset(x: -5, y: 6)
+            Ellipse().fill(fur).frame(width: 5.5, height: 4.5).offset(x: 2, y: 6)
+            Circle().fill(Color.pink.opacity(0.40)).frame(width: 2.5, height: 2.5).offset(x: -5, y: 6.5)
+            Circle().fill(Color.pink.opacity(0.40)).frame(width: 2.5, height: 2.5).offset(x: 2, y: 6.5)
 
+            // Rosy Blush
+            Circle().fill(Color.pink.opacity(0.30)).frame(width: 4, height: 4).offset(x: -15, y: -2)
+
+            // Sleeping 'z' bubbles
             Text("z").font(.system(size: 6, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -25 : -16).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
             Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 18 : 5, y: zzz ? -31 : -22).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.35))
 
+            // Near-End Alert '?'
             if isNearEnd {
                 Text("?").font(.system(size: 7, weight: .bold, design: .rounded))
                     .foregroundColor(Color.p3(h: 0.72, s: 0.45, b: 1.0, a: 0.7, level: .rimHighlight)).offset(x: 0, y: -21)
@@ -691,6 +924,7 @@ struct SleepingCat: View {
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) { breathe = true }
             withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { purr = true }
+            withAnimation(.easeInOut(duration: 3.5).repeatForever(autoreverses: true)) { tailSway = true }
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: false)) { zzz = true }
         }
     }
