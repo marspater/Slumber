@@ -1118,10 +1118,10 @@ struct AnimatedScene: View {
                 CuteCloud2(scale: 0.75).offset(x: 105, y: -30)
             }
 
-            // Companion — position, 360° space somersault tumble, depth & floating drift
-            // all driven by real time inside TimelineView so values are continuous.
+            // Companion & Gravitational Transfer Trajectory — position, 360° space somersault tumble,
+            // stardust wake & zero-gravity floating drift driven continuously in real time.
             if isVisible {
-                TimelineView(.animation(paused: !isVisible || !timerModel.isRunning)) { timeline in
+                TimelineView(.animation(paused: !isVisible || (!timerModel.isRunning && orbitProgress == 0.0))) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
                     let elapsed: Double = {
                         guard let start = orbitStartTime else { return 0 }
@@ -1139,9 +1139,42 @@ struct AnimatedScene: View {
                     let orbitX = moonX + CGFloat(cos(rad)) * orbitRadiusX
                     let orbitY = moonY + CGFloat(sin(rad)) * orbitRadiusY
 
-                    // Smooth transition between idle (cloud) and orbit target
-                    let targetX = cloudX + (orbitX - cloudX) * orbitProgress
-                    let targetY = cloudY + (orbitY - cloudY) * orbitProgress
+                    // --- Gravitational Transfer Arc (Quadratic Bézier Slingshot) ---
+                    // Curves wide around the central timer ring instead of cutting straight across
+                    let arcCtrlX: CGFloat = -132
+                    let arcCtrlY: CGFloat = -8
+                    let p = orbitProgress
+                    let u = 1.0 - p
+
+                    let targetX = u * u * cloudX + 2.0 * u * p * arcCtrlX + p * p * orbitX
+                    let targetY = u * u * cloudY + 2.0 * u * p * arcCtrlY + p * p * orbitY
+
+                    // --- Shimmering Gravitational Stardust Wake ---
+                    let isTransferring = orbitProgress > 0.04 && orbitProgress < 0.96
+                    if isTransferring {
+                        ForEach(1...4, id: \.self) { trailIdx in
+                            let lagP = max(0.0, orbitProgress - CGFloat(trailIdx) * 0.05)
+                            let lagU = 1.0 - lagP
+                            let trailX = lagU * lagU * cloudX + 2.0 * lagU * lagP * arcCtrlX + lagP * lagP * orbitX
+                            let trailY = lagU * lagU * cloudY + 2.0 * lagU * lagP * arcCtrlY + lagP * lagP * orbitY
+                            let trailAlpha = Double(sin(orbitProgress * .pi)) * (1.0 - Double(trailIdx) * 0.22) * 0.65
+
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.p3(h: 0.78, s: 0.6, b: 1.0, a: trailAlpha, level: .rimHighlight),
+                                            Color.p3(h: 0.55, s: 0.5, b: 0.9, a: 0.0, level: .subtleHighlight)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: CGFloat(7 - trailIdx), height: CGFloat(7 - trailIdx))
+                                .blur(radius: 0.8)
+                                .offset(x: trailX, y: trailY)
+                        }
+                    }
 
                     // --- Zero-Gravity Harmonic Space Float & Micro-Drift ---
                     let idleBobY = CGFloat(sin(t * 1.2)) * 1.5 * (1.0 - orbitProgress)
@@ -1150,16 +1183,19 @@ struct AnimatedScene: View {
                     let finalX = targetX + zeroGDriftX
                     let finalY = targetY + idleBobY + zeroGDriftY
 
-                    // --- Zero-Gravity 360° Axis Somersault Tumble Physics ---
-                    // In orbit, companion does a slow, playful 360° cartoon space tumble (~6.5s per rotation)
+                    // --- Gravitational Slingshot Banking & 360° Space Tumble ---
+                    // In orbit: slow playful 360° cartoon space tumble (~6.5s per rotation)
                     let tumbleSpeed = 360.0 / 6.5
                     let continuousTumble = (elapsed * tumbleSpeed).truncatingRemainder(dividingBy: 360.0)
                     let spaceWobble = sin(elapsed * 2.2) * 12.0
                     let zeroGRotation = continuousTumble + spaceWobble
 
-                    // When idle on cloud: gentle subtle breathing tilt
+                    // While transferring: banking tilt aligning with the gravitational slingshot arc
+                    let ascentBank = Double(sin(orbitProgress * .pi)) * -18.0
                     let idleTilt = sin(t * 1.0) * 2.0
-                    let finalRotation = idleTilt * (1.0 - Double(orbitProgress)) + zeroGRotation * Double(orbitProgress)
+                    let finalRotation = idleTilt * (1.0 - Double(orbitProgress))
+                        + ascentBank * (1.0 - Double(orbitProgress)) * Double(orbitProgress) * 4.0
+                        + zeroGRotation * Double(orbitProgress * orbitProgress)
 
                     // --- Depth Scale (Perspective & Orbit Scaling) ---
                     let depthMod = 1.0 + 0.15 * CGFloat(sin(rad)) * orbitProgress
@@ -1209,11 +1245,11 @@ struct AnimatedScene: View {
                 let remaining = timerModel.timeRemaining
                 let elapsed = total - remaining
                 orbitStartTime = Date().addingTimeInterval(-elapsed)
-                withAnimation(.spring(response: 1.0, dampingFraction: 0.72)) {
+                withAnimation(.spring(response: 2.2, dampingFraction: 0.82)) {
                     orbitProgress = 1.0
                 }
             } else {
-                withAnimation(.spring(response: 0.8, dampingFraction: 0.75)) {
+                withAnimation(.spring(response: 1.6, dampingFraction: 0.84)) {
                     orbitProgress = 0.0
                 }
             }
