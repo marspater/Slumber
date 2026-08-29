@@ -1,10 +1,11 @@
 <div align="center">
   <img src="Assets/screenshot.png" alt="Slumber Sleep Timer Preview" width="340"/>
   <h1>Slumber 🌙✨</h1>
-  <p><b>An aesthetic macOS menu bar sleep timer with vector graphics, companion animations, and P3 wide-gamut visuals.</b></p>
+  <p><b>An aesthetic macOS menu bar sleep timer with vector graphics, companion animations, Display P3 wide-gamut & native EDR/HDR rendering.</b></p>
 
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
   [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
+  [![Display P3 + EDR](https://img.shields.io/badge/Display-P3%20%2B%20EDR-violet.svg)]()
   [![Version](https://img.shields.io/badge/Version-3.0-orange.svg)](https://github.com/marspater/Slumber/tags)
   [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)
 </div>
@@ -15,7 +16,7 @@
 
 **Slumber** is an ambient, minimalist menu bar application for macOS. Built with native Swift 6 and SwiftUI, it puts your Mac to sleep after a customizable countdown timer while providing a relaxing visual experience.
 
-Slumber features a Display P3 wide-gamut cosmic sky, soft vector clouds, dynamic shooting stars, and orbiting **animal companions** (the sleeping fox, purple kitten, and sleeping dodo bird) that somersault and float around the moon in zero-gravity as you drift off to sleep.
+Slumber features a **Display P3 + EDR** wide-gamut cosmic sky, soft vector clouds, dynamic shooting stars, and orbiting **animal companions** (the sleeping fox, purple kitten, and sleeping dodo bird) that somersault and float around the moon in zero-gravity as you drift off to sleep.
 
 ---
 
@@ -43,6 +44,18 @@ open /Applications/Slumber.app
 ---
 
 ## 📝 Recent Changes (v3.0)
+
+- **🌌 Display P3 + Semantic EDR/HDR Pipeline**:
+  - Root view dynamic range enabled via `.allowedDynamicRange(.high)`.
+  - Semantic headroom design tiers (`HDRLevel`):
+    - `.sdr` (`1.0×`): Sky background, companion fur/body, native UI controls, text.
+    - `.rimHighlight` (`1.1×`): Moonlit cloud rims, companion alert eye glints.
+    - `.subtleHighlight` (`1.25×`): Aurora ambient washes, timer progress ring glow, active slider thumb.
+    - `.visibleGlow` (`1.75×`): Firefly resting glow, outer moon halo.
+    - `.strongGlow` (`2.25×`): Inner moon crescent core.
+    - `.effect` (`3.0×`): Firefly peak twinkle, shooting star flash.
+  - Continuous linear headroom interpolation (`Color.p3(..., headroomBetween:and:phase:)`) for silky smooth 60/120 fps firefly twinkles and shooting star trails.
+  - Automatic display capability detection (`DisplayHeadroom.supportsEDR`) with graceful SDR fallback on non-HDR external monitors.
 
 - **🏗️ Modular Architecture (`SlumberCore`)**:
   - Decoupled business logic and timer state into standalone `SlumberCore` module.
@@ -74,9 +87,10 @@ open /Applications/Slumber.app
 
 ## ✨ Features & Architecture
 
-### 🎨 1. Beautiful Vector Graphics Engine
+### 🎨 1. Display P3 + EDR Graphics Engine
 - Pure SwiftUI vector path shapes for clouds, twinkling stars, and cosmic auroras.
-- Display P3 wide-gamut color definitions (`Color.p3(...)`) for vibrant colors across both Light & Dark OS themes.
+- Display P3 wide-gamut color definitions with Apple native `.headroom(_:)` integration.
+- Context-aware EDR scaling preserving high contrast between dim backgrounds and glowing celestial lights.
 
 ### 🦊 2. Animated Animal Companions
 - **Sleeping Fox, Kitten & Dodo**: Interactive companions resting on soft clouds during idle state, smoothly transitioning to orbit and somersault around the sleeping moon when a countdown starts.

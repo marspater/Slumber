@@ -1168,6 +1168,7 @@ struct TabButton: View {
     @Binding var currentTab: Int
     var animationNamespace: Namespace.ID
     @State private var isHovered = false
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     
     var body: some View {
         let active = currentTab == tag
@@ -1183,28 +1184,24 @@ struct TabButton: View {
                 Text(title)
                     .font(.system(size: 13, weight: active ? .bold : .medium, design: .rounded))
             }
-            .foregroundColor(active ? .white : (isHovered ? .white.opacity(0.85) : .white.opacity(0.45)))
+            .foregroundColor(active ? .white : (isHovered ? .white.opacity(0.85) : .white.opacity(reduceTransparency ? 0.65 : 0.45)))
             .padding(.vertical, 7)
             .padding(.horizontal, 16)
             .background {
                 if active {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.p3(h: 0.75, s: 0.65, b: 0.92).opacity(0.16))
+                        .fill(reduceTransparency ? Color(red: 0.24, green: 0.20, blue: 0.36) : Color.p3(h: 0.75, s: 0.65, b: 0.92).opacity(0.16))
                         .overlay(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .stroke(
-                                    LinearGradient(
-                                        colors: [Color.white.opacity(0.30), Color.white.opacity(0.08)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 0.75
+                                    reduceTransparency ? Color.white.opacity(0.45) : Color.white.opacity(0.30),
+                                    lineWidth: reduceTransparency ? 1.0 : 0.75
                                 )
                         )
                         .matchedGeometryEffect(id: "activeTabIndicator", in: animationNamespace)
                 } else if isHovered {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.white.opacity(0.05))
+                        .fill(reduceTransparency ? Color.white.opacity(0.12) : Color.white.opacity(0.05))
                 }
             }
         }
@@ -1223,6 +1220,7 @@ struct PresetChip: View {
     @Binding var selectedMinutes: Int
     let accent: Color
     @State private var isHovered = false
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     
     var body: some View {
         let selected = selectedMinutes == value
@@ -1236,9 +1234,13 @@ struct PresetChip: View {
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(selected ? accent.opacity(0.34) : (isHovered ? Color.white.opacity(0.10) : Color.white.opacity(0.065)))
+                            .fill(
+                                selected
+                                    ? (reduceTransparency ? Color(red: 0.38, green: 0.32, blue: 0.55) : accent.opacity(0.34))
+                                    : (isHovered ? (reduceTransparency ? Color.white.opacity(0.18) : Color.white.opacity(0.10)) : (reduceTransparency ? Color.white.opacity(0.12) : Color.white.opacity(0.065)))
+                            )
                         
-                        if selected {
+                        if selected && !reduceTransparency {
                             VStack {
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                                     .fill(LinearGradient(colors: [Color.white.opacity(0.22), Color.clear], startPoint: .top, endPoint: .bottom))
@@ -1249,21 +1251,26 @@ struct PresetChip: View {
                         }
                     }
                 )
-                .foregroundColor(selected ? .white : (isHovered ? .white : .white.opacity(0.65)))
+                .foregroundColor(selected ? .white : (isHovered ? .white : .white.opacity(reduceTransparency ? 0.85 : 0.65)))
                 .scaleEffect(selected ? 1.04 : (isHovered ? 1.02 : 1.0))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(selected ? 0.38 : (isHovered ? 0.20 : 0.10)),
-                                    Color.white.opacity(0.03)
-                                ],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 0.75
-                        )
-                )
+                .overlay {
+                    if reduceTransparency {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(selected ? Color.white.opacity(0.6) : Color.white.opacity(0.25), lineWidth: 1.0)
+                    } else {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(selected ? 0.38 : (isHovered ? 0.20 : 0.10)),
+                                        Color.white.opacity(0.03)
+                                    ],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.75
+                            )
+                    }
+                }
                 .shadow(color: selected ? accent.opacity(0.25) : .clear, radius: 6)
         }
         .buttonStyle(.plain)
@@ -1283,16 +1290,17 @@ struct ErrorBanner: View {
     let reason: String
     let onRetry: () -> Void
     let onDismiss: () -> Void
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color.p3(h: 0.08, s: 0.85, b: 0.98))
+                .foregroundColor(Color.p3(h: 0.08, s: 0.85, b: 0.98, level: .rimHighlight))
             
             Text(reason)
                 .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundColor(.white.opacity(0.95))
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
             
@@ -1307,9 +1315,9 @@ struct ErrorBanner: View {
                     .background(
                         ZStack {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(Color.p3(h: 0.08, s: 0.75, b: 0.65).opacity(0.35))
+                                .fill(reduceTransparency ? Color(red: 0.35, green: 0.20, blue: 0.12) : Color.p3(h: 0.08, s: 0.75, b: 0.65).opacity(0.35))
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .stroke(Color.white.opacity(0.25), lineWidth: 0.75)
+                                .stroke(Color.white.opacity(reduceTransparency ? 0.45 : 0.25), lineWidth: 0.75)
                         }
                     )
             }
@@ -1318,7 +1326,7 @@ struct ErrorBanner: View {
             Button(action: onDismiss) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(.white.opacity(reduceTransparency ? 0.7 : 0.4))
             }
             .buttonStyle(.plain)
         }
@@ -1326,21 +1334,19 @@ struct ErrorBanner: View {
         .padding(.vertical, 9)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.black.opacity(0.45))
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.06))
+                if reduceTransparency {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(red: 0.16, green: 0.10, blue: 0.09))
+                } else {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.black.opacity(0.45))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
+                }
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.p3(h: 0.08, s: 0.85, b: 0.98).opacity(0.4),
-                                Color.white.opacity(0.08)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.75
+                        Color.p3(h: 0.08, s: 0.85, b: 0.98).opacity(reduceTransparency ? 0.7 : 0.4),
+                        lineWidth: reduceTransparency ? 1.0 : 0.75
                     )
             }
         )
@@ -1447,6 +1453,7 @@ struct QuitButton: View {
 struct SettingsCard<Content: View>: View {
     let content: Content
     @State private var isHovered = false
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
@@ -1456,22 +1463,27 @@ struct SettingsCard<Content: View>: View {
         content
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(isHovered ? 0.06 : 0.035))
+            .background(reduceTransparency ? Color(red: 0.14, green: 0.13, blue: 0.21) : Color.white.opacity(isHovered ? 0.06 : 0.035))
             .cornerRadius(14)
             .scaleEffect(isHovered ? 1.01 : 1.0)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(isHovered ? 0.20 : 0.12),
-                                Color.white.opacity(0.03)
-                            ],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.75
-                    )
-            )
+            .overlay {
+                if reduceTransparency {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.white.opacity(isHovered ? 0.35 : 0.22), lineWidth: 1.0)
+                } else {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(isHovered ? 0.20 : 0.12),
+                                    Color.white.opacity(0.03)
+                                ],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.75
+                        )
+                }
+            }
             .onHover { hovering in
                 withAnimation(.easeOut(duration: 0.18)) {
                     isHovered = hovering
@@ -1491,6 +1503,7 @@ struct SlumberView: View {
     @State private var currentTab = 0
     @State private var companionType: Int = Int.random(in: 0...2)
     @Namespace private var tabNamespace
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     private let accent = Color.p3(h: 0.75, s: 0.65, b: 0.92)
     private let cyan   = Color.p3(h: 0.53, s: 0.55, b: 0.97)
@@ -1526,10 +1539,21 @@ struct SlumberView: View {
 
     var body: some View {
         ZStack {
-            VisualEffectView(material: .popover, blendingMode: .behindWindow)
+            if reduceTransparency {
+                Color(red: 0.07, green: 0.06, blue: 0.12)
+            } else {
+                VisualEffectView(material: .popover, blendingMode: .behindWindow)
+            }
 
-            LinearGradient(colors: [skyTop.opacity(0.65), skyBot.opacity(0.75)], startPoint: .top, endPoint: .bottom)
-                .animation(.easeInOut(duration: 1.0), value: skyPhase)
+            LinearGradient(
+                colors: [
+                    skyTop.opacity(reduceTransparency ? 1.0 : 0.65),
+                    skyBot.opacity(reduceTransparency ? 1.0 : 0.75)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .animation(.easeInOut(duration: 1.0), value: skyPhase)
 
             AnimatedScene(
                 timerModel: timerModel,
@@ -1546,11 +1570,11 @@ struct SlumberView: View {
                 .padding(3)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color.white.opacity(0.05))
+                        .fill(reduceTransparency ? Color(red: 0.13, green: 0.12, blue: 0.19) : Color.white.opacity(0.05))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+                        .stroke(reduceTransparency ? Color.white.opacity(0.22) : Color.white.opacity(0.08), lineWidth: 0.5)
                 )
                 .padding(.top, 16)
                 .padding(.horizontal, 16)

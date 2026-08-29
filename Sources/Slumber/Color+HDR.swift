@@ -34,15 +34,21 @@ public enum HDRLevel: Double, CaseIterable, Sendable {
 // MARK: - Display capability
 
 #if os(macOS)
-/// Whether the *current* screen can actually render extended dynamic range.
+/// Hardware display capability detection for dynamic color space and EDR mapping.
 ///
 /// Slumber is a menu bar app: its popover can be shown on whichever display
-/// currently owns the menu bar (e.g. non-HDR external monitor). Always check
-/// before assuming EDR headroom is available.
-public enum DisplayHeadroom {
-    /// True if this screen supports EDR at all (independent of current brightness state).
+/// currently owns the menu bar (e.g. built-in Retina panel, P3 external monitor,
+/// or non-HDR sRGB standard screen).
+public enum DisplayCapability {
+    /// True if the current display hardware supports EDR (> 1.0 peak luminance).
     public static func supportsEDR(_ screen: NSScreen? = .main) -> Bool {
         Double(screen?.maximumPotentialExtendedDynamicRangeColorComponentValue ?? 1.0) > 1.0
+    }
+
+    /// True if the current display hardware supports wide-gamut Display P3.
+    public static func supportsWideColorP3(_ screen: NSScreen? = .main) -> Bool {
+        guard let targetScreen = screen ?? .main else { return true }
+        return targetScreen.canRepresent(.p3)
     }
 
     /// The live headroom currently available on screen right now.
@@ -50,13 +56,15 @@ public enum DisplayHeadroom {
         Double(screen?.maximumExtendedDynamicRangeColorComponentValue ?? 1.0)
     }
 }
+
+public typealias DisplayHeadroom = DisplayCapability
 #endif
 
 extension HDRLevel {
     /// This level, or `.sdr` if the current display can't render EDR at all.
     public var effective: HDRLevel {
         #if os(macOS)
-        DisplayHeadroom.supportsEDR() ? self : .sdr
+        DisplayCapability.supportsEDR() ? self : .sdr
         #else
         self
         #endif
@@ -66,7 +74,10 @@ extension HDRLevel {
 // MARK: - Color Extension
 
 extension Color {
-    /// Display P3 color with an explicit, named HDR headroom tier (unlabeled RGB).
+    /// Constructs a color matching the active display's capabilities:
+    /// - EDR + P3: Display P3 color annotated with linear .headroom(...)
+    /// - P3 without EDR: Display P3 color within standard SDR luminance
+    /// - sRGB without EDR: sRGB-safe color clamped within [0, 1] gamut
     public static func p3(
         _ red: Double,
         _ green: Double,
@@ -74,7 +85,22 @@ extension Color {
         _ opacity: Double = 1.0,
         level: HDRLevel = .sdr
     ) -> Color {
-        let base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
+        #if os(macOS)
+        let isWideP3 = DisplayCapability.supportsWideColorP3()
+        #else
+        let isWideP3 = true
+        #endif
+
+        let base: Color
+        if isWideP3 {
+            base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
+        } else {
+            let clampedR = min(max(red, 0.0), 1.0)
+            let clampedG = min(max(green, 0.0), 1.0)
+            let clampedB = min(max(blue, 0.0), 1.0)
+            base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
+        }
+
         let effectiveLevel = level.effective
         guard effectiveLevel != .sdr else { return base }
         return base.headroom(effectiveLevel.rawValue)
@@ -125,7 +151,22 @@ extension Color {
         and high: HDRLevel,
         phase: Double // 0...1
     ) -> Color {
-        let base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
+        #if os(macOS)
+        let isWideP3 = DisplayCapability.supportsWideColorP3()
+        #else
+        let isWideP3 = true
+        #endif
+
+        let base: Color
+        if isWideP3 {
+            base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
+        } else {
+            let clampedR = min(max(red, 0.0), 1.0)
+            let clampedG = min(max(green, 0.0), 1.0)
+            let clampedB = min(max(blue, 0.0), 1.0)
+            base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
+        }
+
         guard low.effective != .sdr || high.effective != .sdr else { return base }
         let clampedPhase = min(max(phase, 0.0), 1.0)
         let lowVal = low.effective.rawValue
