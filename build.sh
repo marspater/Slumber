@@ -45,12 +45,14 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>com.marspater.slumber2</string>
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
+    <key>CFBundleDisplayName</key>
+    <string>${APP_NAME}</string>
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>3.0</string>
+    <string>3.1</string>
     <key>CFBundleVersion</key>
-    <string>3.0</string>
+    <string>3.1</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>MinimumOSVersion</key>
@@ -85,11 +87,5 @@ else
 fi
 
 touch "${APP_DIR}"
-
-echo "Registering app bundle icon with macOS LaunchServices..."
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R "${APP_DIR}" || true
-qlmanage -r cache > /dev/null 2>&1 || true
-killall Dock 2>/dev/null || true
-killall Finder 2>/dev/null || true
 
 echo "Build complete. App is ready at ${APP_DIR}!"
