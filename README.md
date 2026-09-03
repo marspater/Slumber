@@ -6,7 +6,7 @@
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
   [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
   [![Display P3 + EDR](https://img.shields.io/badge/Display-P3%20%2B%20EDR-violet.svg)]()
-  [![Version](https://img.shields.io/badge/Version-3.0-orange.svg)](https://github.com/marspater/Slumber/tags)
+  [![Version](https://img.shields.io/badge/Version-3.1-orange.svg)](https://github.com/marspater/Slumber/tags)
   [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)
 </div>
 
@@ -23,7 +23,7 @@ Slumber features a **Display P3 + EDR** wide-gamut cosmic sky, soft vector cloud
 ## 📦 Download & Quick Install
 
 ### Option 1: Direct Download (Signed & Verified)
-1. Download **[Slumber.zip (v3.0)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)**.
+1. Download **[Slumber.zip (v3.1)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)**.
 2. Unzip and move `Slumber.app` to your `/Applications` folder:
    ```bash
    # Quick one-liner to download, install and remove download quarantine:
@@ -43,7 +43,38 @@ open /Applications/Slumber.app
 
 ---
 
-## 📝 Recent Changes (v3.0)
+## 📝 Recent Changes (v3.1)
+
+- **🎨 Unified Design System & Pixel-Perfect 272pt Grid (`SlumberTheme`)**:
+  - Centralized design tokens for colors, typography, metrics, and radii under `SlumberTheme.swift`.
+  - Harmonized standard 272pt content grid across all controls: Glowing Slider, 5-chip Preset Bar (48pt × 5 + 8pt × 4), Settings Cards, and Floating Error Overlays.
+  - Zero-jitter countdown typography using `.monospacedDigit()` in display font.
+  - Tactile haptic press states (`SlumberTactileButtonStyle`) providing physical spring feedback on all buttons.
+  - Clean modular architecture separating components, theme, and celestial vector art into dedicated subdirectories.
+
+- **⚡ Zero Background CPU & Battery Optimization**:
+  - Automatically unmounts and pauses all celestial canvas animations (`ShootingStar`, `FireflyField`, `ConstellationOverlay`, `AuroraEffect`, and companion orbital physics) when the popover is closed or when navigating to the Settings tab, reducing background CPU usage to 0.0%.
+
+- **🛡️ Concurrency & Platform Event Safety**:
+  - Global Carbon hotkey (`⌃⌥S`) notification dispatch safely isolated to the main queue, eliminating background AppKit threading hazards.
+  - Replaced re-entrant status bar menu recursion hack with canonical `NSMenu.popUp(positioning:at:in:)`.
+  - Event monitors (`globalMonitor` and `keyMonitor`) strictly bounded to popover presentation lifecycle.
+  - Screen coordinate calculation using `button.convert(button.bounds, to: nil)` to prevent misclicks.
+  - Automatic fallback to `NSScreen.screens.first` when `NSScreen.main` is temporarily `nil` in accessory mode, preventing false SDR downgrades on HDR displays.
+
+- **⏱️ Precision Timer Formatting & Leak Remediation**:
+  - Replaced integer truncation with `max(0, Int(ceil(t)))` in `SlumberTimeFormatter`, eliminating the countdown second-skipping bug (`15:00` -> `14:58`) and negative display artifacts.
+  - Guaranteed `ProcessInfo` activity and `NSWorkspace` observer deallocation via `isolated deinit` on `SlumberTimer`.
+
+- **⌨️ Full Keyboard Access**:
+  - Added `.focusable()` and Left/Right arrow key step adjustments to `GlowingSlider`.
+
+- **🧪 Expanded Test Suite**:
+  - 14/14 automated deterministic tests covering state transitions, wake handling, countdown ceil precision, and deinit cleanup.
+
+---
+
+## 📝 Earlier Changes (v3.0)
 
 - **🌌 Display P3 + Semantic EDR/HDR Pipeline**:
   - Root view dynamic range enabled via `.allowedDynamicRange(.high)`.

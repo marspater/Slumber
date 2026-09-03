@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Run Tests
+      run: swift test
     - name: Run Build Script
       run: |
         chmod +x build.sh
