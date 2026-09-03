@@ -295,6 +295,24 @@ public struct ConstellationOverlay: View {
     }
 }
 
+public struct ConstellationLinesShape: Shape {
+    public let stars: [CGPoint]
+    public let lines: [(Int, Int)]
+
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        for line in lines {
+            let from = stars[line.0]
+            let to = stars[line.1]
+            path.move(to: CGPoint(x: from.x * w, y: from.y * h))
+            path.addLine(to: CGPoint(x: to.x * w, y: to.y * h))
+        }
+        return path
+    }
+}
+
 public struct ConstellationPattern: View {
     public let stars: [CGPoint]
     public let lines: [(Int, Int)]
@@ -306,15 +324,8 @@ public struct ConstellationPattern: View {
             let h = geo.size.height
 
             ZStack {
-                Path { path in
-                    for line in lines {
-                        let from = stars[line.0]
-                        let to = stars[line.1]
-                        path.move(to: CGPoint(x: from.x * w, y: from.y * h))
-                        path.addLine(to: CGPoint(x: to.x * w, y: to.y * h))
-                    }
-                }
-                .stroke(Color.white.opacity(pulse ? 0.09 : 0.04), lineWidth: 0.6)
+                ConstellationLinesShape(stars: stars, lines: lines)
+                    .stroke(Color.white.opacity(pulse ? 0.09 : 0.04), lineWidth: 0.6)
 
                 ForEach(0..<stars.count, id: \.self) { i in
                     Circle()
