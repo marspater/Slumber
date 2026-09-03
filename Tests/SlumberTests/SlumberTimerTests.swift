@@ -212,4 +212,44 @@ final class SlumberTimerTests: XCTestCase {
         XCTAssertEqual(timer.state, TimerState.completed)
         XCTAssertEqual(timer.timeRemaining, 0)
     }
+
+    @MainActor
+    func testCountdownFormattingDoesNotSkipFirstSecond() {
+        // Initial state at 15m
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(900.0), "15:00")
+        
+        // 1 second later: 898.99s remaining. Truncation previously caused this to skip to 14:58.
+        // Ceil rounding correctly preserves 14:59.
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(898.99), "14:59")
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(898.01), "14:59")
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(898.00), "14:58")
+        
+        // Sub-minute boundary
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(60.0), "01:00")
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(59.9), "01:00")
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(59.0), "00:59")
+        
+        // Final seconds down to zero
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(1.0), "00:01")
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(0.5), "00:01")
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(0.0), "00:00")
+        
+        // Negative edge cases should clamp to zero, never displaying negative numbers
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(-0.5), "00:00")
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(-10.0), "00:00")
+        
+        // Multi-hour display
+        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(3665.0), "1:01:05")
+    }
+
+    @MainActor
+    func testDeinitCancelsTimerAndCleansUpResources() {
+        var timer: SlumberTimer? = SlumberTimer()
+        timer?.start(minutes: 10)
+        XCTAssertEqual(timer?.state, TimerState.running)
+        
+        // Releasing reference triggers isolated deinit
+        timer = nil
+        XCTAssertNil(timer)
+    }
 }

@@ -489,11 +489,11 @@ public struct SleepingDodo: View {
 public struct AnimatedScene: View {
     @ObservedObject public var timerModel: SlumberTimer
     public let companionType: Int
+    public let isVisible: Bool
     @Environment(\.colorScheme) var colorScheme
 
     @State private var orbitStartTime: Date? = nil
     @State private var orbitProgress:  CGFloat = 0.0
-    @State private var isVisible:      Bool = true
 
     private let orbitDuration: Double = 90.0
     private let orbitRadiusX: CGFloat = 56
@@ -504,9 +504,10 @@ public struct AnimatedScene: View {
     private let moonX:  CGFloat =   95
     private let moonY:  CGFloat = -135
 
-    public init(timerModel: SlumberTimer, companionType: Int) {
+    public init(timerModel: SlumberTimer, companionType: Int, isVisible: Bool = true) {
         self.timerModel = timerModel
         self.companionType = companionType
+        self.isVisible = isVisible
     }
 
     public var body: some View {
@@ -626,15 +627,9 @@ public struct AnimatedScene: View {
         .onReceive(NotificationCenter.default.publisher(
             for: .slumberOpening)
         ) { _ in
-            isVisible = true
             syncSceneState()
         }
-        .onReceive(NotificationCenter.default.publisher(
-            for: .slumberClosed)
-        ) { _ in
-            isVisible = false
-        }
-        .onAppear   { syncSceneState() }
+        .onAppear { syncSceneState() }
         .onChange(of: isVisible) { _, visible in if visible { syncSceneState() } }
         .onChange(of: timerModel.isRunning) { _, running in
             if running {

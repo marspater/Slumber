@@ -30,7 +30,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         popover.appearance = NSAppearance(named: .vibrantDark)
         popover.delegate = self
 
-        setupGlobalMonitor()
         setupGlobalHotkey()
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleTogglePopoverNotification), name: .slumberTogglePopover, object: nil)
@@ -62,6 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func setupGlobalMonitor() {
+        guard globalMonitor == nil else { return }
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             guard let self = self else { return }
             Task { @MainActor in
@@ -70,13 +70,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 if let button = self.statusItem.button,
                    let window = button.window {
                     let mouseLocation = NSEvent.mouseLocation
-                    let buttonRect = window.convertToScreen(button.frame)
+                    let buttonBoundsInWindow = button.convert(button.bounds, to: nil)
+                    let buttonRect = window.convertToScreen(buttonBoundsInWindow)
                     if buttonRect.contains(mouseLocation) {
                         return
                     }
                 }
                 self.requestClosePopover()
             }
+        }
+    }
+
+    private func removeGlobalMonitor() {
+        if let monitor = globalMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalMonitor = nil
         }
     }
 
@@ -98,7 +106,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 &hotKeyID
             )
             if status == noErr && hotKeyID.signature == 1397443650 && hotKeyID.id == 1 {
-                NotificationCenter.default.post(name: .slumberTogglePopover, object: nil)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .slumberTogglePopover, object: nil)
+                }
                 return noErr
             }
             return CallNextEventHandler(nextHandler, theEvent)
@@ -131,6 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        timerModel.stop()
         if let hk = hotKeyRef {
             UnregisterEventHotKey(hk)
             hotKeyRef = nil
@@ -139,10 +150,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             RemoveEventHandler(eh)
             eventHandlerRef = nil
         }
-        if let monitor = globalMonitor {
-            NSEvent.removeMonitor(monitor)
-            globalMonitor = nil
-        }
+        removeGlobalMonitor()
         if let kMon = keyMonitor {
             NSEvent.removeMonitor(kMon)
             keyMonitor = nil
@@ -152,6 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     // MARK: - NSPopoverDelegate
     func popoverWillShow(_ notification: Notification) {
         NotificationCenter.default.post(name: .slumberOpening, object: nil)
+        setupGlobalMonitor()
         if keyMonitor == nil {
             keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                 if event.keyCode == 53 { // Escape
@@ -165,6 +174,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     func popoverDidClose(_ notification: Notification) {
         NotificationCenter.default.post(name: .slumberClosed, object: nil)
+        removeGlobalMonitor()
         if let kMon = keyMonitor {
             NSEvent.removeMonitor(kMon)
             keyMonitor = nil
@@ -179,11 +189,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         if let event = NSApp.currentEvent, event.type == .rightMouseUp {
             let menu = NSMenu()
             menu.addItem(NSMenuItem(title: "Quit Slumber", action: #selector(quitApp), keyEquivalent: "q"))
-            statusItem.menu = menu
-            statusItem.button?.performClick(nil)
-            DispatchQueue.main.async { [weak self] in
-                self?.statusItem.menu = nil
-            }
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height), in: sender)
         } else {
             togglePopover()
         }

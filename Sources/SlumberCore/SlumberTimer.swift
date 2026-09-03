@@ -199,4 +199,22 @@ public class SlumberTimer: ObservableObject {
         
         self.state = .completed
     }
+
+    isolated deinit {
+        resetTimerResources()
+    }
+}
+
+public enum SlumberTimeFormatter {
+    public static func formatCountdown(_ t: TimeInterval) -> String {
+        let rounded = max(0, Int(ceil(t)))
+        let hrs = rounded / 3600
+        let mins = (rounded % 3600) / 60
+        let secs = rounded % 60
+        if hrs > 0 {
+            return String(format: "%d:%02d:%02d", hrs, mins, secs)
+        } else {
+            return String(format: "%02d:%02d", mins, secs)
+        }
+    }
 }

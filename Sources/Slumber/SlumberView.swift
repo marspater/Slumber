@@ -48,6 +48,7 @@ public struct SlumberView: View {
     @State private var selectedMinutes: Int = 15
     @State private var currentTab: Int = 0
     @State private var companionType: Int = Int.random(in: 0...2)
+    @State private var isPopoverVisible: Bool = false
     @Namespace private var tabNamespace
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
@@ -104,7 +105,8 @@ public struct SlumberView: View {
 
             AnimatedScene(
                 timerModel: timerModel,
-                companionType: companionType
+                companionType: companionType,
+                isVisible: isPopoverVisible && currentTab == 0
             )
             .opacity(currentTab == 0 ? 1 : 0)
             .animation(.easeInOut(duration: 0.3), value: currentTab)
@@ -164,6 +166,12 @@ public struct SlumberView: View {
         .preferredColorScheme(.dark)
         .allowedDynamicRange(.high)
         .onChange(of: showInDock) { _, v in applyDock(v) }
+        .onReceive(NotificationCenter.default.publisher(for: .slumberOpening)) { _ in
+            isPopoverVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .slumberClosed)) { _ in
+            isPopoverVisible = false
+        }
     }
 
     // MARK: - Timer Page
@@ -179,7 +187,7 @@ public struct SlumberView: View {
                     ZStack {
                         PulsingRing(progress: prog)
                         VStack(spacing: SlumberTheme.Metrics.spaceXS) {
-                            Text(fmt(timerModel.timeRemaining))
+                            Text(SlumberTimeFormatter.formatCountdown(timerModel.timeRemaining))
                                 .font(SlumberTheme.Typography.display)
                                 .foregroundColor(SlumberTheme.Colors.textPrimary)
                                 .contentTransition(.numericText())
@@ -325,17 +333,6 @@ public struct SlumberView: View {
         .padding(.horizontal, SlumberTheme.Metrics.horizontalPadding)
         .allowsHitTesting(currentTab == 1)
         .preferredColorScheme(.dark)
-    }
-
-    private func fmt(_ t: TimeInterval) -> String {
-        let hrs = Int(t) / 3600
-        let mins = (Int(t) % 3600) / 60
-        let secs = Int(t) % 60
-        if hrs > 0 {
-            return String(format: "%d:%02d:%02d", hrs, mins, secs)
-        } else {
-            return String(format: "%02d:%02d", mins, secs)
-        }
     }
 
     private func applyDock(_ show: Bool) {

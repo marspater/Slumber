@@ -108,6 +108,23 @@ public struct GlowingSlider: View {
                 isHovered = hovering
             }
         }
+        .focusable()
+        .onKeyPress(.leftArrow) {
+            if value > bounds.lowerBound {
+                value = max(value - 1, bounds.lowerBound)
+                onEditingChanged(false)
+                return .handled
+            }
+            return .ignored
+        }
+        .onKeyPress(.rightArrow) {
+            if value < bounds.upperBound {
+                value = min(value + 1, bounds.upperBound)
+                onEditingChanged(false)
+                return .handled
+            }
+            return .ignored
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Sleep timer duration")
         .accessibilityValue("\(value) minutes")

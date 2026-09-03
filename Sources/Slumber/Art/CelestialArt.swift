@@ -553,7 +553,6 @@ public struct AuroraEffect: View {
 // MARK: - Pulsing Ring
 public struct PulsingRing: View {
     public let progress: CGFloat
-    @State private var pulse = false
 
     public init(progress: CGFloat) {
         self.progress = progress

@@ -41,19 +41,21 @@ public enum HDRLevel: Double, CaseIterable, Sendable {
 /// or non-HDR sRGB standard screen).
 public enum DisplayCapability {
     /// True if the current display hardware supports EDR (> 1.0 peak luminance).
-    public static func supportsEDR(_ screen: NSScreen? = .main) -> Bool {
-        Double(screen?.maximumPotentialExtendedDynamicRangeColorComponentValue ?? 1.0) > 1.0
+    public static func supportsEDR(_ screen: NSScreen? = nil) -> Bool {
+        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
+        return Double(targetScreen?.maximumPotentialExtendedDynamicRangeColorComponentValue ?? 1.0) > 1.0
     }
 
     /// True if the current display hardware supports wide-gamut Display P3.
-    public static func supportsWideColorP3(_ screen: NSScreen? = .main) -> Bool {
-        guard let targetScreen = screen ?? .main else { return true }
-        return targetScreen.canRepresent(.p3)
+    public static func supportsWideColorP3(_ screen: NSScreen? = nil) -> Bool {
+        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
+        return targetScreen?.canRepresent(.p3) ?? true
     }
 
     /// The live headroom currently available on screen right now.
-    public static func currentHeadroom(_ screen: NSScreen? = .main) -> Double {
-        Double(screen?.maximumExtendedDynamicRangeColorComponentValue ?? 1.0)
+    public static func currentHeadroom(_ screen: NSScreen? = nil) -> Double {
+        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
+        return Double(targetScreen?.maximumExtendedDynamicRangeColorComponentValue ?? 1.0)
     }
 }
 
