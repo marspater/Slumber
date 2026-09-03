@@ -30,7 +30,8 @@ let package = Package(
         .testTarget(
             name: "SlumberTests",
             dependencies: [
-                "SlumberCore"
+                "SlumberCore",
+                "Slumber"
             ],
             path: "Tests/SlumberTests",
             swiftSettings: [
