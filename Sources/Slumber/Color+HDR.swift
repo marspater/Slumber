@@ -40,22 +40,114 @@ public enum HDRLevel: Double, CaseIterable, Sendable {
 /// currently owns the menu bar (e.g. built-in Retina panel, P3 external monitor,
 /// or non-HDR sRGB standard screen).
 public enum DisplayCapability {
+    private struct CapabilityCache {
+        var supportsEDR: Bool?
+        var supportsWideColorP3: Bool?
+        var currentHeadroom: Double?
+    }
+
+    private static let lock = NSLock()
+    private static var cache = CapabilityCache()
+    private static var isObservingNotifications = false
+
+    private static func setupObserversIfNeeded() {
+        guard !isObservingNotifications else { return }
+        isObservingNotifications = true
+
+        let center = NotificationCenter.default
+        center.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: nil
+        ) { _ in
+            invalidateCache()
+        }
+        center.addObserver(
+            forName: NSScreen.colorSpaceDidChangeNotification,
+            object: nil,
+            queue: nil
+        ) { _ in
+            invalidateCache()
+        }
+    }
+
+    /// Invalidates all cached display capabilities.
+    public static func invalidateCache() {
+        lock.lock()
+        cache = CapabilityCache()
+        lock.unlock()
+    }
+
     /// True if the current display hardware supports EDR (> 1.0 peak luminance).
     public static func supportsEDR(_ screen: NSScreen? = nil) -> Bool {
-        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
-        return Double(targetScreen?.maximumPotentialExtendedDynamicRangeColorComponentValue ?? 1.0) > 1.0
+        if let targetScreen = screen {
+            return Double(targetScreen.maximumPotentialExtendedDynamicRangeColorComponentValue) > 1.0
+        }
+
+        lock.lock()
+        setupObserversIfNeeded()
+        if let cached = cache.supportsEDR {
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+
+        let targetScreen = NSScreen.main ?? NSScreen.screens.first
+        let value = Double(targetScreen?.maximumPotentialExtendedDynamicRangeColorComponentValue ?? 1.0) > 1.0
+
+        lock.lock()
+        cache.supportsEDR = value
+        lock.unlock()
+
+        return value
     }
 
     /// True if the current display hardware supports wide-gamut Display P3.
     public static func supportsWideColorP3(_ screen: NSScreen? = nil) -> Bool {
-        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
-        return targetScreen?.canRepresent(.p3) ?? true
+        if let targetScreen = screen {
+            return targetScreen.canRepresent(.p3)
+        }
+
+        lock.lock()
+        setupObserversIfNeeded()
+        if let cached = cache.supportsWideColorP3 {
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+
+        let targetScreen = NSScreen.main ?? NSScreen.screens.first
+        let value = targetScreen?.canRepresent(.p3) ?? true
+
+        lock.lock()
+        cache.supportsWideColorP3 = value
+        lock.unlock()
+
+        return value
     }
 
     /// The live headroom currently available on screen right now.
     public static func currentHeadroom(_ screen: NSScreen? = nil) -> Double {
-        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
-        return Double(targetScreen?.maximumExtendedDynamicRangeColorComponentValue ?? 1.0)
+        if let targetScreen = screen {
+            return Double(targetScreen.maximumExtendedDynamicRangeColorComponentValue)
+        }
+
+        lock.lock()
+        setupObserversIfNeeded()
+        if let cached = cache.currentHeadroom {
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+
+        let targetScreen = NSScreen.main ?? NSScreen.screens.first
+        let value = Double(targetScreen?.maximumExtendedDynamicRangeColorComponentValue ?? 1.0)
+
+        lock.lock()
+        cache.currentHeadroom = value
+        lock.unlock()
+
+        return value
     }
 }
 
