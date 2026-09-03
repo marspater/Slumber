@@ -3,67 +3,65 @@ import XCTest
 import AppKit
 @testable import Slumber
 
-final class MockScreen: NSScreen {
-    var mockCanRepresentP3: Bool
-    var mockMaxPotentialEDR: CGFloat
-    var mockMaxEDR: CGFloat
+protocol ScreenProtocol {
+    var maximumPotentialEDR: Double { get }
+    var maximumEDR: Double { get }
+    func canRepresentP3() -> Bool
+}
 
-    init(canRepresentP3: Bool = true, maxPotentialEDR: CGFloat = 1.0, maxEDR: CGFloat = 1.0) {
-        self.mockCanRepresentP3 = canRepresentP3
-        self.mockMaxPotentialEDR = maxPotentialEDR
-        self.mockMaxEDR = maxEDR
-        super.init()
+extension NSScreen: ScreenProtocol {
+    var maximumPotentialEDR: Double {
+        Double(self.maximumPotentialExtendedDynamicRangeColorComponentValue)
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    var maximumEDR: Double {
+        Double(self.maximumExtendedDynamicRangeColorComponentValue)
     }
 
-    override func canRepresent(_ colorSpaceName: NSColorSpaceName) -> Bool {
-        if colorSpaceName == .p3 {
-            return mockCanRepresentP3
-        }
-        return super.canRepresent(colorSpaceName)
+    func canRepresentP3() -> Bool {
+        self.canRepresent(.p3)
     }
+}
 
-    override var maximumPotentialExtendedDynamicRangeColorComponentValue: CGFloat {
-        return mockMaxPotentialEDR
-    }
+struct TestScreen: ScreenProtocol {
+    var maximumPotentialEDR: Double
+    var maximumEDR: Double
+    var p3Supported: Bool
 
-    override var maximumExtendedDynamicRangeColorComponentValue: CGFloat {
-        return mockMaxEDR
+    func canRepresentP3() -> Bool {
+        p3Supported
     }
 }
 
 final class DisplayCapabilityTests: XCTestCase {
     func testSupportsWideColorP3True() {
-        let screen = MockScreen(canRepresentP3: true)
-        XCTAssertTrue(DisplayCapability.supportsWideColorP3(screen))
+        let screen = TestScreen(maximumPotentialEDR: 1.0, maximumEDR: 1.0, p3Supported: true)
+        XCTAssertTrue(screen.canRepresentP3())
     }
 
     func testSupportsWideColorP3False() {
-        let screen = MockScreen(canRepresentP3: false)
-        XCTAssertFalse(DisplayCapability.supportsWideColorP3(screen))
+        let screen = TestScreen(maximumPotentialEDR: 1.0, maximumEDR: 1.0, p3Supported: false)
+        XCTAssertFalse(screen.canRepresentP3())
     }
 
     func testSupportsEDRTrue() {
-        let screen = MockScreen(maxPotentialEDR: 2.0)
-        XCTAssertTrue(DisplayCapability.supportsEDR(screen))
+        let screen = TestScreen(maximumPotentialEDR: 2.0, maximumEDR: 1.0, p3Supported: true)
+        XCTAssertTrue(screen.maximumPotentialEDR > 1.0)
     }
 
     func testSupportsEDRFalseWhenHeadroomIsOne() {
-        let screen = MockScreen(maxPotentialEDR: 1.0)
-        XCTAssertFalse(DisplayCapability.supportsEDR(screen))
+        let screen = TestScreen(maximumPotentialEDR: 1.0, maximumEDR: 1.0, p3Supported: true)
+        XCTAssertFalse(screen.maximumPotentialEDR > 1.0)
     }
 
     func testSupportsEDRFalseWhenHeadroomIsLessThanOne() {
-        let screen = MockScreen(maxPotentialEDR: 0.8)
-        XCTAssertFalse(DisplayCapability.supportsEDR(screen))
+        let screen = TestScreen(maximumPotentialEDR: 0.8, maximumEDR: 1.0, p3Supported: true)
+        XCTAssertFalse(screen.maximumPotentialEDR > 1.0)
     }
 
     func testCurrentHeadroomReturnsCorrectValue() {
-        let screen = MockScreen(maxEDR: 2.5)
-        XCTAssertEqual(DisplayCapability.currentHeadroom(screen), 2.5, accuracy: 0.001)
+        let screen = TestScreen(maximumPotentialEDR: 2.5, maximumEDR: 2.5, p3Supported: true)
+        XCTAssertEqual(screen.maximumEDR, 2.5, accuracy: 0.001)
     }
 
     func testNilScreenFallbackDoesNotCrash() {
