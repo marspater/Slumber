@@ -102,8 +102,7 @@ public class SlumberTimer: ObservableObject {
     }
     
     public func clearStatus() {
-        resetTimerResources()
-        state = .idle
+        stop()
     }
     
     /// Retries immediate system sleep execution after a previous attempt failed.
