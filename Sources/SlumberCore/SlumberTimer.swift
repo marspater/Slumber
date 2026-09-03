@@ -187,18 +187,19 @@ public class SlumberTimer: ObservableObject {
         }
 
         // Offload blocking AppleScript execution to a background queue to avoid blocking the main thread / MainActor
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var errorDict: NSDictionary?
             let script = NSAppleScript(source: "tell application \"System Events\" to sleep")
             let result = script?.executeAndReturnError(&errorDict)
+            let errorMessage = (errorDict?[NSAppleScript.errorMessage] as? String)
+            let isSuccess = result != nil && errorMessage == nil
 
-            DispatchQueue.main.async { [weak self] in
+            DispatchQueue.main.async {
                 guard let self = self else { return }
-                if let error = errorDict {
-                    let desc = (error[NSAppleScript.errorMessage] as? String) ?? "AppleScript execution error"
-                    NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", error)
+                if let desc = errorMessage {
+                    NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", desc)
                     self.state = .sleepFailed(reason: "Could not put Mac to sleep: \(desc)")
-                } else if result == nil {
+                } else if !isSuccess {
                     self.state = .sleepFailed(reason: "Could not put Mac to sleep.")
                 } else {
                     self.state = .completed
