@@ -181,22 +181,30 @@ public class SlumberTimer: ObservableObject {
             NSLog("[SlumberTimer] IOPMFindPowerManagement returned null port, falling back to AppleScript.")
         }
         
-        if !sleepSucceeded {
+        if sleepSucceeded {
+            self.state = .completed
+            return
+        }
+
+        // Offload blocking AppleScript execution to a background queue to avoid blocking the main thread / MainActor
+        DispatchQueue.global(qos: .userInitiated).async {
             var errorDict: NSDictionary?
             let script = NSAppleScript(source: "tell application \"System Events\" to sleep")
             let result = script?.executeAndReturnError(&errorDict)
-            if let error = errorDict {
-                let desc = (error[NSAppleScript.errorMessage] as? String) ?? "AppleScript execution error"
-                NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", error)
-                self.state = .sleepFailed(reason: "Could not put Mac to sleep: \(desc)")
-                return
-            } else if result == nil {
-                self.state = .sleepFailed(reason: "Could not put Mac to sleep.")
-                return
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                if let error = errorDict {
+                    let desc = (error[NSAppleScript.errorMessage] as? String) ?? "AppleScript execution error"
+                    NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", error)
+                    self.state = .sleepFailed(reason: "Could not put Mac to sleep: \(desc)")
+                } else if result == nil {
+                    self.state = .sleepFailed(reason: "Could not put Mac to sleep.")
+                } else {
+                    self.state = .completed
+                }
             }
         }
-        
-        self.state = .completed
     }
 
     isolated deinit {
