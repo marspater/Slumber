@@ -1,6 +1,6 @@
 import XCTest
 import SwiftUI
-@testable import Slumber
+@testable import SlumberCore
 
 final class ColorHDRTests: XCTestCase {
 
