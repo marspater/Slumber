@@ -133,20 +133,8 @@ extension Color {
         a opacity: Double = 1.0,
         level: HDRLevel = .sdr
     ) -> Color {
-        let c = brightness * saturation
-        let hp = abs(hue).truncatingRemainder(dividingBy: 1.0) * 6.0
-        let x = c * (1.0 - abs(hp.truncatingRemainder(dividingBy: 2.0) - 1.0))
-        let m = brightness - c
-        let r: Double, g: Double, bl: Double
-        switch Int(hp) % 6 {
-        case 0:  r = c;  g = x;  bl = 0
-        case 1:  r = x;  g = c;  bl = 0
-        case 2:  r = 0;  g = c;  bl = x
-        case 3:  r = 0;  g = x;  bl = c
-        case 4:  r = x;  g = 0;  bl = c
-        default: r = c;  g = 0;  bl = x
-        }
-        return p3(r + m, g + m, bl + m, opacity, level: level)
+        let rgb = hsbToRGB(h: hue, s: saturation, b: brightness)
+        return p3(rgb.red, rgb.green, rgb.blue, opacity, level: level)
     }
 
     /// Smoothly interpolates headroom between two HDR levels during continuous animations (e.g. firefly twinkle, shooting stars).
@@ -193,19 +181,7 @@ extension Color {
         and high: HDRLevel,
         phase: Double
     ) -> Color {
-        let c = brightness * saturation
-        let hp = abs(hue).truncatingRemainder(dividingBy: 1.0) * 6.0
-        let x = c * (1.0 - abs(hp.truncatingRemainder(dividingBy: 2.0) - 1.0))
-        let m = brightness - c
-        let r: Double, g: Double, bl: Double
-        switch Int(hp) % 6 {
-        case 0:  r = c;  g = x;  bl = 0
-        case 1:  r = x;  g = c;  bl = 0
-        case 2:  r = 0;  g = c;  bl = x
-        case 3:  r = 0;  g = x;  bl = c
-        case 4:  r = x;  g = 0;  bl = c
-        default: r = c;  g = 0;  bl = x
-        }
-        return p3(r + m, g + m, bl + m, opacity, headroomBetween: low, and: high, phase: phase)
+        let rgb = hsbToRGB(h: hue, s: saturation, b: brightness)
+        return p3(rgb.red, rgb.green, rgb.blue, opacity, headroomBetween: low, and: high, phase: phase)
     }
 }
