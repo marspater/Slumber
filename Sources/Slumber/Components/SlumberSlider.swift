@@ -31,6 +31,8 @@ public struct GlowingSlider: View {
         self.onEditingChanged = onEditingChanged
     }
 
+    @FocusState private var isFocused: Bool
+
     public var body: some View {
         let totalRange = Double(bounds.upperBound - bounds.lowerBound)
         let percentage = totalRange > 0 ? max(0, min(1.0, CGFloat(Double(value - bounds.lowerBound) / totalRange))) : 0
@@ -80,6 +82,14 @@ public struct GlowingSlider: View {
         }
         .frame(width: sliderWidth, height: 28)
         .contentShape(Rectangle())
+        .overlay(
+            // Elegant rounded focus indicator only active when navigated via Full Keyboard Access
+            RoundedRectangle(cornerRadius: (trackHeight + 8) / 2.0, style: .continuous)
+                .stroke(SlumberTheme.Colors.cyan.opacity(0.75), lineWidth: 1.5)
+                .frame(width: sliderWidth + 8, height: trackHeight + 8)
+                .opacity(isFocused && !isDragging ? 1.0 : 0.0)
+                .animation(.easeInOut(duration: 0.2), value: isFocused)
+        )
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { gesture in
@@ -108,7 +118,9 @@ public struct GlowingSlider: View {
                 isHovered = hovering
             }
         }
-        .focusable()
+        .focusable(NSApp.isFullKeyboardAccessEnabled)
+        .focused($isFocused)
+        .focusEffectDisabled()
         .onKeyPress(.leftArrow) {
             if value > bounds.lowerBound {
                 value = max(value - 1, bounds.lowerBound)
