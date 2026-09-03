@@ -125,5 +125,7 @@ public struct GlowingSlider: View {
                 break
             }
         }
+        .focusable(false)
+        .focusEffectDisabled()
     }
 }
