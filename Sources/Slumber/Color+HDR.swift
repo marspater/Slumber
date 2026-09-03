@@ -87,21 +87,7 @@ extension Color {
         _ opacity: Double = 1.0,
         level: HDRLevel = .sdr
     ) -> Color {
-        #if os(macOS)
-        let isWideP3 = DisplayCapability.supportsWideColorP3()
-        #else
-        let isWideP3 = true
-        #endif
-
-        let base: Color
-        if isWideP3 {
-            base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
-        } else {
-            let clampedR = min(max(red, 0.0), 1.0)
-            let clampedG = min(max(green, 0.0), 1.0)
-            let clampedB = min(max(blue, 0.0), 1.0)
-            base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
-        }
+        let base = baseP3Color(red, green, blue, opacity: opacity)
 
         let effectiveLevel = level.effective
         guard effectiveLevel != .sdr else { return base }
@@ -127,20 +113,8 @@ extension Color {
         a opacity: Double = 1.0,
         level: HDRLevel = .sdr
     ) -> Color {
-        let c = brightness * saturation
-        let hp = abs(hue).truncatingRemainder(dividingBy: 1.0) * 6.0
-        let x = c * (1.0 - abs(hp.truncatingRemainder(dividingBy: 2.0) - 1.0))
-        let m = brightness - c
-        let r: Double, g: Double, bl: Double
-        switch Int(hp) % 6 {
-        case 0:  r = c;  g = x;  bl = 0
-        case 1:  r = x;  g = c;  bl = 0
-        case 2:  r = 0;  g = c;  bl = x
-        case 3:  r = 0;  g = x;  bl = c
-        case 4:  r = x;  g = 0;  bl = c
-        default: r = c;  g = 0;  bl = x
-        }
-        return p3(r + m, g + m, bl + m, opacity, level: level)
+        let (r, g, bl) = hsbToRGB(hue: hue, saturation: saturation, brightness: brightness)
+        return p3(r, g, bl, opacity, level: level)
     }
 
     /// Smoothly interpolates headroom between two HDR levels during continuous animations (e.g. firefly twinkle, shooting stars).
@@ -153,21 +127,7 @@ extension Color {
         and high: HDRLevel,
         phase: Double // 0...1
     ) -> Color {
-        #if os(macOS)
-        let isWideP3 = DisplayCapability.supportsWideColorP3()
-        #else
-        let isWideP3 = true
-        #endif
-
-        let base: Color
-        if isWideP3 {
-            base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
-        } else {
-            let clampedR = min(max(red, 0.0), 1.0)
-            let clampedG = min(max(green, 0.0), 1.0)
-            let clampedB = min(max(blue, 0.0), 1.0)
-            base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
-        }
+        let base = baseP3Color(red, green, blue, opacity: opacity)
 
         guard low.effective != .sdr || high.effective != .sdr else { return base }
         let clampedPhase = min(max(phase, 0.0), 1.0)
@@ -201,6 +161,41 @@ extension Color {
         and high: HDRLevel,
         phase: Double
     ) -> Color {
+        let (r, g, bl) = hsbToRGB(hue: hue, saturation: saturation, brightness: brightness)
+        return p3(r, g, bl, opacity, headroomBetween: low, and: high, phase: phase)
+    }
+
+    // MARK: - Private Helpers
+
+    /// Creates a base Color matching the active display capabilities (Display P3 or sRGB).
+    private static func baseP3Color(
+        _ red: Double,
+        _ green: Double,
+        _ blue: Double,
+        opacity: Double = 1.0
+    ) -> Color {
+        #if os(macOS)
+        let isWideP3 = DisplayCapability.supportsWideColorP3()
+        #else
+        let isWideP3 = true
+        #endif
+
+        if isWideP3 {
+            return Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
+        } else {
+            let clampedR = min(max(red, 0.0), 1.0)
+            let clampedG = min(max(green, 0.0), 1.0)
+            let clampedB = min(max(blue, 0.0), 1.0)
+            return Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
+        }
+    }
+
+    /// Converts HSB parameters to RGB components.
+    private static func hsbToRGB(
+        hue: Double,
+        saturation: Double,
+        brightness: Double
+    ) -> (red: Double, green: Double, blue: Double) {
         let c = brightness * saturation
         let hp = abs(hue).truncatingRemainder(dividingBy: 1.0) * 6.0
         let x = c * (1.0 - abs(hp.truncatingRemainder(dividingBy: 2.0) - 1.0))
@@ -214,6 +209,6 @@ extension Color {
         case 4:  r = x;  g = 0;  bl = c
         default: r = c;  g = 0;  bl = x
         }
-        return p3(r + m, g + m, bl + m, opacity, headroomBetween: low, and: high, phase: phase)
+        return (r + m, g + m, bl + m)
     }
 }
