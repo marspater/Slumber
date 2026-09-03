@@ -42,15 +42,6 @@ public class SlumberTimer: ObservableObject {
     private let customSleepAction: SleepAction?
     private let dateProvider: DateProvider
     
-    private static var powerManagementPort: io_connect_t = 0
-
-    private static func getPowerManagementPort() -> io_connect_t {
-        if powerManagementPort == 0 {
-            powerManagementPort = IOPMFindPowerManagement(mach_port_t(MACH_PORT_NULL))
-        }
-        return powerManagementPort
-    }
-
     public init(
         sleepAction: SleepAction? = nil,
         dateProvider: @escaping DateProvider = { Date() }
@@ -178,14 +169,13 @@ public class SlumberTimer: ObservableObject {
         }
         
         // Native macOS IOKit C API for putting the system to sleep directly
-        let port = Self.getPowerManagementPort()
+        let port = IOPMFindPowerManagement(mach_port_t(MACH_PORT_NULL))
         var sleepSucceeded = false
         if port != 0 {
             let result = IOPMSleepSystem(port)
+            IOServiceClose(port)
             sleepSucceeded = (result == kIOReturnSuccess)
             if !sleepSucceeded {
-                IOServiceClose(port)
-                Self.powerManagementPort = 0
                 NSLog("[SlumberTimer] IOPMSleepSystem returned error code: %d, falling back to AppleScript.", result)
             }
         } else {
