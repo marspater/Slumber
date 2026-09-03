@@ -47,8 +47,8 @@ public enum DisplayCapability {
     }
 
     private static let lock = NSLock()
-    private static var cache = CapabilityCache()
-    private static var isObservingNotifications = false
+    nonisolated(unsafe) private static var cache = CapabilityCache()
+    nonisolated(unsafe) private static var isObservingNotifications = false
 
     private static func setupObserversIfNeeded() {
         guard !isObservingNotifications else { return }
