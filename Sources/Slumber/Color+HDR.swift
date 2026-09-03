@@ -120,13 +120,12 @@ extension Color {
     }
 
     /// Display P3 color with HSB parameters and an explicit HDR headroom tier.
-    public static func p3(
-        h hue: Double,
-        s saturation: Double,
-        b brightness: Double,
-        a opacity: Double = 1.0,
-        level: HDRLevel = .sdr
-    ) -> Color {
+    /// Converts HSB (hue, saturation, brightness) values into RGB components.
+    private static func hsbToRGB(
+        hue: Double,
+        saturation: Double,
+        brightness: Double
+    ) -> (r: Double, g: Double, b: Double) {
         let c = brightness * saturation
         let hp = abs(hue).truncatingRemainder(dividingBy: 1.0) * 6.0
         let x = c * (1.0 - abs(hp.truncatingRemainder(dividingBy: 2.0) - 1.0))
@@ -140,7 +139,19 @@ extension Color {
         case 4:  r = x;  g = 0;  bl = c
         default: r = c;  g = 0;  bl = x
         }
-        return p3(r + m, g + m, bl + m, opacity, level: level)
+        return (r + m, g + m, bl + m)
+    }
+
+    /// Display P3 color with HSB parameters and an explicit HDR headroom tier.
+    public static func p3(
+        h hue: Double,
+        s saturation: Double,
+        b brightness: Double,
+        a opacity: Double = 1.0,
+        level: HDRLevel = .sdr
+    ) -> Color {
+        let rgb = hsbToRGB(hue: hue, saturation: saturation, brightness: brightness)
+        return p3(rgb.r, rgb.g, rgb.b, opacity, level: level)
     }
 
     /// Smoothly interpolates headroom between two HDR levels during continuous animations (e.g. firefly twinkle, shooting stars).
@@ -201,19 +212,7 @@ extension Color {
         and high: HDRLevel,
         phase: Double
     ) -> Color {
-        let c = brightness * saturation
-        let hp = abs(hue).truncatingRemainder(dividingBy: 1.0) * 6.0
-        let x = c * (1.0 - abs(hp.truncatingRemainder(dividingBy: 2.0) - 1.0))
-        let m = brightness - c
-        let r: Double, g: Double, bl: Double
-        switch Int(hp) % 6 {
-        case 0:  r = c;  g = x;  bl = 0
-        case 1:  r = x;  g = c;  bl = 0
-        case 2:  r = 0;  g = c;  bl = x
-        case 3:  r = 0;  g = x;  bl = c
-        case 4:  r = x;  g = 0;  bl = c
-        default: r = c;  g = 0;  bl = x
-        }
-        return p3(r + m, g + m, bl + m, opacity, headroomBetween: low, and: high, phase: phase)
+        let rgb = hsbToRGB(hue: hue, saturation: saturation, brightness: brightness)
+        return p3(rgb.r, rgb.g, rgb.b, opacity, headroomBetween: low, and: high, phase: phase)
     }
 }
