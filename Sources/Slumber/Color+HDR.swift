@@ -76,6 +76,11 @@ extension HDRLevel {
 // MARK: - Color Extension
 
 extension Color {
+    /// Clamps an RGB component value to the valid sRGB range [0.0, 1.0].
+    public static func clampRGB(_ value: Double) -> Double {
+        min(max(value, 0.0), 1.0)
+    }
+
     /// Constructs a color matching the active display's capabilities:
     /// - EDR + P3: Display P3 color annotated with linear .headroom(...)
     /// - P3 without EDR: Display P3 color within standard SDR luminance
@@ -97,9 +102,9 @@ extension Color {
         if isWideP3 {
             base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
         } else {
-            let clampedR = min(max(red, 0.0), 1.0)
-            let clampedG = min(max(green, 0.0), 1.0)
-            let clampedB = min(max(blue, 0.0), 1.0)
+            let clampedR = clampRGB(red)
+            let clampedG = clampRGB(green)
+            let clampedB = clampRGB(blue)
             base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
         }
 
@@ -163,9 +168,9 @@ extension Color {
         if isWideP3 {
             base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
         } else {
-            let clampedR = min(max(red, 0.0), 1.0)
-            let clampedG = min(max(green, 0.0), 1.0)
-            let clampedB = min(max(blue, 0.0), 1.0)
+            let clampedR = clampRGB(red)
+            let clampedG = clampRGB(green)
+            let clampedB = clampRGB(blue)
             base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
         }
 
