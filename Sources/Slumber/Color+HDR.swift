@@ -81,6 +81,21 @@ extension Color {
         min(max(value, 0.0), 1.0)
     }
 
+    /// Creates a base color using Display P3 or sRGB depending on display capabilities.
+    private static func makeBaseColor(_ red: Double, _ green: Double, _ blue: Double, _ opacity: Double) -> Color {
+        #if os(macOS)
+        let isWideP3 = DisplayCapability.supportsWideColorP3()
+        #else
+        let isWideP3 = true
+        #endif
+
+        if isWideP3 {
+            return Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
+        } else {
+            return Color(.sRGB, red: clampRGB(red), green: clampRGB(green), blue: clampRGB(blue), opacity: opacity)
+        }
+    }
+
     /// Constructs a color matching the active display's capabilities:
     /// - EDR + P3: Display P3 color annotated with linear .headroom(...)
     /// - P3 without EDR: Display P3 color within standard SDR luminance
@@ -92,21 +107,7 @@ extension Color {
         _ opacity: Double = 1.0,
         level: HDRLevel = .sdr
     ) -> Color {
-        #if os(macOS)
-        let isWideP3 = DisplayCapability.supportsWideColorP3()
-        #else
-        let isWideP3 = true
-        #endif
-
-        let base: Color
-        if isWideP3 {
-            base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
-        } else {
-            let clampedR = clampRGB(red)
-            let clampedG = clampRGB(green)
-            let clampedB = clampRGB(blue)
-            base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
-        }
+        let base = makeBaseColor(red, green, blue, opacity)
 
         let effectiveLevel = level.effective
         guard effectiveLevel != .sdr else { return base }
@@ -158,21 +159,7 @@ extension Color {
         and high: HDRLevel,
         phase: Double // 0...1
     ) -> Color {
-        #if os(macOS)
-        let isWideP3 = DisplayCapability.supportsWideColorP3()
-        #else
-        let isWideP3 = true
-        #endif
-
-        let base: Color
-        if isWideP3 {
-            base = Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
-        } else {
-            let clampedR = clampRGB(red)
-            let clampedG = clampRGB(green)
-            let clampedB = clampRGB(blue)
-            base = Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
-        }
+        let base = makeBaseColor(red, green, blue, opacity)
 
         guard low.effective != .sdr || high.effective != .sdr else { return base }
         let clampedPhase = min(max(phase, 0.0), 1.0)
