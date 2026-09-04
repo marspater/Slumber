@@ -32,13 +32,48 @@ public struct GlowingSlider: View {
     }
 
     public var body: some View {
+        ZStack {
+            // 1. Visual & Interactive Slider (Hidden from accessibility system chrome)
+            sliderVisuals
+                .accessibilityHidden(true)
+
+            // 2. Decoupled Accessibility Control Layer for Assistive Technologies
+            Color.clear
+                .frame(width: sliderWidth, height: 28)
+                .contentShape(Rectangle())
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Sleep timer duration")
+                .accessibilityValue("\(value) minutes")
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment:
+                        if value < bounds.upperBound {
+                            value = min(value + 5, bounds.upperBound)
+                            onEditingChanged(false)
+                        }
+                    case .decrement:
+                        if value > bounds.lowerBound {
+                            value = max(value - 5, bounds.lowerBound)
+                            onEditingChanged(false)
+                        }
+                    @unknown default:
+                        break
+                    }
+                }
+                .allowsHitTesting(false)
+        }
+        .focusable(false)
+        .focusEffectDisabled()
+    }
+
+    private var sliderVisuals: some View {
         let totalRange = Double(bounds.upperBound - bounds.lowerBound)
         let percentage = totalRange > 0 ? max(0, min(1.0, CGFloat(Double(value - bounds.lowerBound) / totalRange))) : 0
         let trackTravel: CGFloat = sliderWidth - thumbSize
         let thumbOffset = percentage * trackTravel
         let trackFillWidth = max(0, min(sliderWidth, thumbOffset + (thumbSize / 2.0)))
 
-        ZStack(alignment: .leading) {
+        return ZStack(alignment: .leading) {
             // Background Track
             RoundedRectangle(cornerRadius: trackHeight / 2.0, style: .continuous)
                 .fill(chrome.opacity(0.10))
@@ -108,24 +143,5 @@ public struct GlowingSlider: View {
                 isHovered = hovering
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Sleep timer duration")
-        .accessibilityValue("\(value) minutes")
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment:
-                if value < bounds.upperBound {
-                    value = min(value + 5, bounds.upperBound)
-                }
-            case .decrement:
-                if value > bounds.lowerBound {
-                    value = max(value - 5, bounds.lowerBound)
-                }
-            @unknown default:
-                break
-            }
-        }
-        .focusable(false)
-        .focusEffectDisabled()
     }
 }

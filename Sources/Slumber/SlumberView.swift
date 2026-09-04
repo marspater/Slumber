@@ -319,7 +319,8 @@ public struct SlumberView: View {
             })
             .padding(.bottom, SlumberTheme.Metrics.spaceMD)
 
-            Text("Slumber v3.0")
+            let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.1"
+            Text("Slumber v\(appVersion)")
                 .font(SlumberTheme.Typography.caption.weight(.semibold))
                 .foregroundColor(SlumberTheme.Colors.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .center)
