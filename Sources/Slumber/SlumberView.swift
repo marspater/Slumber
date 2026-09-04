@@ -46,6 +46,7 @@ public struct SlumberView: View {
     @ObservedObject public var timerModel: SlumberTimer
     @AppStorage("showInDock") private var showInDock: Bool = false
     @State private var selectedMinutes: Int = 15
+    @State private var isSliding: Bool = false
     @State private var currentTab: Int = 0
     @State private var companionType: Int = Int.random(in: 0...2)
     @State private var isPopoverVisible: Bool = false
@@ -215,6 +216,7 @@ public struct SlumberView: View {
 
                     VStack(spacing: SlumberTheme.Metrics.spaceXS + 2) {
                         GlowingSlider(value: $selectedMinutes, bounds: 1...120, onEditingChanged: { editing in
+                            isSliding = editing
                             if !editing { playSound("space_button") }
                         })
                         .frame(width: SlumberTheme.Metrics.contentWidth)
@@ -230,11 +232,11 @@ public struct SlumberView: View {
                     }
 
                     HStack(spacing: SlumberTheme.Metrics.spaceSM) {
-                        PresetChip(label: "15m", value: 15, selectedMinutes: $selectedMinutes)
-                        PresetChip(label: "30m", value: 30, selectedMinutes: $selectedMinutes)
-                        PresetChip(label: "45m", value: 45, selectedMinutes: $selectedMinutes)
-                        PresetChip(label: "60m", value: 60, selectedMinutes: $selectedMinutes)
-                        PresetChip(label: "90m", value: 90, selectedMinutes: $selectedMinutes)
+                        PresetChip(label: "15m", value: 15, selectedMinutes: $selectedMinutes, isSliding: isSliding)
+                        PresetChip(label: "30m", value: 30, selectedMinutes: $selectedMinutes, isSliding: isSliding)
+                        PresetChip(label: "45m", value: 45, selectedMinutes: $selectedMinutes, isSliding: isSliding)
+                        PresetChip(label: "60m", value: 60, selectedMinutes: $selectedMinutes, isSliding: isSliding)
+                        PresetChip(label: "90m", value: 90, selectedMinutes: $selectedMinutes, isSliding: isSliding)
                     }
 
                     StartButton(action: {
