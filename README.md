@@ -6,7 +6,7 @@
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
   [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
   [![Display P3 + EDR](https://img.shields.io/badge/Display-P3%20%2B%20EDR-violet.svg)]()
-  [![Version](https://img.shields.io/badge/Version-3.1-orange.svg)](https://github.com/marspater/Slumber/tags)
+  [![Version](https://img.shields.io/badge/Version-3.2-orange.svg)](https://github.com/marspater/Slumber/tags)
   [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)
 </div>
 
@@ -23,7 +23,7 @@ Slumber features a **Display P3 + EDR** wide-gamut cosmic sky, soft vector cloud
 ## 📦 Download & Quick Install
 
 ### Option 1: Direct Download (Signed & Verified)
-1. Download **[Slumber.zip (v3.1)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)**.
+1. Download **[Slumber.zip (v3.2)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)**.
 2. Unzip and move `Slumber.app` to your `/Applications` folder:
    ```bash
    # Quick one-liner to download, install and remove download quarantine:
@@ -43,7 +43,29 @@ open /Applications/Slumber.app
 
 ---
 
-## 📝 Recent Changes (v3.1)
+## 📝 Recent Changes (v3.2)
+
+- **🎛️ Refined Slider & Control UX**:
+  - Decoupled accessibility and gesture layers in `SlumberSlider`, eliminating accessibility layout feedback loops and keyboard stepping conflicts.
+  - Suppressed preset chip state flashing and background jitter when scrubbing the duration slider.
+  - Removed rectangular focus ring on the custom slider.
+
+- **⚡ Asynchronous Sleep & Concurrency Safety**:
+  - Offloaded blocking fallback AppleScript execution (`NSAppleScript.executeAndReturnError`) to a background queue, preventing `@MainActor` thread stalls during fallback sleep.
+  - Resolved `Sendable` data race warning in async sleep dispatch.
+
+- **🌌 Vector Performance & Code Health**:
+  - Extracted celestial constellation line path calculations into `ConstellationLinesShape` conforming to SwiftUI's `Shape` protocol, avoiding redundant path calculations on redraws.
+  - Deduplicated base P3 `Color` construction and unified HSB-to-RGB conversion logic in `Color+HDR.swift`.
+  - Streamlined `SlumberTimer.clearStatus()` by reusing existing `stop()` logic.
+
+- **🛠️ Resilient Build Pipeline**:
+  - Added resilient icon generation with automatic multi-resolution `iconutil` fallback in `build.sh` when `actool` is unavailable or on newer macOS SDKs.
+  - Updated release packaging to version 3.2.
+
+---
+
+## 📝 Earlier Changes (v3.1)
 
 - **🎨 Unified Design System & Pixel-Perfect 272pt Grid (`SlumberTheme`)**:
   - Centralized design tokens for colors, typography, metrics, and radii under `SlumberTheme.swift`.
