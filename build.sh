@@ -21,17 +21,33 @@ echo "Compiling Swift release binary with SwiftPM..."
 swift build -c release
 cp ".build/release/${APP_NAME}" "${MACOS_DIR}/${APP_NAME}"
 
-# Compile Apple Icon Composer .icon package into Assets.car via actool
-echo "Compiling Icon Composer icon with actool..."
-TMP_PLIST="$(mktemp)"
-xcrun actool \
-    --compile "${RESOURCES_DIR}" \
-    --platform macosx \
-    --minimum-deployment-target 26.0 \
-    --app-icon AppIcon \
-    --output-partial-info-plist "${TMP_PLIST}" \
-    "Assets/AppIcon.icon"
-rm -f "${TMP_PLIST}"
+# Build multi-resolution AppIcon.icns from Assets/app_icon.png
+if [ -f "Assets/app_icon.png" ]; then
+    echo "Building multi-resolution AppIcon.icns..."
+    TMP_ICONSET="$(mktemp -d)/AppIcon.iconset"
+    mkdir -p "${TMP_ICONSET}"
+    for size in 16 32 128 256 512; do
+        sips -z $size $size "Assets/app_icon.png" --out "${TMP_ICONSET}/icon_${size}x${size}.png" > /dev/null 2>&1 || true
+        double=$((size * 2))
+        sips -z $double $double "Assets/app_icon.png" --out "${TMP_ICONSET}/icon_${size}x${size}@2x.png" > /dev/null 2>&1 || true
+    done
+    iconutil -c icns "${TMP_ICONSET}" -o "${RESOURCES_DIR}/AppIcon.icns" > /dev/null 2>&1 || true
+    rm -rf "$(dirname "${TMP_ICONSET}")"
+fi
+
+# Compile Apple Icon Composer .icon package into Assets.car via actool if supported
+if [ -d "Assets/AppIcon.icon" ]; then
+    echo "Compiling Icon Composer icon with actool..."
+    TMP_PLIST="$(mktemp)"
+    xcrun actool \
+        --compile "${RESOURCES_DIR}" \
+        --platform macosx \
+        --minimum-deployment-target 14.0 \
+        --app-icon AppIcon \
+        --output-partial-info-plist "${TMP_PLIST}" \
+        "Assets/AppIcon.icon" > /dev/null 2>&1 || true
+    rm -f "${TMP_PLIST}"
+fi
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
@@ -47,6 +63,8 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>${APP_NAME}</string>
     <key>CFBundleDisplayName</key>
     <string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
@@ -54,9 +72,9 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleVersion</key>
     <string>3.1</string>
     <key>LSMinimumSystemVersion</key>
-    <string>26.0</string>
+    <string>14.0</string>
     <key>MinimumOSVersion</key>
-    <string>26.0</string>
+    <string>14.0</string>
     <key>CFBundleSupportedPlatforms</key>
     <array>
         <string>MacOSX</string>
@@ -82,8 +100,8 @@ if [ -n "${SIGN_IDENTITY}" ]; then
     echo "Signing with Identity: ${SIGN_IDENTITY}"
     codesign --force --deep --options runtime --sign "${SIGN_IDENTITY}" "${APP_DIR}"
 else
-    echo "Signing ad-hoc with hardened runtime..."
-    codesign --force --deep --options runtime --sign - "${APP_DIR}"
+    echo "Signing ad-hoc..."
+    codesign --force --deep --options runtime --sign - "${APP_DIR}" 2>/dev/null || codesign --force --deep --sign - "${APP_DIR}"
 fi
 
 touch "${APP_DIR}"
