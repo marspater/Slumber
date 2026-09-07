@@ -52,6 +52,8 @@ public enum SlumberTheme {
     public enum Typography {
         /// Central timer display (e.g. "59:47" or "15") with fixed digit width
         public static let display = Font.system(size: 48, weight: .bold, design: .rounded).monospacedDigit()
+        /// Central timer display for hour-scale countdowns (e.g. "1:24:45") perfectly fitted to holo circle
+        public static let displayHours = Font.system(size: 34, weight: .bold, design: .rounded).monospacedDigit()
         /// Unit label beside display (e.g. "min")
         public static let displayUnit = Font.system(size: 16, weight: .semibold, design: .rounded)
         /// Section and card titles

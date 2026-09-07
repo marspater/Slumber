@@ -214,6 +214,11 @@ public class SlumberTimer: ObservableObject {
 }
 
 public enum SlumberTimeFormatter {
+    public static func hasHours(_ t: TimeInterval) -> Bool {
+        let rounded = max(0, Int(ceil(t)))
+        return rounded >= 3600
+    }
+
     public static func formatCountdown(_ t: TimeInterval) -> String {
         let rounded = max(0, Int(ceil(t)))
         let hrs = rounded / 3600

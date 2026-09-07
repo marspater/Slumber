@@ -185,13 +185,19 @@ public struct SlumberView: View {
                     let total = timerModel.totalTime
                     let prog = total > 0 ? CGFloat(timerModel.timeRemaining / total) : 0
 
+                    let hasHours = SlumberTimeFormatter.hasHours(timerModel.timeRemaining)
+
                     ZStack {
                         PulsingRing(progress: prog)
                         VStack(spacing: SlumberTheme.Metrics.spaceXS) {
                             Text(SlumberTimeFormatter.formatCountdown(timerModel.timeRemaining))
-                                .font(SlumberTheme.Typography.display)
+                                .font(hasHours ? SlumberTheme.Typography.displayHours : SlumberTheme.Typography.display)
                                 .foregroundColor(SlumberTheme.Colors.textPrimary)
                                 .contentTransition(.numericText())
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                                .frame(maxWidth: 136)
+                                .animation(.easeInOut(duration: 0.3), value: hasHours)
                             Text("drifting off...")
                                 .font(SlumberTheme.Typography.body)
                                 .foregroundColor(SlumberTheme.Colors.textTertiary)

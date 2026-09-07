@@ -243,6 +243,17 @@ final class SlumberTimerTests: XCTestCase {
     }
 
     @MainActor
+    func testHasHoursAccuratelyDetectsHourScaleTime() {
+        XCTAssertTrue(SlumberTimeFormatter.hasHours(7200.0))
+        XCTAssertTrue(SlumberTimeFormatter.hasHours(3600.0))
+        XCTAssertTrue(SlumberTimeFormatter.hasHours(3599.1))
+        XCTAssertFalse(SlumberTimeFormatter.hasHours(3599.0))
+        XCTAssertFalse(SlumberTimeFormatter.hasHours(900.0))
+        XCTAssertFalse(SlumberTimeFormatter.hasHours(0.0))
+        XCTAssertFalse(SlumberTimeFormatter.hasHours(-5.0))
+    }
+
+    @MainActor
     func testDeinitCancelsTimerAndCleansUpResources() {
         var timer: SlumberTimer? = SlumberTimer()
         timer?.start(minutes: 10)
