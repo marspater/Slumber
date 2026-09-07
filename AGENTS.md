@@ -17,19 +17,26 @@ The repository is a Swift Package Manager project with:
 
 ## Environment Requirements
 
-Use a macOS host with Xcode/Apple command-line developer tools installed.
+Primary development requires a macOS host with Xcode/Apple command-line developer tools installed.
 
-Required toolchain characteristics:
+Required toolchain characteristics on macOS:
 
 - Swift 6 / Swift Package Manager
 - macOS 26 SDK/runtime compatibility
 - Apple platform tooling available on the PATH (`xcrun`, `actool`, `iconutil`, `sips`, `codesign`, `security`, `xattr`)
 
-Do not attempt to build this project on Linux or Windows. Do not replace Apple frameworks with cross-platform substitutes.
+Do not attempt to compile native AppKit targets or run `build.sh` on Linux or Windows. Do not replace Apple frameworks with cross-platform substitutes.
+
+### Cloud & Container Agent Sandboxes (e.g., Jules on Linux)
+- Acknowledge that the sandbox environment is a headless Linux container lacking Apple SDKs, `AppKit`, `xcrun`, `actool`, `codesign`, and `build.sh` execution support.
+- Do not attempt native build, run, or bundle commands in Linux sandboxes.
+- Rely on static analysis, type checking logic, structural reasoning, and diff inspection.
 
 Before making changes, inspect the current repository state and existing scripts. Work from the checked-out branch exactly as provided by the environment.
 
 ## Canonical Validation Commands
+
+### On a macOS Host:
 
 Run these from the repository root:
 
@@ -44,7 +51,13 @@ chmod +x build.sh
 
 For faster iteration during source-only changes, `swift test` is the minimum validation gate. Changes touching packaging, assets, signing, app lifecycle, AppKit integration, or SwiftUI rendering should also run `./build.sh`.
 
-When a change affects the actual app behavior, prefer validating the built `.app` rather than relying only on compilation.
+When a change affects actual app behavior, prefer validating the built `.app` rather than relying only on compilation.
+
+### In a Headless Linux Sandbox (e.g., Jules):
+
+- **Do NOT execute `swift build`, `swift test`, or `./build.sh`**.
+- Perform static verification of imports, actor boundaries, method signatures, and API compatibility.
+- Ensure test files in `Tests/` are structurally updated to match `SlumberCore` changes.
 
 ## Swift 6 Concurrency Rules
 
@@ -141,11 +154,15 @@ If packaging metadata conflicts with `Package.swift`, stop and report the incons
 
 Before declaring a task complete:
 
-1. Run `swift test`.
-2. Run `swift build -c release` when source changes could affect production compilation.
-3. Run `./build.sh` for app-bundle or packaging changes.
-4. Add or update XCTest coverage for behavioral changes in `SlumberCore`.
-5. Prefer deterministic tests over real wall-clock sleeps.
+- **On macOS:**
+  1. Run `swift test`.
+  2. Run `swift build -c release` when source changes affect compilation.
+  3. Run `./build.sh` for app-bundle or packaging changes.
+- **In Jules / Linux Sandbox:**
+  1. Skip native build and packaging executions.
+  2. Thoroughly verify code diffs against Swift 6 concurrency, type safety, and target SDK API availability.
+  3. Add or update XCTest coverage in `Tests/SlumberTests` for behavioral changes in `SlumberCore`.
+  4. Note in the final summary that runtime packaging/build verification must be executed on macOS.
 
 When fixing a bug, first reproduce it or create a regression test where practical. The regression test should fail before the fix and pass after it.
 
@@ -213,10 +230,9 @@ A task is complete only when:
 - The requested behavior is implemented correctly.
 - Existing architecture and design language remain intact.
 - Swift 6 concurrency constraints are respected.
-- Relevant automated tests pass.
-- Production compilation succeeds when applicable.
-- Packaging succeeds when applicable.
+- Relevant automated tests pass (or are properly authored for macOS CI).
+- Production compilation and packaging succeed on macOS.
 - No unrelated changes are introduced.
-- The final summary identifies what changed and exactly what validation was run.
+- The final summary identifies what changed and exactly what validation was run (or deferred to macOS runners).
 
-If a check cannot run because the environment lacks macOS/Xcode/Apple tooling, state that clearly and do not pretend the change was fully validated.
+If a check cannot run because the environment lacks macOS/Xcode/Apple tooling, state that clearly and do not pretend the change was locally compiled in Linux.
