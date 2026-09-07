@@ -1,13 +1,21 @@
 #!/bin/bash
 set -e
 
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="Slumber"
-APP_DIR="${APP_NAME}.app"
+ARTIFACTS_DIR="${REPO_ROOT}/.build/artifacts"
+APP_DIR="${ARTIFACTS_DIR}/${APP_NAME}.app"
 CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 
 echo "Building ${APP_NAME}..."
+
+# Unregister and remove any legacy root app bundle to prevent LaunchServices duplicate indexing
+if [ -d "${APP_NAME}.app" ]; then
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "${APP_NAME}.app" 2>/dev/null || true
+    rm -rf "${APP_NAME}.app"
+fi
 
 # Clean old build
 rm -rf "${APP_DIR}"
@@ -105,5 +113,21 @@ else
 fi
 
 touch "${APP_DIR}"
+
+# Package Slumber.zip from hidden build artifacts directory
+echo "Packaging Slumber.zip..."
+rm -f "${REPO_ROOT}/Slumber.zip"
+(cd "${ARTIFACTS_DIR}" && zip -r -y -q "${REPO_ROOT}/Slumber.zip" "${APP_NAME}.app")
+
+# Handle optional --install / -i flag
+if [ "$1" = "--install" ] || [ "$1" = "-i" ]; then
+    echo "Installing ${APP_NAME} to /Applications..."
+    pkill -x "${APP_NAME}" 2>/dev/null || true
+    rm -rf "/Applications/${APP_NAME}.app"
+    cp -R "${APP_DIR}" /Applications/
+    xattr -cr "/Applications/${APP_NAME}.app"
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "/Applications/${APP_NAME}.app" 2>/dev/null || true
+    echo "Successfully installed to /Applications/${APP_NAME}.app!"
+fi
 
 echo "Build complete. App is ready at ${APP_DIR}!"

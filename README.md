@@ -36,8 +36,7 @@ Slumber features a **Display P3 + EDR** wide-gamut cosmic sky, soft vector cloud
 git clone https://github.com/marspater/Slumber.git
 cd Slumber
 chmod +x build.sh
-./build.sh
-cp -R Slumber.app /Applications/
+./build.sh --install
 open /Applications/Slumber.app
 ```
 
