@@ -49,7 +49,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         statusItem.isVisible = true
         
         if let button = statusItem.button {
-            if let img = NSImage(systemSymbolName: "cat.fill", accessibilityDescription: "Slumber") {
+            if let img = NSImage(systemSymbolName: "moon.circle", accessibilityDescription: "Slumber") {
                 img.isTemplate = true
                 button.image = img
             } else if let fallback = NSImage(systemSymbolName: "moon.fill", accessibilityDescription: "Slumber") {
