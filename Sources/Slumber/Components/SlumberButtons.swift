@@ -32,7 +32,7 @@ public struct StartButton: View {
                 Text("Start Sleep Timer")
                     .font(SlumberTheme.Typography.title)
             }
-            .frame(width: 240, height: 42)
+            .frame(width: SlumberTheme.Metrics.contentWidth, height: 42)
             .background(
                 LinearGradient(
                     colors: [

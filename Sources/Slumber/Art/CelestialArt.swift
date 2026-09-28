@@ -84,6 +84,7 @@ public struct TwinklingStar: View {
     public let size: CGFloat
     public let delay: Double
     public let isSparkle: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var on = false
 
     public var body: some View {
@@ -105,6 +106,8 @@ public struct TwinklingStar: View {
         .opacity(on ? 0.75 : 0.12)
         .position(position)
         .onAppear {
+            // Static but visible stars when motion is reduced (instead of the dim 0.12 rest state).
+            guard !reduceMotion else { on = true; return }
             withAnimation(
                 .easeInOut(duration: Double.random(in: 1.8...3.8))
                 .repeatForever(autoreverses: true)
@@ -275,6 +278,7 @@ public struct Firefly: View {
 
 // MARK: - Constellation Overlay
 public struct ConstellationOverlay: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var rotation: Double = 0
 
     public init() {}
@@ -288,6 +292,7 @@ public struct ConstellationOverlay: View {
         .opacity(0.3)
         .rotationEffect(.degrees(rotation))
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.linear(duration: 180).repeatForever(autoreverses: false)) {
                 rotation = 360
             }
@@ -316,6 +321,7 @@ public struct ConstellationLinesShape: Shape {
 public struct ConstellationPattern: View {
     public let stars: [CGPoint]
     public let lines: [(Int, Int)]
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pulse = false
 
     public var body: some View {
@@ -336,6 +342,7 @@ public struct ConstellationPattern: View {
                 }
             }
             .onAppear {
+                guard !reduceMotion else { return }
                 withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true).delay(Double(stars.count % 3) * 0.5)) {
                     pulse = true
                 }
@@ -346,6 +353,7 @@ public struct ConstellationPattern: View {
 
 // MARK: - Cute Moon
 public struct CuteMoon: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var bob = false
     @State private var glow = false
 
@@ -395,6 +403,7 @@ public struct CuteMoon: View {
         .offset(y: bob ? -5 : 5)
         .rotationEffect(.degrees(bob ? 3 : -3))
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 3.5).repeatForever(autoreverses: true)) { bob = true }
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) { glow = true }
         }
@@ -448,6 +457,7 @@ public struct VectorCloudShape2: Shape {
 
 public struct CuteCloud1: View {
     public let scale: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var bob = false
 
     public init(scale: CGFloat) {
@@ -486,6 +496,7 @@ public struct CuteCloud1: View {
         .offset(y: bob ? -5 : 4)
         .rotationEffect(.degrees(bob ? 2 : -2))
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { bob = true }
         }
     }
@@ -493,6 +504,7 @@ public struct CuteCloud1: View {
 
 public struct CuteCloud2: View {
     public let scale: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var bob = false
 
     public init(scale: CGFloat) {
@@ -531,6 +543,7 @@ public struct CuteCloud2: View {
         .offset(y: bob ? -4 : 3)
         .rotationEffect(.degrees(bob ? -1.5 : 2))
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 5.5).repeatForever(autoreverses: true).delay(0.5)) { bob = true }
         }
     }
@@ -538,6 +551,7 @@ public struct CuteCloud2: View {
 
 // MARK: - Aurora Effect
 public struct AuroraEffect: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var s1 = false
     @State private var s2 = false
     @State private var s3 = false
@@ -553,6 +567,7 @@ public struct AuroraEffect: View {
             Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.93, s: 0.50, b: 0.7, a: 0.05, level: .subtleHighlight), Color.p3(h: 0.88, s: 0.40, b: 0.7, a: 0.02, level: .subtleHighlight)], startPoint: .top, endPoint: .bottom)).frame(width: 220, height: 70).blur(radius: 40).offset(x: s4 ? -20 : 25, y: s4 ? 20 : -25)
         }
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 6).repeatForever(autoreverses: true))  { s1 = true }
             withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true))  { s2 = true }
             withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true))  { s3 = true }
@@ -588,14 +603,17 @@ public struct PulsingRing: View {
                             SlumberTheme.Colors.cyan
                         ]),
                         center: .center,
-                        startAngle: .degrees(-90),
-                        endAngle: .degrees(270)
+                        // Gradient is defined pre-rotation: 0° here lands at 12 o'clock after
+                        // the -90° rotation below, so it starts where the trim starts.
+                        startAngle: .degrees(0),
+                        endAngle: .degrees(360)
                     ),
                     style: StrokeStyle(lineWidth: 4.5, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
                 .frame(width: 170, height: 170)
                 .shadow(color: SlumberTheme.Colors.cyan.opacity(0.4), radius: 6)
+                .animation(.linear(duration: 1.0), value: progress)
 
             // Glow dot at leading edge
             Circle()
@@ -604,6 +622,7 @@ public struct PulsingRing: View {
                 .shadow(color: SlumberTheme.Colors.cyan.opacity(0.8), radius: 4)
                 .offset(y: -85)
                 .rotationEffect(.degrees(Double(progress) * 360))
+                .animation(.linear(duration: 1.0), value: progress)
         }
     }
 }

@@ -24,7 +24,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
 
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 440)
+        popover.contentSize = NSSize(
+            width: SlumberTheme.Metrics.popoverWidth,
+            height: SlumberTheme.Metrics.popoverHeight
+        )
         popover.animates = true
         popover.behavior = .applicationDefined
         popover.appearance = NSAppearance(named: .vibrantDark)

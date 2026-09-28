@@ -46,14 +46,15 @@ public struct GlowingSlider: View {
                 .accessibilityValue("\(value) minutes")
                 .accessibilityAdjustableAction { direction in
                     switch direction {
+                    // Step along the 5-minute grid (1 → 5 → 10 …) rather than 1 → 6 → 11.
                     case .increment:
                         if value < bounds.upperBound {
-                            value = min(value + 5, bounds.upperBound)
+                            value = min((value / 5 + 1) * 5, bounds.upperBound)
                             onEditingChanged(false)
                         }
                     case .decrement:
                         if value > bounds.lowerBound {
-                            value = max(value - 5, bounds.lowerBound)
+                            value = max((value - 1) / 5 * 5, bounds.lowerBound)
                             onEditingChanged(false)
                         }
                     @unknown default:

@@ -33,6 +33,7 @@ public struct TabButton: View {
     public var body: some View {
         let active = currentTab == tag
         Button {
+            guard !active else { return }
             playSound("space_button")
             withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
                 currentTab = tag
@@ -41,8 +42,14 @@ public struct TabButton: View {
             HStack(spacing: SlumberTheme.Metrics.spaceXS + 2) {
                 Image(systemName: icon)
                     .font(.system(size: 11, weight: .semibold))
+                // Reserve the bold width so the bar doesn't reflow when the weight changes.
                 Text(title)
-                    .font(SlumberTheme.Typography.title.weight(active ? .bold : .medium))
+                    .font(SlumberTheme.Typography.title.weight(.bold))
+                    .hidden()
+                    .overlay {
+                        Text(title)
+                            .font(SlumberTheme.Typography.title.weight(active ? .bold : .medium))
+                    }
             }
             .foregroundColor(
                 active
@@ -74,6 +81,7 @@ public struct TabButton: View {
                         .fill(reduceTransparency ? Color.white.opacity(0.12) : Color.white.opacity(0.05))
                 }
             }
+            .contentShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous))
         }
         .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.98))
         .accessibilityLabel("\(title) tab")
