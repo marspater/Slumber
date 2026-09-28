@@ -33,16 +33,23 @@ public struct TabButton: View {
     public var body: some View {
         let active = currentTab == tag
         Button {
+            guard !active else { return }
             playSound("space_button")
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                 currentTab = tag
             }
         } label: {
             HStack(spacing: SlumberTheme.Metrics.spaceXS + 2) {
                 Image(systemName: icon)
                     .font(.system(size: 11, weight: .semibold))
+                // Reserve the bold width so the bar doesn't reflow when the weight changes.
                 Text(title)
-                    .font(SlumberTheme.Typography.title.weight(active ? .bold : .medium))
+                    .font(SlumberTheme.Typography.title.weight(.bold))
+                    .hidden()
+                    .overlay {
+                        Text(title)
+                            .font(SlumberTheme.Typography.title.weight(active ? .bold : .medium))
+                    }
             }
             .foregroundColor(
                 active
@@ -52,13 +59,13 @@ public struct TabButton: View {
                         : SlumberTheme.Colors.textSecondary)
             )
             .padding(.vertical, 7)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, SlumberTheme.Metrics.spaceLG)
             .background {
                 if active {
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                         .fill(
                             reduceTransparency
-                                ? Color(red: 0.24, green: 0.20, blue: 0.36)
+                                ? SlumberTheme.Colors.solidTabActive
                                 : SlumberTheme.Colors.accent.opacity(0.18)
                         )
                         .overlay(
@@ -74,6 +81,7 @@ public struct TabButton: View {
                         .fill(reduceTransparency ? Color.white.opacity(0.12) : Color.white.opacity(0.05))
                 }
             }
+            .contentShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous))
         }
         .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.98))
         .accessibilityLabel("\(title) tab")

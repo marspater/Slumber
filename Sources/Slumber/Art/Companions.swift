@@ -76,6 +76,7 @@ public struct CatTailShape: Shape {
 // MARK: - Sleeping Fox
 public struct SleepingFox: View {
     public let isNearEnd: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
     @State private var fidget = false
     @State private var tailSway = false
@@ -219,6 +220,7 @@ public struct SleepingFox: View {
         }
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { breathe = true }
             withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
             withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) { tailSway = true }
@@ -230,6 +232,7 @@ public struct SleepingFox: View {
 // MARK: - Sleeping Cat
 public struct SleepingCat: View {
     public let isNearEnd: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
     @State private var fidget = false
     @State private var purr = false
@@ -345,6 +348,7 @@ public struct SleepingCat: View {
         }
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) { breathe = true }
             withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { purr = true }
@@ -357,6 +361,7 @@ public struct SleepingCat: View {
 // MARK: - Sleeping Dodo
 public struct SleepingDodo: View {
     public let isNearEnd: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
     @State private var fidget = false
     @State private var zzz = false
@@ -478,6 +483,7 @@ public struct SleepingDodo: View {
         }
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 2.9).repeatForever(autoreverses: true)) { breathe = true }
             withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: false)) { zzz = true }
@@ -490,12 +496,14 @@ public struct AnimatedScene: View {
     @ObservedObject public var timerModel: SlumberTimer
     public let companionType: Int
     public let isVisible: Bool
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var orbitStartTime: Date? = nil
-    @State private var orbitProgress:  CGFloat = 0.0
+    @State private var transfer = OrbitTransfer(settledAt: 0)
 
     private let orbitDuration: Double = 90.0
+    private let launchDuration: Double = 2.2
+    private let returnDuration: Double = 1.6
     private let orbitRadiusX: CGFloat = 56
     private let orbitRadiusY: CGFloat = 28
 
@@ -513,26 +521,32 @@ public struct AnimatedScene: View {
     public var body: some View {
         ZStack {
             if isVisible {
-                ConstellationOverlay().opacity(1.0)
-                AuroraEffect().opacity(1.0)
-                StarField(count: 45).opacity(1.0)
-                FireflyField(count: 8).opacity(1.0)
+                ConstellationOverlay()
+                AuroraEffect()
+                StarField(count: 45)
+            }
+
+            if isVisible && !reduceMotion {
+                FireflyField(count: 8)
 
                 ShootingStar(angle: 32,  cycleDuration: 4.0, initialDelay:  1.0, length: 50, startX: -60, startY:  20)
                 ShootingStar(angle: 45,  cycleDuration: 5.5, initialDelay:  4.0, length: 35, startX:  80, startY: -30)
                 ShootingStar(angle: 25,  cycleDuration: 3.8, initialDelay:  7.0, length: 45, startX: -20, startY: -50)
                 ShootingStar(angle: 38,  cycleDuration: 6.0, initialDelay: 10.5, length: 40, startX:  40, startY:  60)
-                ShootingStar(angle: 18,  cycleDuration: 4.5, initialDelay: 14.0, length: 55, startX: -90, startY: -80)
+                ShootingStar(angle: 18,  cycleDuration: 4.5, initialDelay: 14.0, length: 55, startX: -90, startY:  90)
+            }
 
-                CuteMoon().offset(x: moonX, y: moonY).opacity(1.0)
+            if isVisible {
+                CuteMoon().offset(x: moonX, y: moonY)
 
                 CuteCloud1(scale: 1.00).offset(x: cloudX, y: 170)
                 CuteCloud2(scale: 0.75).offset(x: 105, y: -30)
             }
 
             if isVisible {
-                TimelineView(.animation(paused: !isVisible || (!timerModel.isRunning && orbitProgress == 0.0))) { timeline in
+                TimelineView(.animation(paused: reduceMotion)) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
+                    let orbitProgress = transfer.progress(at: timeline.date)
                     let elapsed: Double = {
                         guard let start = orbitStartTime else { return 0 }
                         return max(0, t - start.timeIntervalSinceReferenceDate)
@@ -557,10 +571,11 @@ public struct AnimatedScene: View {
                     let isTransferring = orbitProgress > 0.04 && orbitProgress < 0.96
                     if isTransferring {
                         ForEach(1...4, id: \.self) { trailIdx in
-                            let lagP = max(0.0, orbitProgress - CGFloat(trailIdx) * 0.05)
+                            // Trail lags behind the direction of travel (up on launch, down on return).
+                            let lagP = min(1.0, max(0.0, orbitProgress - transfer.direction * CGFloat(trailIdx) * 0.05))
                             let lagU = 1.0 - lagP
                             let trailX = lagU * lagU * cloudX + 2.0 * lagU * lagP * arcCtrlX + lagP * lagP * orbitX
-                            let trailY = lagU * lagU * cloudY + 2.0 * lagU * lagP * arcCtrlX + lagP * lagP * orbitY
+                            let trailY = lagU * lagU * cloudY + 2.0 * lagU * lagP * arcCtrlY + lagP * lagP * orbitY
                             let trailAlpha = Double(sin(orbitProgress * .pi)) * (1.0 - Double(trailIdx) * 0.22) * 0.65
 
                             Circle()
@@ -632,19 +647,22 @@ public struct AnimatedScene: View {
         .onAppear { syncSceneState() }
         .onChange(of: isVisible) { _, visible in if visible { syncSceneState() } }
         .onChange(of: timerModel.isRunning) { _, running in
+            let now = Date()
             if running {
                 let total = timerModel.totalTime
                 let remaining = timerModel.timeRemaining
                 let elapsed = total - remaining
-                orbitStartTime = Date().addingTimeInterval(-elapsed)
-                withAnimation(.spring(response: 2.2, dampingFraction: 0.82)) {
-                    orbitProgress = 1.0
-                }
-            } else {
-                withAnimation(.spring(response: 1.6, dampingFraction: 0.84)) {
-                    orbitProgress = 0.0
-                }
+                orbitStartTime = now.addingTimeInterval(-elapsed)
             }
+            // Progress is sampled from the timeline clock rather than animated through
+            // @State, so the Bézier arc and trail are actually traversed frame by frame.
+            // Retarget from the current position so an interrupted launch reverses smoothly.
+            transfer = OrbitTransfer(
+                from: transfer.progress(at: now),
+                to: running ? 1.0 : 0.0,
+                start: now,
+                duration: reduceMotion ? 0 : (running ? launchDuration : returnDuration)
+            )
         }
     }
 
@@ -654,9 +672,38 @@ public struct AnimatedScene: View {
             let remaining = timerModel.timeRemaining
             let elapsed = total - remaining
             orbitStartTime = Date().addingTimeInterval(-elapsed)
-            orbitProgress = 1.0
+            transfer = OrbitTransfer(settledAt: 1.0)
         } else {
-            orbitProgress  = 0.0
+            transfer = OrbitTransfer(settledAt: 0.0)
         }
+    }
+}
+
+/// Time-based cloud ⇄ orbit transfer, eased with a cubic in-out curve.
+private struct OrbitTransfer {
+    var from: CGFloat
+    var to: CGFloat
+    var start: Date
+    var duration: Double
+
+    init(from: CGFloat, to: CGFloat, start: Date, duration: Double) {
+        self.from = from
+        self.to = to
+        self.start = start
+        self.duration = duration
+    }
+
+    init(settledAt value: CGFloat) {
+        self.init(from: value, to: value, start: .distantPast, duration: 0)
+    }
+
+    /// +1 while launching toward the orbit, -1 while returning to the cloud.
+    var direction: CGFloat { to >= from ? 1.0 : -1.0 }
+
+    func progress(at date: Date) -> CGFloat {
+        guard duration > 0 else { return to }
+        let x = min(max(date.timeIntervalSince(start) / duration, 0.0), 1.0)
+        let eased = x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0
+        return from + (to - from) * CGFloat(eased)
     }
 }

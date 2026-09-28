@@ -32,7 +32,7 @@ public struct StartButton: View {
                 Text("Start Sleep Timer")
                     .font(SlumberTheme.Typography.title)
             }
-            .frame(width: 240, height: 42)
+            .frame(width: SlumberTheme.Metrics.contentWidth, height: SlumberTheme.Metrics.primaryButtonHeight)
             .background(
                 LinearGradient(
                     colors: [
@@ -81,7 +81,7 @@ public struct CancelButton: View {
                 Text("Cancel")
                     .font(SlumberTheme.Typography.title)
             }
-            .frame(width: 140, height: 38)
+            .frame(width: 140, height: SlumberTheme.Metrics.buttonHeight)
             .background(coral.opacity(isHovered ? 0.24 : 0.14))
             .foregroundColor(coral)
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous))
@@ -121,7 +121,7 @@ public struct QuitButton: View {
                     .font(SlumberTheme.Typography.title)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 38)
+            .frame(height: SlumberTheme.Metrics.buttonHeight)
             .background(coral.opacity(isHovered ? 0.18 : 0.08))
             .foregroundColor(coral)
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous))

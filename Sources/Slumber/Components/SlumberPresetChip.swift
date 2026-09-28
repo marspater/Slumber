@@ -50,7 +50,7 @@ public struct PresetChip: View {
                         RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                             .fill(
                                 selected
-                                    ? (reduceTransparency ? Color(red: 0.38, green: 0.32, blue: 0.55) : accent.opacity(0.34))
+                                    ? (reduceTransparency ? SlumberTheme.Colors.solidChipSelected : accent.opacity(0.34))
                                     : (isHovered
                                         ? (reduceTransparency ? Color.white.opacity(0.18) : Color.white.opacity(0.10))
                                         : (reduceTransparency ? Color.white.opacity(0.12) : Color.white.opacity(0.065)))
