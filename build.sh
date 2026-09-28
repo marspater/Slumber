@@ -37,11 +37,13 @@ xcrun actool \
     --platform macosx \
     --minimum-deployment-target 26.0 \
     --app-icon AppIcon \
+    --output-format human-readable-text --errors --warnings \
     --output-partial-info-plist "${TMP_PLIST}" \
-    "Assets/AppIcon.icon" > /dev/null
+    "Assets/AppIcon.icon"
 rm -f "${TMP_PLIST}"
-test -f "${RESOURCES_DIR}/Assets.car"
-test -f "${RESOURCES_DIR}/AppIcon.icns"
+for f in Assets.car AppIcon.icns; do
+    [ -f "${RESOURCES_DIR}/${f}" ] || { echo "error: actool did not produce ${f}" >&2; exit 1; }
+done
 
 # Create Info.plist
 cat > "${CONTENTS_DIR}/Info.plist" <<EOF
