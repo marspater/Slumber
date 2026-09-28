@@ -49,10 +49,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         statusItem.isVisible = true
         
         if let button = statusItem.button {
-            if let img = NSImage(systemSymbolName: "moon.circle", accessibilityDescription: "Slumber") {
+            // Match the optical size/weight of the system menu bar extras (Wi-Fi, Control Center).
+            let symbolConfig = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
+            if let img = NSImage(systemSymbolName: "moon.circle", accessibilityDescription: "Slumber")?
+                .withSymbolConfiguration(symbolConfig) {
                 img.isTemplate = true
                 button.image = img
-            } else if let fallback = NSImage(systemSymbolName: "moon.fill", accessibilityDescription: "Slumber") {
+            } else if let fallback = NSImage(systemSymbolName: "moon.fill", accessibilityDescription: "Slumber")?
+                .withSymbolConfiguration(symbolConfig) {
                 fallback.isTemplate = true
                 button.image = fallback
             } else {
