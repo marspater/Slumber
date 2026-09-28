@@ -89,7 +89,7 @@ public struct SlumberView: View {
     public var body: some View {
         ZStack {
             if reduceTransparency {
-                Color(red: 0.07, green: 0.06, blue: 0.12)
+                SlumberTheme.Colors.solidBackground
             } else {
                 VisualEffectView(material: .popover, blendingMode: .behindWindow)
             }
@@ -110,7 +110,6 @@ public struct SlumberView: View {
                 isVisible: isPopoverVisible && currentTab == 0
             )
             .opacity(currentTab == 0 ? 1 : 0)
-            .animation(.easeInOut(duration: 0.3), value: currentTab)
 
             VStack(spacing: 0) {
                 // Top Segmented Bar
@@ -133,7 +132,7 @@ public struct SlumberView: View {
                 .padding(3)
                 .background(
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous)
-                        .fill(reduceTransparency ? Color(red: 0.13, green: 0.12, blue: 0.19) : Color.white.opacity(0.05))
+                        .fill(reduceTransparency ? SlumberTheme.Colors.solidTabBar : Color.white.opacity(0.05))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous)
@@ -158,7 +157,6 @@ public struct SlumberView: View {
                             ))
                     }
                 }
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: currentTab)
             }
         }
         .frame(width: SlumberTheme.Metrics.popoverWidth, height: SlumberTheme.Metrics.popoverHeight)
@@ -172,6 +170,10 @@ public struct SlumberView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .slumberClosed)) { _ in
             isPopoverVisible = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .slumberNudgeDuration)) { note in
+            guard currentTab == 0, !timerModel.isRunning, let delta = note.object as? Int else { return }
+            selectedMinutes = min(max(selectedMinutes + delta, 1), 120)
         }
     }
 
@@ -329,8 +331,8 @@ public struct SlumberView: View {
             })
             .padding(.bottom, SlumberTheme.Metrics.spaceMD)
 
-            let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.2"
-            Text("Slumber v\(appVersion)")
+            let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+            Text(appVersion.map { "Slumber v\($0)" } ?? "Slumber")
                 .font(SlumberTheme.Typography.caption.weight(.semibold))
                 .foregroundColor(SlumberTheme.Colors.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -343,7 +345,6 @@ public struct SlumberView: View {
         }
         .padding(.horizontal, SlumberTheme.Metrics.horizontalPadding)
         .allowsHitTesting(currentTab == 1)
-        .preferredColorScheme(.dark)
     }
 
     private func applyDock(_ show: Bool) {

@@ -54,14 +54,14 @@ public struct KeycapBadge: View {
         }
         .font(SlumberTheme.Typography.keycap)
         .foregroundColor(SlumberTheme.Colors.textPrimary)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, SlumberTheme.Metrics.spaceSM)
         .padding(.vertical, 5)
         .background(
-            RoundedRectangle(cornerRadius: SlumberTheme.Radius.sm - 2, style: .continuous)
+            RoundedRectangle(cornerRadius: SlumberTheme.Radius.xs, style: .continuous)
                 .fill(Color.white.opacity(0.10))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: SlumberTheme.Radius.sm - 2, style: .continuous)
+            RoundedRectangle(cornerRadius: SlumberTheme.Radius.xs, style: .continuous)
                 .stroke(
                     LinearGradient(
                         colors: [Color.white.opacity(0.30), Color.white.opacity(0.08)],
@@ -81,6 +81,7 @@ public struct ErrorBanner: View {
     public let onRetry: () -> Void
     public let onDismiss: () -> Void
     @State private var isDismissHovered = false
+    @State private var isRetryHovered = false
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     public init(
@@ -118,12 +119,12 @@ public struct ErrorBanner: View {
                             RoundedRectangle(cornerRadius: SlumberTheme.Radius.sm, style: .continuous)
                                 .fill(
                                     reduceTransparency
-                                        ? Color(red: 0.35, green: 0.20, blue: 0.12)
-                                        : SlumberTheme.Colors.amber.opacity(0.35)
+                                        ? SlumberTheme.Colors.solidRetry
+                                        : SlumberTheme.Colors.amber.opacity(isRetryHovered ? 0.50 : 0.35)
                                 )
                             RoundedRectangle(cornerRadius: SlumberTheme.Radius.sm, style: .continuous)
                                 .stroke(
-                                    Color.white.opacity(reduceTransparency ? 0.45 : 0.25),
+                                    Color.white.opacity(reduceTransparency ? (isRetryHovered ? 0.70 : 0.45) : (isRetryHovered ? 0.40 : 0.25)),
                                     lineWidth: 0.75
                                 )
                         }
@@ -131,6 +132,11 @@ public struct ErrorBanner: View {
             }
             .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.96))
             .accessibilityLabel("Retry put Mac to sleep")
+            .onHover { hovering in
+                withAnimation(.easeOut(duration: 0.15)) {
+                    isRetryHovered = hovering
+                }
+            }
 
             Button(action: onDismiss) {
                 Image(systemName: "xmark.circle.fill")
@@ -151,13 +157,13 @@ public struct ErrorBanner: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, SlumberTheme.Metrics.spaceMD)
         .padding(.vertical, 9)
         .background(
             ZStack {
                 if reduceTransparency {
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
-                        .fill(Color(red: 0.16, green: 0.10, blue: 0.09))
+                        .fill(SlumberTheme.Colors.solidErrorBanner)
                 } else {
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
                         .fill(Color.black.opacity(0.45))

@@ -521,23 +521,23 @@ public struct AnimatedScene: View {
     public var body: some View {
         ZStack {
             if isVisible {
-                ConstellationOverlay().opacity(1.0)
-                AuroraEffect().opacity(1.0)
-                StarField(count: 45).opacity(1.0)
+                ConstellationOverlay()
+                AuroraEffect()
+                StarField(count: 45)
             }
 
             if isVisible && !reduceMotion {
-                FireflyField(count: 8).opacity(1.0)
+                FireflyField(count: 8)
 
                 ShootingStar(angle: 32,  cycleDuration: 4.0, initialDelay:  1.0, length: 50, startX: -60, startY:  20)
                 ShootingStar(angle: 45,  cycleDuration: 5.5, initialDelay:  4.0, length: 35, startX:  80, startY: -30)
                 ShootingStar(angle: 25,  cycleDuration: 3.8, initialDelay:  7.0, length: 45, startX: -20, startY: -50)
                 ShootingStar(angle: 38,  cycleDuration: 6.0, initialDelay: 10.5, length: 40, startX:  40, startY:  60)
-                ShootingStar(angle: 18,  cycleDuration: 4.5, initialDelay: 14.0, length: 55, startX: -90, startY: -80)
+                ShootingStar(angle: 18,  cycleDuration: 4.5, initialDelay: 14.0, length: 55, startX: -90, startY:  90)
             }
 
             if isVisible {
-                CuteMoon().offset(x: moonX, y: moonY).opacity(1.0)
+                CuteMoon().offset(x: moonX, y: moonY)
 
                 CuteCloud1(scale: 1.00).offset(x: cloudX, y: 170)
                 CuteCloud2(scale: 0.75).offset(x: 105, y: -30)

@@ -25,9 +25,18 @@ public enum SlumberTheme {
         public static let textTertiary   = Color.white.opacity(0.50)
         public static let textQuaternary = Color.white.opacity(0.35)
 
+        // Reduce Transparency solid fallbacks (sRGB, tuned to match the translucent originals)
+        public static let solidBackground    = Color(red: 0.07, green: 0.06, blue: 0.12)
+        public static let solidTabBar        = Color(red: 0.13, green: 0.12, blue: 0.19)
+        public static let solidCard          = Color(red: 0.14, green: 0.13, blue: 0.21)
+        public static let solidTabActive     = Color(red: 0.24, green: 0.20, blue: 0.36)
+        public static let solidChipSelected  = Color(red: 0.38, green: 0.32, blue: 0.55)
+        public static let solidErrorBanner   = Color(red: 0.16, green: 0.10, blue: 0.09)
+        public static let solidRetry         = Color(red: 0.35, green: 0.20, blue: 0.12)
+
         // Surfaces & Materials
         public static func cardBackground(reduceTransparency: Bool) -> Color {
-            reduceTransparency ? Color(red: 0.14, green: 0.13, blue: 0.21) : Color.white.opacity(0.045)
+            reduceTransparency ? solidCard : Color.white.opacity(0.045)
         }
 
         public static func cardBorder(isHovered: Bool, reduceTransparency: Bool) -> AnyShapeStyle {
@@ -76,6 +85,10 @@ public enum SlumberTheme {
         /// Unified content width: 320 - (2 * 24) = 272
         public static let contentWidth: CGFloat = 272
 
+        // Control heights
+        public static let buttonHeight: CGFloat = 38
+        public static let primaryButtonHeight: CGFloat = 42
+
         // Spacing scale
         public static let spaceXXS: CGFloat = 2
         public static let spaceXS:  CGFloat = 4
@@ -88,6 +101,7 @@ public enum SlumberTheme {
 
     // MARK: - Corner Radii
     public enum Radius {
+        public static let xs:      CGFloat = 6
         public static let sm:      CGFloat = 8
         public static let md:      CGFloat = 10
         public static let lg:      CGFloat = 12

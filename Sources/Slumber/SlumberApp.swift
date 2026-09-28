@@ -7,6 +7,8 @@ extension Notification.Name {
     static let slumberOpening = Notification.Name("SlumberOpening")
     static let slumberClosed = Notification.Name("SlumberClosed")
     static let slumberTogglePopover = Notification.Name("SlumberTogglePopover")
+    /// Keyboard duration nudge; `object` is the Int minute delta.
+    static let slumberNudgeDuration = Notification.Name("SlumberNudgeDuration")
 }
 
 @MainActor
@@ -42,7 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         vc.view.appearance = NSAppearance(named: .darkAqua)
         popover.contentViewController = vc
 
-        statusItem = NSStatusBar.system.statusItem(withLength: 28)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.autosaveName = "SlumberMainIconV4"
         statusItem.isVisible = true
         
@@ -169,6 +171,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 if event.keyCode == 53 { // Escape
                     self?.requestClosePopover()
                     return nil
+                }
+                // Arrow keys adjust the duration (the slider itself stays non-focusable to avoid
+                // focus chrome). Shift steps by 5. Cmd/Opt/Ctrl combos pass through.
+                let step = event.modifierFlags.contains(.shift) ? 5 : 1
+                if event.modifierFlags.intersection([.command, .option, .control]).isEmpty {
+                    switch event.keyCode {
+                    case 123, 125: // Left, Down
+                        NotificationCenter.default.post(name: .slumberNudgeDuration, object: -step)
+                        return nil
+                    case 124, 126: // Right, Up
+                        NotificationCenter.default.post(name: .slumberNudgeDuration, object: step)
+                        return nil
+                    default:
+                        break
+                    }
                 }
                 return event
             }

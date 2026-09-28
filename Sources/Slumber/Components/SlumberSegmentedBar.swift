@@ -35,7 +35,7 @@ public struct TabButton: View {
         Button {
             guard !active else { return }
             playSound("space_button")
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                 currentTab = tag
             }
         } label: {
@@ -59,13 +59,13 @@ public struct TabButton: View {
                         : SlumberTheme.Colors.textSecondary)
             )
             .padding(.vertical, 7)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, SlumberTheme.Metrics.spaceLG)
             .background {
                 if active {
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                         .fill(
                             reduceTransparency
-                                ? Color(red: 0.24, green: 0.20, blue: 0.36)
+                                ? SlumberTheme.Colors.solidTabActive
                                 : SlumberTheme.Colors.accent.opacity(0.18)
                         )
                         .overlay(
