@@ -3,75 +3,11 @@
 //  Slumber
 //
 //  Vector companion characters (Sleeping Fox, Kitten, Dodo Bird) and Keplerian orbital physics.
+//  Path data lives in ArtPaths.swift.
 //
 
 import SwiftUI
 import SlumberCore
-
-// MARK: - Tail Shapes
-public struct FoxTailShape: Shape {
-    public init() {}
-    public func path(in rect: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: 2, y: rect.height * 0.72))
-        p.addCurve(
-            to: CGPoint(x: rect.width - 2, y: rect.height * 0.18),
-            control1: CGPoint(x: rect.width * 0.40, y: rect.height * 1.05),
-            control2: CGPoint(x: rect.width + 5, y: rect.height * 0.62)
-        )
-        p.addCurve(
-            to: CGPoint(x: 2, y: rect.height * 0.72),
-            control1: CGPoint(x: rect.width * 0.68, y: -rect.height * 0.10),
-            control2: CGPoint(x: rect.width * 0.15, y: rect.height * 0.22)
-        )
-        p.closeSubpath()
-        return p
-    }
-}
-
-public struct FoxTailTipShape: Shape {
-    public init() {}
-    public func path(in rect: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: rect.width * 0.52, y: 0))
-        p.addCurve(
-            to: CGPoint(x: rect.width - 2, y: rect.height * 0.18),
-            control1: CGPoint(x: rect.width * 0.75, y: -rect.height * 0.05),
-            control2: CGPoint(x: rect.width + 2, y: rect.height * 0.06)
-        )
-        p.addCurve(
-            to: CGPoint(x: rect.width * 0.48, y: rect.height * 0.62),
-            control1: CGPoint(x: rect.width + 3, y: rect.height * 0.45),
-            control2: CGPoint(x: rect.width * 0.70, y: rect.height * 0.60)
-        )
-        p.addCurve(
-            to: CGPoint(x: rect.width * 0.40, y: rect.height * 0.32),
-            control1: CGPoint(x: rect.width * 0.42, y: rect.height * 0.48),
-            control2: CGPoint(x: rect.width * 0.40, y: rect.height * 0.38)
-        )
-        p.addCurve(
-            to: CGPoint(x: rect.width * 0.52, y: 0),
-            control1: CGPoint(x: rect.width * 0.42, y: rect.height * 0.20),
-            control2: CGPoint(x: rect.width * 0.46, y: rect.height * 0.08)
-        )
-        p.closeSubpath()
-        return p
-    }
-}
-
-public struct CatTailShape: Shape {
-    public init() {}
-    public func path(in rect: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: 2, y: rect.height * 0.55))
-        p.addCurve(
-            to: CGPoint(x: rect.width - 3, y: 4),
-            control1: CGPoint(x: rect.width * 0.42, y: rect.height + 6),
-            control2: CGPoint(x: rect.width + 5, y: rect.height * 0.48)
-        )
-        return p
-    }
-}
 
 // MARK: - Sleeping Fox
 public struct SleepingFox: View {
@@ -82,130 +18,68 @@ public struct SleepingFox: View {
     @State private var tailSway = false
     @State private var zzz = false
 
-    private let fur     = Color.p3(r: 0.94, g: 0.50, b: 0.15)
-    private let furDk   = Color.p3(r: 0.76, g: 0.32, b: 0.08)
-    private let cream   = Color.p3(r: 0.98, g: 0.94, b: 0.88)
-    private let dark    = Color.p3(r: 0.12, g: 0.08, b: 0.06)
+    private let cream = Color.p3(0.99, 0.95, 0.89)
+    private let ink = Color.p3(0.22, 0.12, 0.10)
+    private let headFur = Gradient(colors: [.p3(1.0, 0.62, 0.24), .p3(0.86, 0.40, 0.10)])
 
     public init(isNearEnd: Bool) {
         self.isNearEnd = isNearEnd
     }
 
     public var body: some View {
+        let box = FoxArt.box
         ZStack {
-            // Big Fluffy Fox Tail with Snowy Tip
+            // Curled body, breathing from the ground up
             ZStack {
-                FoxTailShape()
-                    .fill(
-                        LinearGradient(
-                            colors: [fur, furDk],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                FoxTailTipShape()
-                    .fill(cream)
-
-                Circle()
-                    .fill(cream.opacity(0.95))
-                    .frame(width: 7, height: 7)
-                    .offset(x: 14, y: -6)
+                FoxArt.body.fill(LinearGradient(
+                    Gradient(colors: [.p3(0.98, 0.58, 0.20), .p3(0.78, 0.32, 0.08)]),
+                    from: CGPoint(x: 14, y: 10), to: CGPoint(x: 52, y: 42), in: box
+                ))
+                FoxArt.backRim.stroke(Color.p3(1, 0.80, 0.55, 0.35), style: .round(0.8))
+                // Contact shadow so the wrapped tail reads as lying in front of the body
+                FoxArt.tail.fill(Color.p3(0.45, 0.14, 0.04, 0.35))
+                    .offset(y: -1.3)
+                    .mask { FoxArt.body }
+                FoxArt.chest.fill(cream)
             }
-            .frame(width: 38, height: 26)
-            .offset(x: 17, y: -2)
-            .rotationEffect(.degrees(tailSway ? 3.5 : -2), anchor: .bottomLeading)
+            .scaleEffect(x: breathe ? 0.99 : 1.0, y: breathe ? 1.04 : 1.0, anchor: UnitPoint(35, 38, in: box))
 
-            // Curled Fox Body
-            Ellipse()
-                .fill(
-                    LinearGradient(
-                        colors: [fur, furDk],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 38, height: 23)
-                .scaleEffect(y: breathe ? 1.04 : 1.0)
-                .scaleEffect(x: breathe ? 0.99 : 1.0)
-
-            // Fluffy Cream Chest / Belly Ruff
-            Ellipse()
-                .fill(cream.opacity(0.85))
-                .frame(width: 18, height: 12)
-                .offset(x: -6, y: 5)
-
-            // Tucked Little Paws
-            Ellipse().fill(dark.opacity(0.75)).frame(width: 6, height: 4.5).offset(x: -10, y: 8)
-            Ellipse().fill(fur).frame(width: 6, height: 4.5).offset(x: -9, y: 7.5)
-            Ellipse().fill(dark.opacity(0.75)).frame(width: 6, height: 4.5).offset(x: -4, y: 9)
-            Ellipse().fill(fur).frame(width: 6, height: 4.5).offset(x: -3, y: 8.5)
-
-            // Fox Head
-            Circle()
-                .fill(fur)
-                .frame(width: 22, height: 22)
-                .offset(x: -14, y: -7)
-
-            // Fox Ears
+            // Tail wrapped around the front, swaying from its root
             ZStack {
-                Triangle().fill(dark.opacity(0.85)).frame(width: 9, height: 16)
-                Triangle().fill(fur).frame(width: 8, height: 14).offset(y: 1)
-                Triangle().fill(cream).frame(width: 5, height: 10).offset(y: 2)
-                Triangle().fill(Color.pink.opacity(0.35)).frame(width: 3.5, height: 7).offset(y: 3)
+                FoxArt.tail.fill(LinearGradient(
+                    Gradient(colors: [.p3(1.0, 0.60, 0.22), .p3(0.80, 0.33, 0.08)]),
+                    from: CGPoint(x: 30, y: 34), to: CGPoint(x: 34, y: 44), in: box
+                ))
+                FoxArt.tailRim.stroke(Color.p3(1, 0.78, 0.5, 0.3), style: .round(0.8))
+                FoxArt.tailTip.fill(cream)
             }
-            .rotationEffect(.degrees(isNearEnd ? (fidget ? -22 : 0) : -10))
-            .offset(x: -22, y: -20)
+            .rotationEffect(.degrees(tailSway ? 2.5 : 0), anchor: UnitPoint(53, 26, in: box))
+
+            // Ears, hinged at the head so they twitch in the last minute
+            ZStack {
+                FoxArt.earBack.fill(Color.p3(0.86, 0.40, 0.10))
+                FoxArt.earBackTip.fill(ink)
+            }
+            .rotationEffect(.degrees(fidget ? 10 : 0), anchor: UnitPoint(23, 13.5, in: box))
 
             ZStack {
-                Triangle().fill(dark.opacity(0.85)).frame(width: 9, height: 16)
-                Triangle().fill(fur).frame(width: 8, height: 14).offset(y: 1)
-                Triangle().fill(cream).frame(width: 5, height: 10).offset(y: 2)
-                Triangle().fill(Color.pink.opacity(0.35)).frame(width: 3.5, height: 7).offset(y: 3)
+                FoxArt.earFront.fill(LinearGradient(headFur, from: CGPoint(x: 8, y: 10), to: CGPoint(x: 26, y: 30), in: box))
+                FoxArt.earFrontInner.fill(Color.p3(0.99, 0.90, 0.84))
+                FoxArt.earFrontTip.fill(ink)
             }
-            .rotationEffect(.degrees(isNearEnd ? (fidget ? 16 : -2) : 6))
-            .offset(x: -9, y: -21)
+            .rotationEffect(.degrees(fidget ? -12 : 0), anchor: UnitPoint(15.5, 13.5, in: box))
 
-            // Snout & Cheeks
-            Ellipse()
-                .fill(cream)
-                .frame(width: 14, height: 8)
-                .offset(x: -24, y: -4)
+            FoxArt.head.fill(LinearGradient(headFur, from: CGPoint(x: 8, y: 10), to: CGPoint(x: 26, y: 30), in: box))
+            FoxArt.muzzle.fill(cream)
+            FoxArt.nose.fill(Color.p3(0.16, 0.09, 0.08))
 
-            // Button Nose
-            Circle()
-                .fill(dark)
-                .frame(width: 3, height: 3)
-                .offset(x: -29, y: -5)
-
-            // Eyes
             if isNearEnd {
-                Capsule()
-                    .fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight))
-                    .frame(width: 3, height: 1.5)
-                    .offset(x: -18, y: -9)
-                Capsule()
-                    .fill(Color.p3(h: 0.10, s: 0.8, b: 0.85, level: .rimHighlight))
-                    .frame(width: 3, height: 1.5)
-                    .offset(x: -12, y: -9)
+                AwakeEye(color: ink).offset(x: 15 - 32, y: 20 - 22)
             } else {
-                Arc()
-                    .stroke(dark.opacity(0.75), lineWidth: 1.2)
-                    .frame(width: 4.5, height: 2.5)
-                    .rotationEffect(.degrees(180))
-                    .offset(x: -18, y: -9)
-                Arc()
-                    .stroke(dark.opacity(0.75), lineWidth: 1.2)
-                    .frame(width: 4.5, height: 2.5)
-                    .rotationEffect(.degrees(180))
-                    .offset(x: -12, y: -9)
+                FoxArt.eye.stroke(Color.p3(0.22, 0.11, 0.08), style: .round(1.2))
             }
 
-            // Cheek Blush
-            Circle()
-                .fill(Color.pink.opacity(0.30))
-                .frame(width: 5, height: 5)
-                .offset(x: -24, y: -1)
+            FoxArt.blush.fill(Color.p3(1, 0.45, 0.55, 0.45))
 
             // 'z' particles
             Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
@@ -218,11 +92,12 @@ public struct SleepingFox: View {
                     .foregroundColor(Color.p3(h: 0.08, s: 0.6, b: 1.0, a: 0.75, level: .rimHighlight)).offset(x: -5, y: -23)
             }
         }
+        .frame(width: box.width, height: box.height)
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
+        .earFidget($fidget, isNearEnd: isNearEnd, reduceMotion: reduceMotion)
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { breathe = true }
-            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
             withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) { tailSway = true }
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: false)) { zzz = true }
         }
@@ -239,102 +114,70 @@ public struct SleepingCat: View {
     @State private var tailSway = false
     @State private var zzz = false
 
-    private let fur     = Color.p3(r: 0.54, g: 0.48, b: 0.70)
-    private let furDk   = Color.p3(r: 0.36, g: 0.30, b: 0.50)
-    private let furLt   = Color.p3(r: 0.74, g: 0.68, b: 0.86)
+    private let stripe = Color.p3(0.36, 0.29, 0.52)
+    private let innerEar = Color.p3(1, 0.66, 0.80)
+    private let headFur = Gradient(colors: [.p3(0.74, 0.67, 0.90), .p3(0.50, 0.43, 0.68)])
 
     public init(isNearEnd: Bool) {
         self.isNearEnd = isNearEnd
     }
 
     public var body: some View {
+        let box = CatArt.box
         ZStack {
             ZStack {
-                CatTailShape()
-                    .stroke(
-                        LinearGradient(
-                            colors: [fur, furDk],
-                            startPoint: .leading,
-                            endPoint: .topTrailing
-                        ),
-                        style: StrokeStyle(lineWidth: 5.0, lineCap: .round, lineJoin: .round)
-                    )
-
-                Circle()
-                    .fill(furDk)
-                    .frame(width: 5, height: 5)
-                    .offset(x: 9, y: -8)
+                CatArt.body.fill(LinearGradient(
+                    Gradient(colors: [.p3(0.68, 0.61, 0.86), .p3(0.42, 0.35, 0.60)]),
+                    from: CGPoint(x: 18, y: 12), to: CGPoint(x: 52, y: 40), in: box
+                ))
+                CatArt.stripes.stroke(stripe.opacity(0.4), style: .round(1.3))
+                CatArt.backRim.stroke(Color.p3(0.86, 0.82, 0.98, 0.35), style: .round(0.8))
+                CatArt.tail.fill(Color.p3(0.20, 0.14, 0.34, 0.25))
+                    .offset(y: -1.1)
+                    .mask { CatArt.body }
             }
-            .frame(width: 24, height: 20)
-            .offset(x: 17, y: 1)
-            .rotationEffect(.degrees(tailSway ? 6 : -3), anchor: .bottomLeading)
-
-            Ellipse()
-                .fill(
-                    LinearGradient(
-                        colors: [fur, furDk],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 32, height: 23)
-                .scaleEffect(y: breathe ? 1.04 : 1.0)
-                .scaleEffect(x: purr ? 1.01 : 0.99)
-
-            Ellipse()
-                .fill(furLt.opacity(0.40))
-                .frame(width: 14, height: 10)
-                .offset(x: -4, y: 4)
-
-            Circle()
-                .fill(fur)
-                .frame(width: 18, height: 18)
-                .offset(x: -11, y: -6)
+            .scaleEffect(x: purr ? 1.01 : 0.99, y: 1.0, anchor: UnitPoint(36, 38, in: box))
+            .scaleEffect(x: 1.0, y: breathe ? 1.04 : 1.0, anchor: UnitPoint(36, 38, in: box))
 
             ZStack {
-                Triangle().fill(furDk).frame(width: 7, height: 11)
-                Triangle().fill(fur).frame(width: 6, height: 9.5).offset(y: 1)
-                Triangle().fill(Color.pink.opacity(0.40)).frame(width: 3.5, height: 6.5).offset(y: 2)
+                CatArt.tail.fill(LinearGradient(
+                    Gradient(colors: [.p3(0.66, 0.59, 0.84), .p3(0.42, 0.35, 0.60)]),
+                    from: CGPoint(x: 30, y: 36), to: CGPoint(x: 30, y: 42), in: box
+                ))
+                CatArt.tailTip.fill(stripe)
             }
-            .rotationEffect(.degrees(isNearEnd ? (fidget ? -18 : -2) : -12))
-            .offset(x: -16, y: -14)
+            .rotationEffect(.degrees(tailSway ? 2 : 0), anchor: UnitPoint(52, 28, in: box))
+
+            CatArt.pawFront.fill(Color.p3(0.80, 0.75, 0.93))
+            CatArt.pawBack.fill(Color.p3(0.76, 0.70, 0.90))
 
             ZStack {
-                Triangle().fill(furDk).frame(width: 7, height: 11)
-                Triangle().fill(fur).frame(width: 6, height: 9.5).offset(y: 1)
-                Triangle().fill(Color.pink.opacity(0.40)).frame(width: 3.5, height: 6.5).offset(y: 2)
+                CatArt.earFront.fill(LinearGradient(headFur, from: CGPoint(x: 10, y: 12), to: CGPoint(x: 28, y: 32), in: box))
+                CatArt.earFrontInner.fill(innerEar.opacity(0.8))
             }
-            .rotationEffect(.degrees(isNearEnd ? (fidget ? 12 : -2) : 6))
-            .offset(x: -6, y: -15)
+            .rotationEffect(.degrees(fidget ? -10 : 0), anchor: UnitPoint(14.8, 16.8, in: box))
 
-            Triangle()
-                .fill(Color.pink.opacity(0.80))
-                .frame(width: 3, height: 2)
-                .rotationEffect(.degrees(180))
-                .offset(x: -14, y: -4)
+            ZStack {
+                CatArt.earBack.fill(Color.p3(0.50, 0.43, 0.68))
+                CatArt.earBackInner.fill(innerEar.opacity(0.6))
+            }
+            .rotationEffect(.degrees(fidget ? 8 : 0), anchor: UnitPoint(24, 16.6, in: box))
+
+            CatArt.head.fill(LinearGradient(headFur, from: CGPoint(x: 10, y: 12), to: CGPoint(x: 28, y: 32), in: box))
+            CatArt.muzzle.fill(Color.p3(0.86, 0.82, 0.96))
+            CatArt.nose.fill(Color.p3(1, 0.55, 0.70))
+            CatArt.mouth.stroke(Color.p3(0.32, 0.24, 0.44), style: .round(0.7))
 
             if isNearEnd {
-                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -13, y: -7)
-                Capsule().fill(Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)).frame(width: 2.5, height: 1.5).offset(x: -8, y: -7)
+                let glow = Color.p3(h: 0.35, s: 0.65, b: 0.85, level: .rimHighlight)
+                AwakeEye(color: glow).offset(x: 14.6 - 32, y: 23.3 - 22)
+                AwakeEye(color: glow).offset(x: 22.6 - 32, y: 23.3 - 22)
             } else {
-                Arc().stroke(Color.white.opacity(0.80), lineWidth: 1.1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -13, y: -7)
-                Arc().stroke(Color.white.opacity(0.80), lineWidth: 1.1).frame(width: 4, height: 2).rotationEffect(.degrees(180)).offset(x: -8, y: -7)
+                CatArt.eyes.stroke(Color.p3(0.26, 0.19, 0.38), style: .round(1.1))
             }
 
-            ForEach(0..<3, id: \.self) { i in
-                Capsule()
-                    .fill(Color.white.opacity(0.35))
-                    .frame(width: 8, height: 0.6)
-                    .rotationEffect(.degrees(Double(i - 1) * 12 - 5))
-                    .offset(x: -20, y: -3 + CGFloat(i) * 2)
-            }
-
-            Ellipse().fill(fur).frame(width: 5.5, height: 4.5).offset(x: -5, y: 6)
-            Ellipse().fill(fur).frame(width: 5.5, height: 4.5).offset(x: 2, y: 6)
-            Circle().fill(Color.pink.opacity(0.40)).frame(width: 2.5, height: 2.5).offset(x: -5, y: 6.5)
-            Circle().fill(Color.pink.opacity(0.40)).frame(width: 2.5, height: 2.5).offset(x: 2, y: 6.5)
-
-            Circle().fill(Color.pink.opacity(0.30)).frame(width: 4, height: 4).offset(x: -15, y: -2)
+            CatArt.blush.fill(Color.p3(1, 0.50, 0.65, 0.45))
+            CatArt.whiskers.stroke(Color.white.opacity(0.55), style: .round(0.45))
 
             Text("z").font(.system(size: 6, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -25 : -16).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
@@ -346,11 +189,12 @@ public struct SleepingCat: View {
                     .foregroundColor(Color.p3(h: 0.72, s: 0.45, b: 1.0, a: 0.7, level: .rimHighlight)).offset(x: 0, y: -21)
             }
         }
+        .frame(width: box.width, height: box.height)
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
+        .earFidget($fidget, isNearEnd: isNearEnd, reduceMotion: reduceMotion)
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) { breathe = true }
-            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { purr = true }
             withAnimation(.easeInOut(duration: 3.5).repeatForever(autoreverses: true)) { tailSway = true }
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: false)) { zzz = true }
@@ -366,110 +210,63 @@ public struct SleepingDodo: View {
     @State private var fidget = false
     @State private var zzz = false
 
-    private let feather     = Color.p3(r: 0.38, g: 0.68, b: 0.74)
-    private let featherDk   = Color.p3(r: 0.26, g: 0.52, b: 0.60)
-    private let cream       = Color.p3(r: 0.96, g: 0.94, b: 0.88)
-    private let beakAmber   = Color.p3(r: 0.98, g: 0.78, b: 0.38)
-    private let beakTip     = Color.p3(r: 0.42, g: 0.78, b: 0.68)
-    private let dark        = Color.p3(r: 0.14, g: 0.12, b: 0.18)
+    private let cream = Color.p3(0.97, 0.95, 0.89)
+    private let ink = Color.p3(0.14, 0.14, 0.20)
+    private let headFeather = Gradient(colors: [.p3(0.56, 0.84, 0.87), .p3(0.30, 0.58, 0.65)])
 
     public init(isNearEnd: Bool) {
         self.isNearEnd = isNearEnd
     }
 
     public var body: some View {
+        let box = DodoArt.box
+        let head = LinearGradient(headFeather, from: CGPoint(x: 12, y: 11), to: CGPoint(x: 27, y: 28), in: box)
         ZStack {
-            Circle().fill(cream.opacity(0.85)).frame(width: 8, height: 8).offset(x: 18, y: -2)
-            Circle().fill(feather.opacity(0.9)).frame(width: 9, height: 9).offset(x: 16, y: 3)
-            Circle().fill(cream.opacity(0.95)).frame(width: 7, height: 7).offset(x: 20, y: 1)
+            // Tail plume
+            DodoArt.plumeBack.fill(Color.p3(0.88, 0.86, 0.80))
+            DodoArt.plumeTop.fill(cream)
+            DodoArt.plumeFront.fill(Color.p3(0.94, 0.92, 0.86))
 
-            Ellipse()
-                .fill(
-                    LinearGradient(
-                        colors: [feather, featherDk],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 36, height: 26)
-                .scaleEffect(y: breathe ? 1.05 : 1.0)
-                .scaleEffect(x: breathe ? 0.98 : 1.0)
+            ZStack {
+                DodoArt.body.fill(LinearGradient(
+                    Gradient(colors: [.p3(0.50, 0.80, 0.84), .p3(0.24, 0.50, 0.58)]),
+                    from: CGPoint(x: 20, y: 11), to: CGPoint(x: 52, y: 40), in: box
+                ))
+                DodoArt.backRim.stroke(Color.p3(0.80, 0.96, 0.98, 0.35), style: .round(0.8))
+                DodoArt.belly.fill(cream.opacity(0.92))
+                DodoArt.wing.fill(LinearGradient(
+                    Gradient(colors: [.p3(0.34, 0.62, 0.70), .p3(0.20, 0.44, 0.52)]),
+                    from: CGPoint(x: 32, y: 20), to: CGPoint(x: 48, y: 31), in: box
+                ))
+                DodoArt.wingLines.stroke(Color.p3(0.70, 0.90, 0.93, 0.45), style: .round(0.7))
+            }
+            .scaleEffect(x: breathe ? 0.98 : 1.0, y: breathe ? 1.05 : 1.0, anchor: UnitPoint(38, 39.5, in: box))
 
-            Ellipse()
-                .fill(cream.opacity(0.75))
-                .frame(width: 18, height: 14)
-                .offset(x: -6, y: 5)
+            DodoArt.footBack.fill(Color.p3(0.95, 0.70, 0.32))
+            DodoArt.footFront.fill(Color.p3(0.98, 0.76, 0.38))
 
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [featherDk, feather],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .frame(width: 16, height: 10)
-                .rotationEffect(.degrees(-15))
-                .offset(x: 4, y: 3)
+            DodoArt.tufts.fill(head)
+                .rotationEffect(.degrees(fidget ? -12 : 0), anchor: UnitPoint(21.5, 12.8, in: box))
 
-            Arc()
-                .stroke(Color.white.opacity(0.35), lineWidth: 1)
-                .frame(width: 10, height: 5)
-                .rotationEffect(.degrees(-15))
-                .offset(x: 3, y: 3)
+            // Beak sits behind the head so its root is hidden
+            DodoArt.beak.fill(LinearGradient(
+                Gradient(colors: [.p3(1.0, 0.84, 0.46), .p3(0.92, 0.64, 0.28)]),
+                from: CGPoint(x: 4, y: 18), to: CGPoint(x: 12, y: 27), in: box
+            ))
+            DodoArt.beakHook.fill(Color.p3(0.40, 0.66, 0.60))
+            DodoArt.beakLower.fill(Color.p3(0.99, 0.86, 0.56))
+            DodoArt.beakLine.stroke(Color.p3(0.70, 0.46, 0.18, 0.5), style: .round(0.6))
+            DodoArt.nostril.fill(Color.p3(0.55, 0.36, 0.16, 0.7))
 
-            Ellipse().fill(beakAmber).frame(width: 6, height: 4).offset(x: -8, y: 12)
-            Ellipse().fill(beakAmber).frame(width: 6, height: 4).offset(x: 0, y: 12)
-
-            Triangle()
-                .fill(feather)
-                .frame(width: 5, height: 9)
-                .rotationEffect(.degrees(isNearEnd ? (fidget ? -20 : -5) : -12))
-                .offset(x: -18, y: -19)
-            Triangle()
-                .fill(cream)
-                .frame(width: 4, height: 7)
-                .rotationEffect(.degrees(isNearEnd ? (fidget ? 18 : 2) : 8))
-                .offset(x: -14, y: -20)
-
-            Circle()
-                .fill(feather)
-                .frame(width: 20, height: 20)
-                .offset(x: -12, y: -7)
-
-            Ellipse()
-                .fill(beakAmber)
-                .frame(width: 13, height: 8)
-                .rotationEffect(.degrees(12))
-                .offset(x: -24, y: -4)
-
-            Circle()
-                .fill(beakTip)
-                .frame(width: 7, height: 7)
-                .offset(x: -28, y: -2)
-
-            Circle()
-                .fill(dark.opacity(0.6))
-                .frame(width: 1.5, height: 1.5)
-                .offset(x: -22, y: -5)
+            DodoArt.head.fill(head)
 
             if isNearEnd {
-                Capsule()
-                    .fill(Color.p3(h: 0.12, s: 0.8, b: 0.9, level: .rimHighlight))
-                    .frame(width: 3, height: 1.5)
-                    .offset(x: -14, y: -8)
+                AwakeEye(color: ink).offset(x: 16.8 - 32, y: 19.4 - 22)
             } else {
-                Arc()
-                    .stroke(dark.opacity(0.75), lineWidth: 1.2)
-                    .frame(width: 4.5, height: 2.5)
-                    .rotationEffect(.degrees(180))
-                    .offset(x: -14, y: -8)
+                DodoArt.eye.stroke(ink, style: .round(1.1))
             }
 
-            Circle()
-                .fill(Color.pink.opacity(0.35))
-                .frame(width: 4.5, height: 4.5)
-                .offset(x: -18, y: -2)
+            DodoArt.blush.fill(Color.p3(1, 0.50, 0.62, 0.45))
 
             Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -26 : -16).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
@@ -481,12 +278,45 @@ public struct SleepingDodo: View {
                     .foregroundColor(Color.p3(h: 0.50, s: 0.7, b: 1.0, a: 0.8, level: .rimHighlight)).offset(x: -6, y: -23)
             }
         }
+        .frame(width: box.width, height: box.height)
         .animation(.easeInOut(duration: 0.6), value: isNearEnd)
+        .earFidget($fidget, isNearEnd: isNearEnd, reduceMotion: reduceMotion)
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 2.9).repeatForever(autoreverses: true)) { breathe = true }
-            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget = true }
             withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: false)) { zzz = true }
+        }
+    }
+}
+
+/// Open eye with a small EDR glint, shown in the last minute.
+private struct AwakeEye: View {
+    let color: Color
+
+    var body: some View {
+        Ellipse()
+            .fill(color)
+            .frame(width: 2.6, height: 3.0)
+            .overlay(alignment: .topLeading) {
+                Circle()
+                    .fill(Color.p3(1, 1, 1, level: .rimHighlight))
+                    .frame(width: 1.1, height: 1.1)
+                    .offset(x: 0.4, y: 0.4)
+            }
+    }
+}
+
+@MainActor
+private extension View {
+    /// Twitches ears (or tufts) while the last minute runs. Started on entry rather than on appear,
+    /// so the loop runs even when the companion appeared before the last minute.
+    func earFidget(_ fidget: Binding<Bool>, isNearEnd: Bool, reduceMotion: Bool) -> some View {
+        onChange(of: isNearEnd, initial: true) { _, nearEnd in
+            if nearEnd && !reduceMotion {
+                withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { fidget.wrappedValue = true }
+            } else {
+                withAnimation(.easeInOut(duration: 0.3)) { fidget.wrappedValue = false }
+            }
         }
     }
 }

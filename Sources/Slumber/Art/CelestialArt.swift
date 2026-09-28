@@ -9,31 +9,6 @@ import SwiftUI
 import AppKit
 
 // MARK: - Shapes
-public struct Triangle: Shape {
-    public func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.closeSubpath()
-        return path
-    }
-}
-
-public struct Arc: Shape {
-    public func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.addArc(
-            center: CGPoint(x: rect.midX, y: rect.midY),
-            radius: rect.width / 2,
-            startAngle: .degrees(0),
-            endAngle: .degrees(180),
-            clockwise: false
-        )
-        return path
-    }
-}
-
 public struct SparkleStarShape: Shape {
     public func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -357,9 +332,13 @@ public struct CuteMoon: View {
     @State private var bob = false
     @State private var glow = false
 
+    private let face = Color.p3(0.36, 0.26, 0.58)
+    private let cloth = Color.p3(0.98, 0.97, 1.0, level: .subtleHighlight)
+
     public init() {}
 
     public var body: some View {
+        let box = MoonArt.box
         ZStack {
             Circle()
                 .fill(
@@ -372,33 +351,30 @@ public struct CuteMoon: View {
                 .scaleEffect(glow ? 1.15 : 1.0)
 
             ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.p3(h: 0.73, s: 0.35, b: 0.95, level: .strongGlow),
-                                Color.p3(h: 0.78, s: 0.45, b: 0.80, level: .strongGlow)
-                            ],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 44, height: 44)
+                MoonArt.crescent.fill(LinearGradient(
+                    Gradient(stops: [
+                        .init(color: .p3(0.88, 0.82, 1.0, level: .strongGlow), location: 0),
+                        .init(color: .p3(0.74, 0.62, 0.95, level: .strongGlow), location: 0.55),
+                        .init(color: .p3(0.60, 0.48, 0.88, level: .strongGlow), location: 1)
+                    ]),
+                    from: CGPoint(x: 4, y: 6), to: CGPoint(x: 34, y: 40), in: box
+                ))
+                MoonArt.rim.stroke(Color.p3(1, 1, 1, 0.55, level: .strongGlow), style: .round(0.8))
+                MoonArt.craters.fill(Color.p3(0.62, 0.50, 0.90, 0.18))
+                MoonArt.eyes.stroke(face, style: .round(1.1))
+                MoonArt.mouth.stroke(face, style: .round(0.9))
+                MoonArt.blush.fill(Color.p3(1, 0.50, 0.70, 0.5))
 
-                HStack(spacing: 6) { CuteEye(); CuteEye() }.offset(x: -4, y: 2)
-                Circle().fill(Color.pink.opacity(0.5)).frame(width: 6, height: 6).offset(x: -12, y: 8)
-                Arc().stroke(Color.white.opacity(0.7), lineWidth: 1.2).frame(width: 8, height: 4).offset(x: -5, y: 10)
+                // Nightcap (pokes out above the 44pt frame on purpose)
+                MoonArt.cap.fill(LinearGradient(
+                    Gradient(colors: [.p3(0.46, 0.74, 1.0, level: .rimHighlight), .p3(0.30, 0.46, 0.92, level: .rimHighlight)]),
+                    from: CGPoint(x: 8, y: -3), to: CGPoint(x: 30, y: 14), in: box
+                ))
+                MoonArt.capFold.stroke(Color.p3(0.20, 0.30, 0.78, 0.35), style: .round(0.9))
+                MoonArt.capBand.fill(cloth)
+                MoonArt.pompom.fill(cloth)
             }
-            .mask(
-                ZStack {
-                    Rectangle().fill(Color.white).frame(width: 80, height: 80)
-                    Circle()
-                        .fill(Color.black)
-                        .frame(width: 38, height: 38)
-                        .offset(x: 12, y: -10)
-                        .blendMode(.destinationOut)
-                }
-                .compositingGroup()
-            )
+            .frame(width: box.width, height: box.height)
         }
         .offset(y: bob ? -5 : 5)
         .rotationEffect(.degrees(bob ? 3 : -3))
@@ -410,48 +386,43 @@ public struct CuteMoon: View {
     }
 }
 
-public struct CuteEye: View {
-    public init() {}
-
-    public var body: some View {
-        Arc()
-            .stroke(Color.white.opacity(0.9), lineWidth: 1.5)
-            .frame(width: 5, height: 3)
-            .rotationEffect(.degrees(180))
-    }
-}
-
 // MARK: - Clouds
-public struct VectorCloudShape1: Shape {
-    public func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let w = rect.width
-        let h = rect.height
+/// Sleepy cloud: soft shadow, lilac-to-white body, a fading EDR top rim and a face.
+private struct SleepyCloud: View {
+    let art: CloudArt
+    let opacity: Double
 
-        path.move(to: CGPoint(x: w * 0.2, y: h * 0.85))
-        path.addQuadCurve(to: CGPoint(x: w * 0.8, y: h * 0.85), control: CGPoint(x: w * 0.5, y: h * 0.95))
-        path.addCurve(to: CGPoint(x: w * 0.78, y: h * 0.35), control1: CGPoint(x: w * 1.02, y: h * 0.78), control2: CGPoint(x: w * 0.95, y: h * 0.38))
-        path.addCurve(to: CGPoint(x: w * 0.42, y: h * 0.22), control1: CGPoint(x: w * 0.68, y: h * 0.05), control2: CGPoint(x: w * 0.48, y: h * 0.08))
-        path.addCurve(to: CGPoint(x: w * 0.12, y: h * 0.52), control1: CGPoint(x: w * 0.28, y: h * 0.18), control2: CGPoint(x: w * 0.1, y: h * 0.35))
-        path.addCurve(to: CGPoint(x: w * 0.2, y: h * 0.85), control1: CGPoint(x: w * -0.02, y: h * 0.68), control2: CGPoint(x: w * 0.08, y: h * 0.85))
-        path.closeSubpath()
-        return path
-    }
-}
+    var body: some View {
+        let box = art.box
+        let face = Color.p3(0.40, 0.32, 0.62)
+        ZStack {
+            art.outline
+                .fill(Color.p3(0.10, 0.06, 0.24, 0.22))
+                .offset(y: 2.5)
+                .blur(radius: 3)
 
-public struct VectorCloudShape2: Shape {
-    public func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let w = rect.width
-        let h = rect.height
+            art.outline.fill(LinearGradient(
+                Gradient(stops: [
+                    .init(color: .p3(0.99, 0.98, 1.0, opacity), location: 0),
+                    .init(color: .p3(0.88, 0.85, 0.97, opacity), location: 0.6),
+                    .init(color: .p3(0.70, 0.64, 0.90, opacity), location: 1)
+                ]),
+                from: CGPoint(x: 0, y: 4), to: CGPoint(x: 0, y: box.height - 4), in: box
+            ))
 
-        path.move(to: CGPoint(x: w * 0.15, y: h * 0.82))
-        path.addQuadCurve(to: CGPoint(x: w * 0.85, y: h * 0.82), control: CGPoint(x: w * 0.5, y: h * 0.92))
-        path.addCurve(to: CGPoint(x: w * 0.72, y: h * 0.32), control1: CGPoint(x: w * 1.0, y: h * 0.72), control2: CGPoint(x: w * 0.9, y: h * 0.32))
-        path.addCurve(to: CGPoint(x: w * 0.32, y: h * 0.22), control1: CGPoint(x: w * 0.58, y: h * 0.08), control2: CGPoint(x: w * 0.42, y: h * 0.12))
-        path.addCurve(to: CGPoint(x: w * 0.15, y: h * 0.82), control1: CGPoint(x: w * 0.1, y: h * 0.32), control2: CGPoint(x: w * -0.02, y: h * 0.65))
-        path.closeSubpath()
-        return path
+            art.outline.stroke(
+                LinearGradient(
+                    Gradient(colors: [.p3(1, 1, 1, 0.9 * opacity, level: .rimHighlight), .p3(1, 1, 1, 0)]),
+                    from: CGPoint(x: 0, y: 4), to: CGPoint(x: 0, y: box.height * 0.7), in: box
+                ),
+                lineWidth: 1
+            )
+
+            art.eyes.stroke(face, style: .round(1.1))
+            art.mouth.stroke(face, style: .round(0.9))
+            art.blush.fill(Color.p3(1, 0.50, 0.70, 0.45))
+        }
+        .frame(width: box.width, height: box.height)
     }
 }
 
@@ -465,40 +436,14 @@ public struct CuteCloud1: View {
     }
 
     public var body: some View {
-        ZStack {
-            VectorCloudShape1()
-                .fill(Color.black.opacity(0.2))
-                .blur(radius: 4 * scale)
-                .offset(y: 3 * scale)
-
-            VectorCloudShape1()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.p3(r: 0.95, g: 0.95, b: 0.98, a: 0.92), Color.p3(h: 0.72, s: 0.25, b: 0.82, a: 0.85)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                )
-
-            VectorCloudShape1()
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.p3(1.0, 1.0, 1.0, 0.9, level: .rimHighlight), Color.p3(1.0, 1.0, 1.0, 0.1, level: .sdr)],
-                        startPoint: .top, endPoint: .bottom
-                    ),
-                    lineWidth: 1.2 * scale
-                )
-
-            HStack(spacing: 5 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale).offset(y: -1 * scale)
-            Circle().fill(Color.pink.opacity(0.40)).frame(width: 5 * scale, height: 5 * scale).offset(x: -11 * scale, y: 4 * scale)
-            Circle().fill(Color.pink.opacity(0.40)).frame(width: 5 * scale, height: 5 * scale).offset(x: 11 * scale, y: 4 * scale)
-        }
-        .frame(width: 64 * scale, height: 40 * scale)
-        .offset(y: bob ? -5 : 4)
-        .rotationEffect(.degrees(bob ? 2 : -2))
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { bob = true }
-        }
+        SleepyCloud(art: .large, opacity: 0.95)
+            .scaleEffect(scale)
+            .offset(y: bob ? -5 : 4)
+            .rotationEffect(.degrees(bob ? 2 : -2))
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { bob = true }
+            }
     }
 }
 
@@ -512,40 +457,14 @@ public struct CuteCloud2: View {
     }
 
     public var body: some View {
-        ZStack {
-            VectorCloudShape2()
-                .fill(Color.black.opacity(0.12))
-                .blur(radius: 3 * scale)
-                .offset(y: 2 * scale)
-
-            VectorCloudShape2()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.p3(r: 0.85, g: 0.85, b: 0.92, a: 0.55), Color.p3(h: 0.65, s: 0.22, b: 0.75, a: 0.40)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                )
-
-            VectorCloudShape2()
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.p3(1.0, 1.0, 1.0, 0.45, level: .rimHighlight), Color.p3(1.0, 1.0, 1.0, 0.08, level: .sdr)],
-                        startPoint: .top, endPoint: .bottom
-                    ),
-                    lineWidth: 0.8 * scale
-                )
-
-            HStack(spacing: 5 * scale) { CuteEye(); CuteEye() }.scaleEffect(scale).offset(y: -1 * scale).opacity(0.6)
-            Circle().fill(Color.pink.opacity(0.25)).frame(width: 4 * scale, height: 4 * scale).offset(x: -10 * scale, y: 4 * scale)
-            Circle().fill(Color.pink.opacity(0.25)).frame(width: 4 * scale, height: 4 * scale).offset(x: 10 * scale, y: 4 * scale)
-        }
-        .frame(width: 58 * scale, height: 34 * scale)
-        .offset(y: bob ? -4 : 3)
-        .rotationEffect(.degrees(bob ? -1.5 : 2))
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 5.5).repeatForever(autoreverses: true).delay(0.5)) { bob = true }
-        }
+        SleepyCloud(art: .small, opacity: 0.6)
+            .scaleEffect(scale)
+            .offset(y: bob ? -4 : 3)
+            .rotationEffect(.degrees(bob ? -1.5 : 2))
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 5.5).repeatForever(autoreverses: true).delay(0.5)) { bob = true }
+            }
     }
 }
 
