@@ -42,7 +42,7 @@ xcrun actool \
     "Assets/AppIcon.icon"
 rm -f "${TMP_PLIST}"
 for f in Assets.car AppIcon.icns; do
-    [ -f "${RESOURCES_DIR}/${f}" ] || { echo "error: actool did not produce ${f}" >&2; exit 1; }
+    [[ -f "${RESOURCES_DIR}/${f}" ]] || { echo "error: actool did not produce ${f}" >&2; exit 1; }
 done
 
 # Create Info.plist
