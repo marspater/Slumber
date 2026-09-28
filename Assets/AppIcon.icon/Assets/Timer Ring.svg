@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="ring" x1="0.9" y1="0.1" x2="0.1" y2="0.9">
+      <stop offset="0" stop-color="#7FE3FF"/>
+      <stop offset="1" stop-color="#B08CFF"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#ring)" d="M910.85 441.67 A405 405 0 1 1 455.63 110.94 A27 27 0 0 1 463.15 164.42 A351 351 0 1 0 857.67 451.05 A27 27 0 0 1 910.85 441.67 Z"/>
+</svg>
