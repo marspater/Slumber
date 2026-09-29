@@ -55,9 +55,18 @@ final class SlumberTimerTests: XCTestCase {
 
     @MainActor
     func testClearStatusResetsToIdle() {
-        let timer = SlumberTimer()
+        let clock = MockClock()
+        let timer = SlumberTimer(
+            sleepAction: { SleepResult.failure(reason: "nope") },
+            dateProvider: { clock.now() }
+        )
+        timer.start(minutes: 1)
+        clock.advance(by: 61)
+        timer.tick()
+        XCTAssertEqual(timer.state, TimerState.sleepFailed(reason: "nope"))
         timer.clearStatus()
         XCTAssertEqual(timer.state, TimerState.idle)
+        XCTAssertNil(timer.sleepError)
     }
 
     @MainActor
@@ -68,6 +77,10 @@ final class SlumberTimerTests: XCTestCase {
         timer.start(minutes: -10)
         XCTAssertEqual(timer.state, TimerState.idle)
         timer.start(minutes: .infinity)
+        XCTAssertEqual(timer.state, TimerState.idle)
+        timer.start(minutes: .nan)
+        XCTAssertEqual(timer.state, TimerState.idle)
+        timer.start(minutes: .greatestFiniteMagnitude) // seconds overflow to infinity
         XCTAssertEqual(timer.state, TimerState.idle)
     }
 
@@ -134,7 +147,7 @@ final class SlumberTimerTests: XCTestCase {
 
     @MainActor
     func testRetrySleepAfterFailure() {
-        final class SleepController: @unchecked Sendable {
+        @MainActor final class SleepController {
             var shouldSucceed = false
         }
         let controller = SleepController()
@@ -256,11 +269,58 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testDeinitCancelsTimerAndCleansUpResources() {
         var timer: SlumberTimer? = SlumberTimer()
+        weak var weakTimer = timer
         timer?.start(minutes: 10)
         XCTAssertEqual(timer?.state, TimerState.running)
-        
-        // Releasing reference triggers isolated deinit
+
+        // Releasing the reference must not be blocked by the dispatch source or wake observer
         timer = nil
-        XCTAssertNil(timer)
+        XCTAssertNil(weakTimer)
+    }
+
+    @MainActor
+    func testDoesNotSleepBeforeDeadlineButDoesAtDeadline() {
+        let clock = MockClock()
+        var sleeps = 0
+        let timer = SlumberTimer(sleepAction: { sleeps += 1; return SleepResult.success }, dateProvider: { clock.now() })
+        timer.start(minutes: 10)
+
+        clock.advance(by: 599)
+        timer.tick()
+        XCTAssertEqual(sleeps, 0)
+        XCTAssertTrue(timer.isRunning)
+
+        clock.advance(by: 1) // exactly the deadline
+        timer.tick()
+        XCTAssertEqual(sleeps, 1)
+        XCTAssertEqual(timer.state, TimerState.completed)
+    }
+
+    @MainActor
+    func testRetrySleepIsIgnoredUnlessFailed() {
+        var sleeps = 0
+        let timer = SlumberTimer(sleepAction: { sleeps += 1; return SleepResult.success })
+        timer.retrySleep()
+        XCTAssertEqual(sleeps, 0)
+        XCTAssertEqual(timer.state, TimerState.idle)
+    }
+
+    @MainActor
+    func testRepeatedFailureStaysRetryable() {
+        let timer = SlumberTimer(sleepAction: { SleepResult.failure(reason: "busy") })
+        timer.start(minutes: 1)
+        timer.retrySleep() // ignored while running
+        XCTAssertTrue(timer.isRunning)
+        timer.stop()
+
+        let clock = MockClock()
+        let failing = SlumberTimer(sleepAction: { SleepResult.failure(reason: "busy") }, dateProvider: { clock.now() })
+        failing.start(minutes: 1)
+        clock.advance(by: 61)
+        failing.tick()
+        failing.retrySleep()
+        XCTAssertEqual(failing.state, TimerState.sleepFailed(reason: "busy"))
+        failing.retrySleep()
+        XCTAssertEqual(failing.state, TimerState.sleepFailed(reason: "busy"))
     }
 }

@@ -11,6 +11,9 @@ extension Notification.Name {
     static let slumberNudgeDuration = Notification.Name("SlumberNudgeDuration")
 }
 
+/// 'SLMB'
+private let hotKeySignature: OSType = 0x534C4D42
+
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var statusItem: NSStatusItem!
@@ -36,6 +39,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         popover.delegate = self
 
         setupGlobalHotkey()
+        preloadSounds()
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleTogglePopoverNotification), name: .slumberTogglePopover, object: nil)
 
@@ -114,7 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 nil,
                 &hotKeyID
             )
-            if status == noErr && hotKeyID.signature == 1397443650 && hotKeyID.id == 1 {
+            if status == noErr && hotKeyID.signature == hotKeySignature && hotKeyID.id == 1 {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: .slumberTogglePopover, object: nil)
                 }
@@ -135,7 +139,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             NSLog("[SlumberApp] Failed to install Carbon event handler: OSStatus %d", installStatus)
         }
         
-        let hotKeyID = EventHotKeyID(signature: 1397443650, id: 1) // 'SLMB'
+        let hotKeyID = EventHotKeyID(signature: hotKeySignature, id: 1)
         let regStatus = RegisterEventHotKey(
             UInt32(1), // 'S' key
             UInt32(controlKey | optionKey),
@@ -224,8 +228,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             requestClosePopover()
         } else {
             guard let button = statusItem.button else { return }
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            showPopover(from: button)
         }
+    }
+
+    /// Activates the app so the popover window becomes key and the Escape/arrow monitors receive keys
+    /// (the global hotkey path otherwise leaves another app frontmost).
+    private func showPopover(from button: NSStatusBarButton) {
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        NSApp.activate(ignoringOtherApps: true)
+        popover.contentViewController?.view.window?.makeKey()
     }
 
     private func requestClosePopover() {
@@ -243,7 +255,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !popover.isShown {
             guard let button = statusItem.button else { return false }
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            showPopover(from: button)
         }
         return true
     }
@@ -255,5 +267,6 @@ struct SlumberApp: App {
 
     var body: some Scene {
         Settings { EmptyView() }
+            .commands { CommandGroup(replacing: .appSettings) {} }
     }
 }

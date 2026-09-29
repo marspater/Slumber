@@ -43,7 +43,8 @@ public struct StartButton: View {
                     endPoint: .trailing
                 )
             )
-            .foregroundColor(.white)
+            // Dark ink: white on the bright violet-cyan gradient measured about 2:1.
+            .foregroundColor(SlumberTheme.Colors.onAccent)
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous))
             .shadow(
                 color: accent.opacity(isHovered ? 0.55 : 0.35),

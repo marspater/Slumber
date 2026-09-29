@@ -2,6 +2,7 @@
 set -e
 
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "${REPO_ROOT}"
 APP_NAME="Slumber"
 ARTIFACTS_DIR="${REPO_ROOT}/.build/artifacts"
 APP_DIR="${ARTIFACTS_DIR}/${APP_NAME}.app"
@@ -69,8 +70,8 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>3.2</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
-    <key>MinimumOSVersion</key>
-    <string>26.0</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Slumber asks System Events to put your Mac to sleep when the timer ends.</string>
     <key>CFBundleSupportedPlatforms</key>
     <array>
         <string>MacOSX</string>
@@ -91,24 +92,40 @@ echo "Signing binary..."
 find "${APP_DIR}" -name '.DS_Store' -delete || true
 xattr -cr "${APP_DIR}"
 
+# Hardened runtime needs this entitlement for the AppleScript sleep fallback to reach System Events.
+ENTITLEMENTS="$(mktemp)"
+cat > "${ENTITLEMENTS}" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+</dict>
+</plist>
+PLIST
+
 SIGN_IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | grep -E 'Developer ID Application|Apple Development' | head -n 1 | awk -F '"' '{print $2}' || true)"
 if [ -n "${SIGN_IDENTITY}" ]; then
     echo "Signing with Identity: ${SIGN_IDENTITY}"
-    codesign --force --deep --options runtime --sign "${SIGN_IDENTITY}" "${APP_DIR}"
+    codesign --force --deep --options runtime --entitlements "${ENTITLEMENTS}" --sign "${SIGN_IDENTITY}" "${APP_DIR}"
 else
     echo "Signing ad-hoc..."
-    codesign --force --deep --options runtime --sign - "${APP_DIR}" 2>/dev/null || codesign --force --deep --sign - "${APP_DIR}"
+    codesign --force --deep --options runtime --entitlements "${ENTITLEMENTS}" --sign - "${APP_DIR}"
 fi
+rm -f "${ENTITLEMENTS}"
 
 touch "${APP_DIR}"
 
-# Package Slumber.zip from hidden build artifacts directory
-echo "Packaging Slumber.zip..."
-rm -f "${REPO_ROOT}/Slumber.zip"
-(cd "${ARTIFACTS_DIR}" && zip -r -y -q "${REPO_ROOT}/Slumber.zip" "${APP_NAME}.app")
+# Package Slumber.zip (tracked release artifact) only on request, so ordinary builds leave the tree clean
+if [[ " $* " == *" --package "* ]]; then
+    echo "Packaging Slumber.zip..."
+    rm -f "${REPO_ROOT}/Slumber.zip"
+    (cd "${ARTIFACTS_DIR}" && zip -r -y -q "${REPO_ROOT}/Slumber.zip" "${APP_NAME}.app")
+fi
 
 # Handle optional --install / -i flag
-if [ "$1" = "--install" ] || [ "$1" = "-i" ]; then
+if [[ " $* " == *" --install "* || " $* " == *" -i "* ]]; then
     echo "Installing ${APP_NAME} to /Applications..."
     pkill -x "${APP_NAME}" 2>/dev/null || true
     rm -rf "/Applications/${APP_NAME}.app"

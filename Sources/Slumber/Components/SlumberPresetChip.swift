@@ -103,7 +103,7 @@ public struct PresetChip: View {
                 .animation(.easeInOut(duration: 0.2), value: selected)
         }
         .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.95))
-        .accessibilityLabel("\(value) minutes preset")
+        .accessibilityLabel("\(label), \(value) minutes preset")
         .accessibilityValue(selected ? "Selected" : "Not selected")
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.18)) {

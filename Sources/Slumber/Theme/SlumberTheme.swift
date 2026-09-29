@@ -14,6 +14,8 @@ public enum SlumberTheme {
         public static let accent = Color.p3(h: 0.75, s: 0.65, b: 0.92)
         /// Atmospheric accent (Cyan / Cosmic Blue)
         public static let cyan   = Color.p3(h: 0.53, s: 0.55, b: 0.97)
+        /// Label ink for text on the accent-to-cyan gradient (meets 4.5:1).
+        public static let onAccent = Color.p3(h: 0.72, s: 0.70, b: 0.14)
         /// Soft alert / destructive action (Coral / Soft Rosé)
         public static let coral  = Color.p3(h: 0.98, s: 0.65, b: 0.95)
         /// Warning / retry accent (Warm Amber)

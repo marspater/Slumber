@@ -39,6 +39,8 @@ public class SlumberTimer: ObservableObject {
     private var endTime: Date?
     private var activity: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
+    /// Bumped whenever resources reset, so a slow AppleScript fallback cannot overwrite newer state.
+    private var sleepGeneration = 0
     private let customSleepAction: SleepAction?
     private let dateProvider: DateProvider
     
@@ -56,9 +58,14 @@ public class SlumberTimer: ObservableObject {
             return
         }
 
-        resetTimerResources()
-        
         let seconds = minutes * 60
+        guard seconds.isFinite else {
+            NSLog("[SlumberTimer] Duration overflows: %f minutes", minutes)
+            return
+        }
+
+        resetTimerResources()
+
         self.totalTime = seconds
         self.timeRemaining = seconds
         self.endTime = dateProvider().addingTimeInterval(seconds)
@@ -126,6 +133,7 @@ public class SlumberTimer: ObservableObject {
     }
     
     private func resetTimerResources() {
+        sleepGeneration += 1
         timer?.cancel()
         timer = nil
         endTime = nil
@@ -187,6 +195,7 @@ public class SlumberTimer: ObservableObject {
         }
 
         // Offload blocking AppleScript execution to a background queue to avoid blocking the main thread / MainActor
+        let generation = sleepGeneration
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var errorDict: NSDictionary?
             let script = NSAppleScript(source: "tell application \"System Events\" to sleep")
@@ -195,7 +204,7 @@ public class SlumberTimer: ObservableObject {
             let isSuccess = result != nil && errorMessage == nil
 
             DispatchQueue.main.async {
-                guard let self = self else { return }
+                guard let self = self, self.sleepGeneration == generation, self.state == .requestingSleep else { return }
                 if let desc = errorMessage {
                     NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", desc)
                     self.state = .sleepFailed(reason: "Could not put Mac to sleep: \(desc)")
