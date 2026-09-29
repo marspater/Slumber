@@ -381,97 +381,101 @@ public struct AnimatedScene: View {
 
             if isVisible {
                 TimelineView(.animation(paused: reduceMotion)) { timeline in
-                    let t = timeline.date.timeIntervalSinceReferenceDate
-                    let orbitProgress = transfer.progress(at: timeline.date)
-                    let elapsed: Double = {
-                        guard let start = orbitStartTime else { return 0 }
-                        return max(0, t - start.timeIntervalSinceReferenceDate)
-                    }()
+                    // TimelineView stacks several children like a VStack, so the trail appearing
+                    // (p > 0.04) and vanishing (p > 0.96) shoved the companion ~25 pt mid-launch.
+                    ZStack {
+                        let t = timeline.date.timeIntervalSinceReferenceDate
+                        let orbitProgress = transfer.progress(at: timeline.date)
+                        let elapsed: Double = {
+                            guard let start = orbitStartTime else { return 0 }
+                            return max(0, t - start.timeIntervalSinceReferenceDate)
+                        }()
 
-                    let baseAngle = (elapsed / orbitDuration) * 360.0
-                    let baseRad = baseAngle * .pi / 180.0
-                    let angle = baseAngle - 12.0 * cos(baseRad)
-                    let rad = angle * .pi / 180.0
+                        let baseAngle = (elapsed / orbitDuration) * 360.0
+                        let baseRad = baseAngle * .pi / 180.0
+                        let angle = baseAngle - 12.0 * cos(baseRad)
+                        let rad = angle * .pi / 180.0
 
-                    let orbitX = moonX + CGFloat(cos(rad)) * orbitRadiusX
-                    let orbitY = moonY + CGFloat(sin(rad)) * orbitRadiusY
+                        let orbitX = moonX + CGFloat(cos(rad)) * orbitRadiusX
+                        let orbitY = moonY + CGFloat(sin(rad)) * orbitRadiusY
 
-                    let arcCtrlX: CGFloat = -132
-                    let arcCtrlY: CGFloat = -8
-                    let p = orbitProgress
-                    let u = 1.0 - p
+                        let arcCtrlX: CGFloat = -132
+                        let arcCtrlY: CGFloat = -8
+                        let p = orbitProgress
+                        let u = 1.0 - p
 
-                    let targetX = u * u * cloudX + 2.0 * u * p * arcCtrlX + p * p * orbitX
-                    let targetY = u * u * cloudY + 2.0 * u * p * arcCtrlY + p * p * orbitY
+                        let targetX = u * u * cloudX + 2.0 * u * p * arcCtrlX + p * p * orbitX
+                        let targetY = u * u * cloudY + 2.0 * u * p * arcCtrlY + p * p * orbitY
 
-                    let isTransferring = orbitProgress > 0.04 && orbitProgress < 0.96
-                    if isTransferring {
-                        ForEach(1...4, id: \.self) { trailIdx in
-                            // Trail lags behind the direction of travel (up on launch, down on return).
-                            let lagP = min(1.0, max(0.0, orbitProgress - transfer.direction * CGFloat(trailIdx) * 0.05))
-                            let lagU = 1.0 - lagP
-                            let trailX = lagU * lagU * cloudX + 2.0 * lagU * lagP * arcCtrlX + lagP * lagP * orbitX
-                            let trailY = lagU * lagU * cloudY + 2.0 * lagU * lagP * arcCtrlY + lagP * lagP * orbitY
-                            let trailAlpha = Double(sin(orbitProgress * .pi)) * (1.0 - Double(trailIdx) * 0.22) * 0.65
+                        let isTransferring = orbitProgress > 0.04 && orbitProgress < 0.96
+                        if isTransferring {
+                            ForEach(1...4, id: \.self) { trailIdx in
+                                // Trail lags behind the direction of travel (up on launch, down on return).
+                                let lagP = min(1.0, max(0.0, orbitProgress - transfer.direction * CGFloat(trailIdx) * 0.05))
+                                let lagU = 1.0 - lagP
+                                let trailX = lagU * lagU * cloudX + 2.0 * lagU * lagP * arcCtrlX + lagP * lagP * orbitX
+                                let trailY = lagU * lagU * cloudY + 2.0 * lagU * lagP * arcCtrlY + lagP * lagP * orbitY
+                                let trailAlpha = Double(sin(orbitProgress * .pi)) * (1.0 - Double(trailIdx) * 0.22) * 0.65
 
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.p3(h: 0.78, s: 0.6, b: 1.0, a: trailAlpha, level: .rimHighlight),
-                                            Color.p3(h: 0.55, s: 0.5, b: 0.9, a: 0.0, level: .subtleHighlight)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.p3(h: 0.78, s: 0.6, b: 1.0, a: trailAlpha, level: .rimHighlight),
+                                                Color.p3(h: 0.55, s: 0.5, b: 0.9, a: 0.0, level: .subtleHighlight)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
-                                .frame(width: CGFloat(7 - trailIdx), height: CGFloat(7 - trailIdx))
-                                .blur(radius: 0.8)
-                                .offset(x: trailX, y: trailY)
+                                    .frame(width: CGFloat(7 - trailIdx), height: CGFloat(7 - trailIdx))
+                                    .blur(radius: 0.8)
+                                    .offset(x: trailX, y: trailY)
+                            }
                         }
+
+                        let idleBobY = CGFloat(sin(t * 1.2)) * 1.5 * (1.0 - orbitProgress)
+                        let zeroGDriftX = CGFloat(cos(t * 1.3 + 0.4)) * 5.0 * orbitProgress
+                        let zeroGDriftY = CGFloat(sin(t * 1.8)) * 6.5 * orbitProgress
+                        let finalX = targetX + zeroGDriftX
+                        let finalY = targetY + idleBobY + zeroGDriftY
+
+                        let tumbleSpeed = 360.0 / 6.5
+                        let continuousTumble = elapsed * tumbleSpeed  // unwrapped: a 360° wrap under the p² weight would snap the sprite
+                        let spaceWobble = sin(elapsed * 2.2) * 12.0
+                        let zeroGRotation = continuousTumble + spaceWobble
+
+                        let ascentBank = Double(sin(orbitProgress * .pi)) * -18.0
+                        let idleTilt = sin(t * 1.0) * 2.0
+                        let finalRotation = idleTilt * (1.0 - Double(orbitProgress))
+                            + ascentBank * (1.0 - Double(orbitProgress)) * Double(orbitProgress) * 4.0
+                            + zeroGRotation * Double(orbitProgress * orbitProgress)
+
+                        let depthMod = 1.0 + 0.15 * CGFloat(sin(rad)) * orbitProgress
+                        let baseScale: CGFloat = {
+                            switch companionType {
+                            case 0:  return (0.65 - 0.15 * orbitProgress)
+                            case 1:  return (0.82 - 0.12 * orbitProgress)
+                            default: return (0.75 - 0.14 * orbitProgress)
+                            }
+                        }()
+                        let finalScale = baseScale * depthMod
+
+                        let nearEnd = timerModel.isRunning
+                            && timerModel.timeRemaining < 60
+                            && timerModel.timeRemaining > 0
+
+                        Group {
+                            switch companionType {
+                            case 0:  SleepingFox(isNearEnd: nearEnd)
+                            case 1:  SleepingCat(isNearEnd: nearEnd)
+                            default: SleepingDodo(isNearEnd: nearEnd)
+                            }
+                        }
+                        .scaleEffect(finalScale)
+                        .rotationEffect(.degrees(finalRotation))
+                        .offset(x: finalX, y: finalY)
                     }
-
-                    let idleBobY = CGFloat(sin(t * 1.2)) * 1.5 * (1.0 - orbitProgress)
-                    let zeroGDriftX = CGFloat(cos(t * 1.3 + 0.4)) * 5.0 * orbitProgress
-                    let zeroGDriftY = CGFloat(sin(t * 1.8)) * 6.5 * orbitProgress
-                    let finalX = targetX + zeroGDriftX
-                    let finalY = targetY + idleBobY + zeroGDriftY
-
-                    let tumbleSpeed = 360.0 / 6.5
-                    let continuousTumble = elapsed * tumbleSpeed  // unwrapped: a 360° wrap under the p² weight would snap the sprite
-                    let spaceWobble = sin(elapsed * 2.2) * 12.0
-                    let zeroGRotation = continuousTumble + spaceWobble
-
-                    let ascentBank = Double(sin(orbitProgress * .pi)) * -18.0
-                    let idleTilt = sin(t * 1.0) * 2.0
-                    let finalRotation = idleTilt * (1.0 - Double(orbitProgress))
-                        + ascentBank * (1.0 - Double(orbitProgress)) * Double(orbitProgress) * 4.0
-                        + zeroGRotation * Double(orbitProgress * orbitProgress)
-
-                    let depthMod = 1.0 + 0.15 * CGFloat(sin(rad)) * orbitProgress
-                    let baseScale: CGFloat = {
-                        switch companionType {
-                        case 0:  return (0.65 - 0.15 * orbitProgress)
-                        case 1:  return (0.82 - 0.12 * orbitProgress)
-                        default: return (0.75 - 0.14 * orbitProgress)
-                        }
-                    }()
-                    let finalScale = baseScale * depthMod
-
-                    let nearEnd = timerModel.isRunning
-                        && timerModel.timeRemaining < 60
-                        && timerModel.timeRemaining > 0
-
-                    Group {
-                        switch companionType {
-                        case 0:  SleepingFox(isNearEnd: nearEnd)
-                        case 1:  SleepingCat(isNearEnd: nearEnd)
-                        default: SleepingDodo(isNearEnd: nearEnd)
-                        }
-                    }
-                    .scaleEffect(finalScale)
-                    .rotationEffect(.degrees(finalRotation))
-                    .offset(x: finalX, y: finalY)
                 }
             }
         }
