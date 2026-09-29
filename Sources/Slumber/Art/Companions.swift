@@ -82,10 +82,12 @@ public struct SleepingFox: View {
             FoxArt.blush.fill(Color.p3(1, 0.45, 0.55, 0.45))
 
             // 'z' particles
-            Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 14 : 2, y: zzz ? -28 : -18).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
-            Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 20 : 8, y: zzz ? -34 : -24).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.35))
+            if !isNearEnd {
+                Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 14 : 2, y: zzz ? -28 : -18).opacity(zzz ? 0 : 0.5)
+                Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 20 : 8, y: zzz ? -34 : -24).opacity(zzz ? 0 : 0.35)
+            }
 
             if isNearEnd {
                 Text("?").font(.system(size: 8, weight: .bold, design: .rounded))
@@ -179,10 +181,12 @@ public struct SleepingCat: View {
             CatArt.blush.fill(Color.p3(1, 0.50, 0.65, 0.45))
             CatArt.whiskers.stroke(Color.white.opacity(0.55), style: .round(0.45))
 
-            Text("z").font(.system(size: 6, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -25 : -16).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
-            Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 18 : 5, y: zzz ? -31 : -22).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.35))
+            if !isNearEnd {
+                Text("z").font(.system(size: 6, weight: .bold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -25 : -16).opacity(zzz ? 0 : 0.5)
+                Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 18 : 5, y: zzz ? -31 : -22).opacity(zzz ? 0 : 0.35)
+            }
 
             if isNearEnd {
                 Text("?").font(.system(size: 7, weight: .bold, design: .rounded))
@@ -268,10 +272,12 @@ public struct SleepingDodo: View {
 
             DodoArt.blush.fill(Color.p3(1, 0.50, 0.62, 0.45))
 
-            Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -26 : -16).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.5))
-            Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 18 : 6, y: zzz ? -32 : -22).opacity(isNearEnd ? 0 : (zzz ? 0 : 0.35))
+            if !isNearEnd {
+                Text("z").font(.system(size: 7, weight: .bold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.4)).offset(x: zzz ? 12 : 0, y: zzz ? -26 : -16).opacity(zzz ? 0 : 0.5)
+                Text("z").font(.system(size: 5, weight: .bold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.3)).offset(x: zzz ? 18 : 6, y: zzz ? -32 : -22).opacity(zzz ? 0 : 0.35)
+            }
 
             if isNearEnd {
                 Text("?").font(.system(size: 8, weight: .bold, design: .rounded))
@@ -432,7 +438,7 @@ public struct AnimatedScene: View {
                     let finalY = targetY + idleBobY + zeroGDriftY
 
                     let tumbleSpeed = 360.0 / 6.5
-                    let continuousTumble = (elapsed * tumbleSpeed).truncatingRemainder(dividingBy: 360.0)
+                    let continuousTumble = elapsed * tumbleSpeed  // unwrapped: a 360° wrap under the p² weight would snap the sprite
                     let spaceWobble = sin(elapsed * 2.2) * 12.0
                     let zeroGRotation = continuousTumble + spaceWobble
 

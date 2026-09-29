@@ -23,7 +23,7 @@ Required toolchain characteristics on macOS:
 
 - Swift 6 / Swift Package Manager
 - macOS 26 SDK/runtime compatibility
-- Apple platform tooling available on the PATH (`xcrun`, `actool`, `iconutil`, `sips`, `codesign`, `security`, `xattr`)
+- Apple platform tooling available on the PATH (`xcrun`, `actool`, `codesign`, `security`, `xattr`)
 
 Do not attempt to compile native AppKit targets or run `build.sh` on Linux or Windows. Do not replace Apple frameworks with cross-platform substitutes.
 

@@ -103,7 +103,6 @@ public struct ErrorBanner: View {
             Text(reason)
                 .font(SlumberTheme.Typography.caption)
                 .foregroundColor(SlumberTheme.Colors.textPrimary)
-                .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer()

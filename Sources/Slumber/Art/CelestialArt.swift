@@ -118,7 +118,7 @@ public struct ShootingStar: View {
     }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let adjusted = t - initialDelay
             let progress = adjusted > 0
@@ -210,7 +210,7 @@ public struct Firefly: View {
     private var driftDY: CGFloat { seededRandom(seed: seed * 13, max: 20) - 10 }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let period = Double(4 + (seed % 3))
             let phaseOffset = Double(seed) * 1.2

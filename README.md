@@ -22,12 +22,13 @@ Slumber features a **Display P3 + EDR** wide-gamut cosmic sky, soft vector cloud
 
 ## 📦 Download & Quick Install
 
-### Option 1: Direct Download (Signed & Verified)
+### Option 1: Direct Download (Ad-hoc signed)
 1. Download **[Slumber.zip (v3.2)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)**.
 2. Unzip and move `Slumber.app` to your `/Applications` folder:
    ```bash
-   # Quick one-liner to download, install and remove download quarantine:
-   curl -L -o /tmp/Slumber.zip "https://github.com/marspater/Slumber/raw/main/Slumber.zip" && unzip -q /tmp/Slumber.zip -d /Applications/ && xattr -cr /Applications/Slumber.app
+   # Quick one-liner to download, install and remove download quarantine.
+   # The build is ad-hoc signed and not notarized, so clearing quarantine is required.
+   curl -L -o /tmp/Slumber.zip "https://github.com/marspater/Slumber/raw/main/Slumber.zip" && unzip -oq /tmp/Slumber.zip -d /Applications/ && xattr -cr /Applications/Slumber.app
    ```
 3. Open Slumber from Spotlight or Launchpad!
 
@@ -36,7 +37,7 @@ Slumber features a **Display P3 + EDR** wide-gamut cosmic sky, soft vector cloud
 git clone https://github.com/marspater/Slumber.git
 cd Slumber
 chmod +x build.sh
-./build.sh --install
+./build.sh --install   # add --package to refresh the tracked Slumber.zip
 open /Applications/Slumber.app
 ```
 
@@ -59,7 +60,7 @@ open /Applications/Slumber.app
   - Streamlined `SlumberTimer.clearStatus()` by reusing existing `stop()` logic.
 
 - **🛠️ Resilient Build Pipeline**:
-  - Added resilient icon generation with automatic multi-resolution `iconutil` fallback in `build.sh` when `actool` is unavailable or on newer macOS SDKs.
+  - Icon Composer `.icon` compiled with `actool`; `build.sh` fails if `Assets.car` or `AppIcon.icns` is missing.
   - Updated release packaging to version 3.2.
 
 ---
@@ -74,7 +75,7 @@ open /Applications/Slumber.app
   - Clean modular architecture separating components, theme, and celestial vector art into dedicated subdirectories.
 
 - **⚡ Zero Background CPU & Battery Optimization**:
-  - Automatically unmounts and pauses all celestial canvas animations (`ShootingStar`, `FireflyField`, `ConstellationOverlay`, `AuroraEffect`, and companion orbital physics) when the popover is closed or when navigating to the Settings tab, reducing background CPU usage to 0.0%.
+  - Automatically unmounts and pauses all celestial canvas animations (`ShootingStar`, `FireflyField`, `ConstellationOverlay`, `AuroraEffect`, and companion orbital physics) when the popover is closed or when navigating to the Settings tab, so the popover adds no animation work while closed (a running countdown still ticks once per second).
 
 - **🛡️ Concurrency & Platform Event Safety**:
   - Global Carbon hotkey (`⌃⌥S`) notification dispatch safely isolated to the main queue, eliminating background AppKit threading hazards.
@@ -146,7 +147,7 @@ open /Applications/Slumber.app
 
 ### 🦊 2. Animated Animal Companions
 - **Sleeping Fox, Kitten & Dodo**: Interactive companions resting on soft clouds during idle state, smoothly transitioning to orbit and somersault around the sleeping moon when a countdown starts.
-- **Keplerian Orbital Motion & Zero-G Physics**: Continuous wall-clock time math using `TimelineView` for zero-g floating, breathing sine-wave motions, and spring-interpolated position lerping.
+- **Keplerian Orbital Motion & Zero-G Physics**: Continuous wall-clock time math using `TimelineView` for zero-g floating, breathing sine-wave motions, and a time-based cubic ease along a Bézier arc between the cloud and the moon.
 
 ### 🖥️ 3. Native macOS Support
 - Native `.icon` bundle format support (`Assets/AppIcon.icon`) compiled directly with Apple `actool` into `Assets.car`.

@@ -14,28 +14,51 @@ import SlumberCore
 // MARK: - Audio Helper
 // ===================================================================
 
-@MainActor private var audioPlayers: [String: AVAudioPlayer] = [:]
+private let soundNames = ["space_timer_start", "cancel", "space_button"]
+
+/// Owns the players off the main actor: creating one and calling `play()` each block for
+/// 100-250 ms, which froze the UI (and the companion launch) the moment Start was pressed.
+private actor SoundBoard {
+    static let shared = SoundBoard()
+    private var players: [String: AVAudioPlayer] = [:]
+
+    func play(_ name: String) {
+        guard let player = player(named: name) else { return }
+        if player.isPlaying { player.currentTime = 0 }
+        player.play()
+    }
+
+    func preload() {
+        for name in soundNames { _ = player(named: name) }
+    }
+
+    private func player(named name: String) -> AVAudioPlayer? {
+        if let player = players[name] { return player }
+        guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
+            NSLog("[SlumberAudio] Audio file '%@.wav' not found in bundle resources.", name)
+            return nil
+        }
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.prepareToPlay()
+            players[name] = player
+            return player
+        } catch {
+            NSLog("[SlumberAudio] Failed to initialize AVAudioPlayer for '%@.wav': %@", name, error.localizedDescription)
+            return nil
+        }
+    }
+}
 
 @MainActor
 func playSound(_ name: String) {
-    if let player = audioPlayers[name] {
-        if player.isPlaying { player.currentTime = 0 }
-        player.play()
-        return
-    }
+    Task { await SoundBoard.shared.play(name) }
+}
 
-    guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
-        NSLog("[SlumberAudio] Audio file '%@.wav' not found in bundle resources.", name)
-        return
-    }
-    do {
-        let player = try AVAudioPlayer(contentsOf: url)
-        player.prepareToPlay()
-        audioPlayers[name] = player
-        player.play()
-    } catch {
-        NSLog("[SlumberAudio] Failed to initialize AVAudioPlayer for '%@.wav': %@", name, error.localizedDescription)
-    }
+/// Builds every player up front so the first tap does not pay for it.
+@MainActor
+func preloadSounds() {
+    Task { await SoundBoard.shared.preload() }
 }
 
 // ===================================================================
@@ -52,6 +75,7 @@ public struct SlumberView: View {
     @State private var isPopoverVisible: Bool = false
     @Namespace private var tabNamespace
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(timerModel: SlumberTimer) {
         self.timerModel = timerModel
@@ -110,6 +134,7 @@ public struct SlumberView: View {
                 isVisible: isPopoverVisible && currentTab == 0
             )
             .opacity(currentTab == 0 ? 1 : 0)
+            .accessibilityHidden(true)
 
             VStack(spacing: 0) {
                 // Top Segmented Bar
@@ -145,16 +170,10 @@ public struct SlumberView: View {
                 ZStack {
                     if currentTab == 0 {
                         timerPage
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .leading).combined(with: .opacity),
-                                removal: .move(edge: .leading).combined(with: .opacity)
-                            ))
+                            .transition(pageTransition(edge: .leading))
                     } else {
                         settingsPage
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity),
-                                removal: .move(edge: .trailing).combined(with: .opacity)
-                            ))
+                            .transition(pageTransition(edge: .trailing))
                     }
                 }
             }
@@ -171,10 +190,20 @@ public struct SlumberView: View {
         .onReceive(NotificationCenter.default.publisher(for: .slumberClosed)) { _ in
             isPopoverVisible = false
         }
+        .onChange(of: timerModel.sleepError) { _, error in
+            if let error { AccessibilityNotification.Announcement("Could not put Mac to sleep. \(error)").post() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .slumberNudgeDuration)) { note in
             guard currentTab == 0, !timerModel.isRunning, let delta = note.object as? Int else { return }
             selectedMinutes = min(max(selectedMinutes + delta, 1), 120)
         }
+    }
+
+    private func pageTransition(edge: Edge) -> AnyTransition {
+        reduceMotion ? .opacity : .asymmetric(
+            insertion: .move(edge: edge).combined(with: .opacity),
+            removal: .move(edge: edge).combined(with: .opacity)
+        )
     }
 
     // MARK: - Timer Page
@@ -183,7 +212,7 @@ public struct SlumberView: View {
             VStack(spacing: SlumberTheme.Metrics.spaceMD + 2) {
                 Spacer()
 
-                if timerModel.isRunning {
+                if timerModel.isRunning || timerModel.state == .requestingSleep {
                     let total = timerModel.totalTime
                     let prog = total > 0 ? CGFloat(timerModel.timeRemaining / total) : 0
 
@@ -196,12 +225,12 @@ public struct SlumberView: View {
                             Text(countdown)
                                 .font(hasHours ? SlumberTheme.Typography.displayHours : SlumberTheme.Typography.display)
                                 .foregroundColor(SlumberTheme.Colors.textPrimary)
-                                .contentTransition(.numericText(countsDown: true))
+                                .contentTransition(reduceMotion ? .identity : .numericText(countsDown: true))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
                                 .frame(maxWidth: 136)
                                 .animation(.easeInOut(duration: 0.3), value: hasHours)
-                                .animation(.snappy(duration: 0.35), value: countdown)
+                                .animation(reduceMotion ? nil : .snappy(duration: 0.35), value: countdown)
                             Text("drifting off…")
                                 .font(SlumberTheme.Typography.body)
                                 .foregroundColor(SlumberTheme.Colors.textTertiary)
@@ -218,7 +247,7 @@ public struct SlumberView: View {
                         Text("\(selectedMinutes)")
                             .font(SlumberTheme.Typography.display)
                             .foregroundColor(SlumberTheme.Colors.textPrimary)
-                            .contentTransition(.numericText())
+                            .contentTransition(reduceMotion ? .identity : .numericText())
                         Text("min")
                             .font(SlumberTheme.Typography.displayUnit)
                             .foregroundColor(SlumberTheme.Colors.textTertiary)
@@ -268,15 +297,15 @@ public struct SlumberView: View {
                 )
                 .frame(width: SlumberTheme.Metrics.contentWidth)
                 .padding(.top, SlumberTheme.Metrics.spaceSM)
-                .transition(.asymmetric(
+                .transition(reduceMotion ? .opacity : .asymmetric(
                     insertion: .move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: 0.95)),
                     removal: .move(edge: .top).combined(with: .opacity)
                 ))
             }
         }
         .allowsHitTesting(currentTab == 0)
-        .animation(.spring(response: 0.38, dampingFraction: 0.8), value: timerModel.state)
-        .animation(.spring(response: 0.5, dampingFraction: 0.75), value: timerModel.isRunning)
+        .animation(reduceMotion ? nil : .spring(response: 0.38, dampingFraction: 0.8), value: timerModel.state)
+        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75), value: timerModel.isRunning)
     }
 
     // MARK: - Settings Page
@@ -318,6 +347,7 @@ public struct SlumberView: View {
                         }
                         Spacer()
                         KeycapBadge(keys: ["⌃", "⌥", "S"])
+                            .accessibilityElement(children: .ignore)
                             .accessibilityLabel("Shortcut Control Option S")
                     }
                 }
