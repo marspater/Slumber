@@ -23,11 +23,17 @@ public struct GlowingSlider: View {
     public init(
         value: Binding<Int>,
         bounds: ClosedRange<Int> = 1...120,
-        onEditingChanged: @escaping (Bool) -> Void = { _ in }
+        onEditingChanged: @escaping (Bool) -> Void = { _ in /* no-op by default */ }
     ) {
         self._value = value
         self.bounds = bounds
         self.onEditingChanged = onEditingChanged
+    }
+
+    /// Picks the drag, hover or rest variant of a spec value.
+    private func interactionValue<T>(_ spec: (rest: T, hover: T, drag: T)) -> T {
+        if isDragging { return spec.drag }
+        return isHovered ? spec.hover : spec.rest
     }
 
     public var body: some View {
@@ -94,7 +100,7 @@ public struct GlowingSlider: View {
                 .frame(width: trackFillWidth, height: trackHeight)
                 .shadow(
                     color: SlumberTheme.Colors.cyan.opacity(
-                        isDragging ? Spec.fillGlowOpacity.drag : (isHovered ? Spec.fillGlowOpacity.hover : Spec.fillGlowOpacity.rest)
+                        interactionValue(Spec.fillGlowOpacity)
                     ),
                     radius: isDragging ? Spec.fillGlowRadius.drag : Spec.fillGlowRadius.rest
                 )
@@ -112,7 +118,7 @@ public struct GlowingSlider: View {
                     color: SlumberTheme.Colors.accent.opacity(Spec.thumbGlowOpacity),
                     radius: isDragging ? Spec.thumbGlowRadius.drag : Spec.thumbGlowRadius.rest
                 )
-                .scaleEffect(isDragging ? Spec.thumbScale.drag : (isHovered ? Spec.thumbScale.hover : Spec.thumbScale.rest))
+                .scaleEffect(interactionValue(Spec.thumbScale))
                 .offset(x: thumbOffset)
         }
         .frame(width: sliderWidth, height: Spec.height)

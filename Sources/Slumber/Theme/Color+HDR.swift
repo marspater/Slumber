@@ -127,7 +127,9 @@ extension Color {
         let hp = abs(hue).truncatingRemainder(dividingBy: 1.0) * 6.0
         let x = c * (1.0 - abs(hp.truncatingRemainder(dividingBy: 2.0) - 1.0))
         let m = brightness - c
-        let r: Double, g: Double, bl: Double
+        let r: Double
+        let g: Double
+        let bl: Double
         switch Int(hp) % 6 {
         case 0:  r = c;  g = x;  bl = 0
         case 1:  r = x;  g = c;  bl = 0

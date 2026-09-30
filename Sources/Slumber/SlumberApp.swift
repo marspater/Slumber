@@ -24,7 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    func applicationDidFinishLaunching(_: Notification) {
         let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
 
@@ -154,7 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         return installStatus == noErr && regStatus == noErr
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
+    func applicationWillTerminate(_: Notification) {
         timerModel.stop()
         if let hk = hotKeyRef {
             UnregisterEventHotKey(hk)
@@ -172,7 +172,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     // MARK: - NSPopoverDelegate
-    func popoverWillShow(_ notification: Notification) {
+    func popoverWillShow(_: Notification) {
         NotificationCenter.default.post(name: .slumberOpening, object: nil)
         setupGlobalMonitor()
         if keyMonitor == nil {
@@ -201,7 +201,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
     }
 
-    func popoverDidClose(_ notification: Notification) {
+    func popoverDidClose(_: Notification) {
         NotificationCenter.default.post(name: .slumberClosed, object: nil)
         removeGlobalMonitor()
         if let kMon = keyMonitor {
@@ -210,7 +210,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
     }
 
-    @objc private func handleTogglePopoverNotification(_ notification: Notification) {
+    @objc private func handleTogglePopoverNotification(_: Notification) {
         togglePopover()
     }
 
@@ -249,11 +249,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSApp.terminate(nil)
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
         return false
     }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+    func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows _: Bool) -> Bool {
         if !popover.isShown {
             guard let button = statusItem.button else { return false }
             showPopover(from: button)
@@ -268,6 +268,10 @@ struct SlumberApp: App {
 
     var body: some Scene {
         Settings { EmptyView() }
-            .commands { CommandGroup(replacing: .appSettings) {} }
+            .commands {
+                CommandGroup(replacing: .appSettings) {
+                    // Empty on purpose: removes the standard Settings… menu item.
+                }
+            }
     }
 }

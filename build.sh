@@ -13,7 +13,7 @@ RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 echo "Building ${APP_NAME}..."
 
 # Unregister and remove any legacy root app bundle to prevent LaunchServices duplicate indexing
-if [ -d "${APP_NAME}.app" ]; then
+if [[ -d "${APP_NAME}.app" ]]; then
     /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "${APP_NAME}.app" 2>/dev/null || true
     rm -rf "${APP_NAME}.app"
 fi
@@ -114,9 +114,9 @@ IDENTITIES="$(security find-identity -v -p codesigning 2>/dev/null || true)"
 SIGN_IDENTITY=""
 for KIND in "Developer ID Application" "Apple Development"; do
     SIGN_IDENTITY="$(printf '%s\n' "${IDENTITIES}" | grep "${KIND}" | head -n 1 | awk -F '"' '{print $2}' || true)"
-    if [ -n "${SIGN_IDENTITY}" ]; then break; fi
+    if [[ -n "${SIGN_IDENTITY}" ]]; then break; fi
 done
-if [ -n "${SIGN_IDENTITY}" ]; then
+if [[ -n "${SIGN_IDENTITY}" ]]; then
     echo "Signing with Identity: ${SIGN_IDENTITY}"
     codesign --force --deep --options runtime --entitlements "${ENTITLEMENTS}" --sign "${SIGN_IDENTITY}" "${APP_DIR}"
 else

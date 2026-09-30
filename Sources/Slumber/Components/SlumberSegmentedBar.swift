@@ -53,11 +53,9 @@ public struct TabButton: View {
                     }
             }
             .foregroundColor(
-                active
+                active || isHovered
                     ? SlumberTheme.Colors.textPrimary
-                    : (isHovered
-                        ? SlumberTheme.Colors.textPrimary
-                        : SlumberTheme.Colors.textSecondary)
+                    : SlumberTheme.Colors.textSecondary
             )
             .padding(.vertical, Spec.verticalPadding)
             .padding(.horizontal, Spec.horizontalPadding)
