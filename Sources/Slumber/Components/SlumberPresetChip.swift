@@ -33,6 +33,13 @@ public struct PresetChip: View {
         !isSliding && selectedMinutes == value
     }
 
+    private var fillColor: Color {
+        if isSelected {
+            return reduceTransparency ? SlumberTheme.Colors.solidChipSelected : accent.opacity(Spec.selectedFillOpacity)
+        }
+        return Color.white.opacity(reduceTransparency ? Spec.fillOpacitySolid(isHovered) : Spec.fillOpacity(isHovered))
+    }
+
     public var body: some View {
         let selected = isSelected
         Button {
@@ -47,13 +54,7 @@ public struct PresetChip: View {
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
-                            .fill(
-                                selected
-                                    ? (reduceTransparency ? SlumberTheme.Colors.solidChipSelected : accent.opacity(Spec.selectedFillOpacity))
-                                    : Color.white.opacity(
-                                        reduceTransparency ? Spec.fillOpacitySolid(isHovered) : Spec.fillOpacity(isHovered)
-                                    )
-                            )
+                            .fill(fillColor)
 
                         VStack {
                             RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
@@ -72,9 +73,9 @@ public struct PresetChip: View {
                     }
                 )
                 .foregroundColor(
-                    selected
+                    selected || isHovered
                         ? SlumberTheme.Colors.textPrimary
-                        : (isHovered ? SlumberTheme.Colors.textPrimary : SlumberTheme.Colors.textSecondary)
+                        : SlumberTheme.Colors.textSecondary
                 )
                 .overlay {
                     if reduceTransparency {

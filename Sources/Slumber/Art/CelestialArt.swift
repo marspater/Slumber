@@ -63,6 +63,8 @@ public struct TwinklingStar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var on = false
 
+    private var glowRadius: CGFloat { isSparkle ? Stars.sparkleGlowRadius : Stars.glowRadius }
+
     public var body: some View {
         Group {
             if isSparkle {
@@ -77,7 +79,7 @@ public struct TwinklingStar: View {
         }
         .shadow(
             color: Stars.glow(alpha: on ? Stars.glowOpacity : 0, level: isSparkle ? .rimHighlight : .sdr),
-            radius: on ? (isSparkle ? Stars.sparkleGlowRadius : Stars.glowRadius) : 0
+            radius: on ? glowRadius : 0
         )
         .opacity(on ? Stars.litOpacity : Stars.restOpacity)
         .position(position)
@@ -529,7 +531,7 @@ public struct VisualEffectView: NSViewRepresentable {
         self.blendingMode = blendingMode
     }
 
-    public func makeNSView(context: Context) -> NSVisualEffectView {
+    public func makeNSView(context _: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
         view.material = material
         view.blendingMode = blendingMode
@@ -538,7 +540,7 @@ public struct VisualEffectView: NSViewRepresentable {
         return view
     }
 
-    public func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+    public func updateNSView(_ nsView: NSVisualEffectView, context _: Context) {
         if nsView.material != material { nsView.material = material }
         if nsView.blendingMode != blendingMode { nsView.blendingMode = blendingMode }
     }

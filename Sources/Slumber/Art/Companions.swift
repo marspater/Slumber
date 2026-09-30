@@ -356,6 +356,8 @@ public struct AnimatedScene: View {
         self.isVisible = isVisible
     }
 
+    private var flightDuration: Double { timerModel.isRunning ? launchDuration : returnDuration }
+
     public var body: some View {
         ZStack {
             if isVisible {
@@ -385,9 +387,7 @@ public struct AnimatedScene: View {
 
                 CuteCloud1(scale: Layout.largeCloudScale).offset(x: Layout.largeCloud.x, y: Layout.largeCloud.y)
                 CuteCloud2(scale: Layout.smallCloudScale).offset(x: Layout.smallCloud.x, y: Layout.smallCloud.y)
-            }
 
-            if isVisible {
                 TimelineView(.animation(paused: reduceMotion)) { timeline in
                     // TimelineView stacks several children like a VStack, so the trail appearing
                     // (p > 0.04) and vanishing (p > 0.96) shoved the companion ~25 pt mid-launch.
@@ -499,7 +499,7 @@ public struct AnimatedScene: View {
                 from: transfer.progress(at: now),
                 to: running ? 1.0 : 0.0,
                 start: now,
-                duration: reduceMotion ? 0 : (running ? launchDuration : returnDuration)
+                duration: reduceMotion ? 0 : flightDuration
             )
         }
     }
