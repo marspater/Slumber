@@ -269,8 +269,9 @@ struct SlumberApp: App {
     var body: some Scene {
         Settings { EmptyView() }
             .commands {
-                // Empty on purpose: removes the standard Settings… menu item.
-                CommandGroup(replacing: .appSettings) {}
+                CommandGroup(replacing: .appSettings) {
+                    // Empty on purpose: removes the standard Settings… menu item.
+                }
             }
     }
 }
