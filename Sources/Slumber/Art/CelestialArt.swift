@@ -118,7 +118,9 @@ public struct ShootingStar: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+        // 60 fps: at 30 a streak crossing a 60 Hz panel holds every position for two frames and judders.
+        // Fireflies drift slowly enough to stay at 30.
+        TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let adjusted = t - initialDelay
             let progress = adjusted > 0

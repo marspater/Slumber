@@ -11,8 +11,6 @@ public struct GlowingSlider: View {
     @Binding public var value: Int
     public let bounds: ClosedRange<Int>
     public let onEditingChanged: (Bool) -> Void
-    @Environment(\.colorScheme) var colorScheme
-    private var chrome: Color { colorScheme == .dark ? .white : .black }
 
     @State private var isDragging = false
     @State private var isHovered = false
@@ -77,7 +75,7 @@ public struct GlowingSlider: View {
         return ZStack(alignment: .leading) {
             // Background Track
             RoundedRectangle(cornerRadius: trackHeight / 2.0, style: .continuous)
-                .fill(chrome.opacity(0.10))
+                .fill(Color.white.opacity(0.10))
                 .frame(width: sliderWidth, height: trackHeight)
 
             // Filled Track with Wide-gamut Glow

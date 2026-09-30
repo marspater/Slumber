@@ -305,7 +305,7 @@ private struct AwakeEye: View {
             .frame(width: 2.6, height: 3.0)
             .overlay(alignment: .topLeading) {
                 Circle()
-                    .fill(Color.p3(1, 1, 1, level: .rimHighlight))
+                    .fill(Color.p3(1, 1, 1, level: .visibleGlow))
                     .frame(width: 1.1, height: 1.1)
                     .offset(x: 0.4, y: 0.4)
             }
@@ -479,11 +479,6 @@ public struct AnimatedScene: View {
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(
-            for: .slumberOpening)
-        ) { _ in
-            syncSceneState()
-        }
         .onAppear { syncSceneState() }
         .onChange(of: isVisible) { _, visible in if visible { syncSceneState() } }
         .onChange(of: timerModel.isRunning) { _, running in
@@ -519,7 +514,7 @@ public struct AnimatedScene: View {
     }
 }
 
-/// Time-based cloud ⇄ orbit transfer, eased with a cubic in-out curve.
+/// Time-based cloud ⇄ orbit transfer, eased with smootherstep.
 private struct OrbitTransfer {
     var from: CGFloat
     var to: CGFloat
@@ -543,7 +538,9 @@ private struct OrbitTransfer {
     func progress(at date: Date) -> CGFloat {
         guard duration > 0 else { return to }
         let x = min(max(date.timeIntervalSince(start) / duration, 0.0), 1.0)
-        let eased = x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0
+        // Starts and lands with zero velocity and acceleration, like a cubic in-out, but peaks at
+        // 1.9x the average speed instead of 3x: ~5 pt per frame on a 60 Hz panel instead of ~8.
+        let eased = x * x * x * (x * (6.0 * x - 15.0) + 10.0)
         return from + (to - from) * CGFloat(eased)
     }
 }

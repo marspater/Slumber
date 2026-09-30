@@ -42,7 +42,7 @@ public struct SettingsCard<Content: View>: View {
 public struct KeycapBadge: View {
     public let keys: [String]
 
-    public init(keys: [String] = ["⌃", "⌥", "S"]) {
+    public init(keys: [String]) {
         self.keys = keys
     }
 

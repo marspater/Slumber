@@ -10,18 +10,12 @@ import SwiftUI
 // MARK: - Start Button (Primary Action)
 public struct StartButton: View {
     public let action: () -> Void
-    public let accent: Color
-    public let cyan: Color
     @State private var isHovered = false
+    private let accent = SlumberTheme.Colors.accent
+    private let cyan = SlumberTheme.Colors.cyan
 
-    public init(
-        action: @escaping () -> Void,
-        accent: Color = SlumberTheme.Colors.accent,
-        cyan: Color = SlumberTheme.Colors.cyan
-    ) {
+    public init(action: @escaping () -> Void) {
         self.action = action
-        self.accent = accent
-        self.cyan = cyan
     }
 
     public var body: some View {

@@ -3,27 +3,25 @@
 //  Slumber
 //
 //  Display P3 + EDR (Extended Dynamic Range) color system for Slumber.
-//  Provides named design tiers for HDR headroom, automatic fallback on
-//  non-HDR external screens, and continuous headroom interpolation for animations.
+//  Glowing tiers are brightened above SDR white; macOS tone-maps them back to the plain
+//  P3 color wherever the display has no headroom left (SDR monitors, or a MacBook Air at
+//  full brightness), so no per-display detection is needed.
 //
 
 import SwiftUI
-#if os(macOS)
-import AppKit
-#endif
 
 // MARK: - Semantic HDR tiers
 
-/// Named headroom levels for Slumber's UI.
-public enum HDRLevel: Double, CaseIterable, Sendable {
+/// Named brightness levels for Slumber's UI, as multiples of SDR white.
+public enum HDRLevel: Double, Sendable {
     /// Background sky, companion bodies (fox/cat/dodo), base controls, chips, text.
     case sdr = 1.0
-    /// A thin specular highlight on an otherwise-SDR surface — a companion's eye
-    /// glint, a cloud edge catching moonlight, or active slider thumb rim.
+    /// Small highlights: cloud rims, the moon's nightcap, sparkle stars, firefly cores,
+    /// the companions' '?' and awake eyes.
     case rimHighlight = 1.1
-    /// Ambient gradients, cloud rim light, aurora washes, progress ring pulse.
+    /// Ambient light: aurora washes, constellation glow, the nightcap trim, the progress ring's dot.
     case subtleHighlight = 1.25
-    /// Firefly glow (resting), moon halo outer edge.
+    /// Moon halo, a firefly's resting glow, a companion's eye glint.
     case visibleGlow = 1.75
     /// Moon core glow.
     case strongGlow = 2.25
@@ -31,55 +29,10 @@ public enum HDRLevel: Double, CaseIterable, Sendable {
     case effect = 3.0
 }
 
-// MARK: - Display capability
-
-#if os(macOS)
-/// Hardware display capability detection for dynamic color space and EDR mapping.
-///
-/// Slumber is a menu bar app: its popover can be shown on whichever display
-/// currently owns the menu bar (e.g. built-in Retina panel, P3 external monitor,
-/// or non-HDR sRGB standard screen).
-public enum DisplayCapability {
-    /// True if the current display hardware supports EDR (> 1.0 peak luminance).
-    public static func supportsEDR(_ screen: NSScreen? = nil) -> Bool {
-        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
-        return Double(targetScreen?.maximumPotentialExtendedDynamicRangeColorComponentValue ?? 1.0) > 1.0
-    }
-
-    /// True if the current display hardware supports wide-gamut Display P3.
-    public static func supportsWideColorP3(_ screen: NSScreen? = nil) -> Bool {
-        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
-        return targetScreen?.canRepresent(.p3) ?? true
-    }
-
-    /// The live headroom currently available on screen right now.
-    public static func currentHeadroom(_ screen: NSScreen? = nil) -> Double {
-        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens.first
-        return Double(targetScreen?.maximumExtendedDynamicRangeColorComponentValue ?? 1.0)
-    }
-}
-
-public typealias DisplayHeadroom = DisplayCapability
-#endif
-
-extension HDRLevel {
-    /// This level, or `.sdr` if the current display can't render EDR at all.
-    public var effective: HDRLevel {
-        #if os(macOS)
-        DisplayCapability.supportsEDR() ? self : .sdr
-        #else
-        self
-        #endif
-    }
-}
-
 // MARK: - Color Extension
 
 extension Color {
-    /// Constructs a color matching the active display's capabilities:
-    /// - EDR + P3: Display P3 color annotated with linear .headroom(...)
-    /// - P3 without EDR: Display P3 color within standard SDR luminance
-    /// - sRGB without EDR: sRGB-safe color clamped within [0, 1] gamut
+    /// Display P3 color, brightened to `level` on EDR displays.
     public static func p3(
         _ red: Double,
         _ green: Double,
@@ -87,14 +40,10 @@ extension Color {
         _ opacity: Double = 1.0,
         level: HDRLevel = .sdr
     ) -> Color {
-        let base = baseP3Color(red, green, blue, opacity: opacity)
-
-        let effectiveLevel = level.effective
-        guard effectiveLevel != .sdr else { return base }
-        return base.headroom(effectiveLevel.rawValue)
+        edr(Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity), level.rawValue)
     }
 
-    /// Display P3 color with labeled RGB parameters and an explicit HDR headroom tier.
+    /// Display P3 color with labeled RGB parameters and an explicit HDR tier.
     public static func p3(
         r red: Double,
         g green: Double,
@@ -105,7 +54,7 @@ extension Color {
         p3(red, green, blue, opacity, level: level)
     }
 
-    /// Display P3 color with HSB parameters and an explicit HDR headroom tier.
+    /// Display P3 color with HSB parameters and an explicit HDR tier.
     public static func p3(
         h hue: Double,
         s saturation: Double,
@@ -117,7 +66,7 @@ extension Color {
         return p3(r, g, bl, opacity, level: level)
     }
 
-    /// Smoothly interpolates headroom between two HDR levels during continuous animations (e.g. firefly twinkle, shooting stars).
+    /// Brightness interpolated between two tiers for continuous animations (e.g. firefly twinkle, shooting stars).
     public static func p3(
         _ red: Double,
         _ green: Double,
@@ -127,18 +76,12 @@ extension Color {
         and high: HDRLevel,
         phase: Double // 0...1
     ) -> Color {
-        let base = baseP3Color(red, green, blue, opacity: opacity)
-
-        guard low.effective != .sdr || high.effective != .sdr else { return base }
         let clampedPhase = min(max(phase, 0.0), 1.0)
-        let lowVal = low.effective.rawValue
-        let highVal = high.effective.rawValue
-        let interpolated = lowVal + clampedPhase * (highVal - lowVal)
-        guard interpolated > 1.0 else { return base }
-        return base.headroom(interpolated)
+        let level = low.rawValue + clampedPhase * (high.rawValue - low.rawValue)
+        return edr(Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity), level)
     }
 
-    /// Smoothly interpolates headroom with labeled RGB parameters.
+    /// Interpolated brightness with labeled RGB parameters.
     public static func p3(
         r red: Double,
         g green: Double,
@@ -151,7 +94,7 @@ extension Color {
         p3(red, green, blue, opacity, headroomBetween: low, and: high, phase: phase)
     }
 
-    /// Smoothly interpolates headroom with HSB parameters.
+    /// Interpolated brightness with HSB parameters.
     public static func p3(
         h hue: Double,
         s saturation: Double,
@@ -167,27 +110,11 @@ extension Color {
 
     // MARK: - Private Helpers
 
-    /// Creates a base Color matching the active display capabilities (Display P3 or sRGB).
-    private static func baseP3Color(
-        _ red: Double,
-        _ green: Double,
-        _ blue: Double,
-        opacity: Double = 1.0
-    ) -> Color {
-        #if os(macOS)
-        let isWideP3 = DisplayCapability.supportsWideColorP3()
-        #else
-        let isWideP3 = true
-        #endif
-
-        if isWideP3 {
-            return Color(.displayP3, red: red, green: green, blue: blue, opacity: opacity)
-        } else {
-            let clampedR = min(max(red, 0.0), 1.0)
-            let clampedG = min(max(green, 0.0), 1.0)
-            let clampedB = min(max(blue, 0.0), 1.0)
-            return Color(.sRGB, red: clampedR, green: clampedG, blue: clampedB, opacity: opacity)
-        }
+    /// Scales the color's linear light by `level`. `exposureAdjust` also tags the result's headroom,
+    /// which lets macOS tone-map it on displays with less headroom. `headroom(_:)` alone only tags:
+    /// it renders no brighter on EDR displays and is dimmed (down to 0.66x) when tone-mapped to SDR.
+    private static func edr(_ base: Color, _ level: Double) -> Color {
+        level > 1.0 ? base.exposureAdjust(log2(level)) : base
     }
 
     /// Converts HSB parameters to RGB components.

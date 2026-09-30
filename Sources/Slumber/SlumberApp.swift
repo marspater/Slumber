@@ -38,12 +38,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         popover.appearance = NSAppearance(named: .vibrantDark)
         popover.delegate = self
 
-        setupGlobalHotkey()
+        let hotKeyAvailable = setupGlobalHotkey()
         preloadSounds()
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleTogglePopoverNotification), name: .slumberTogglePopover, object: nil)
 
-        let vc = NSHostingController(rootView: SlumberView(timerModel: timerModel))
+        let vc = NSHostingController(rootView: SlumberView(timerModel: timerModel, hotKeyAvailable: hotKeyAvailable))
         vc.view.wantsLayer = true
         vc.view.appearance = NSAppearance(named: .darkAqua)
         popover.contentViewController = vc
@@ -101,7 +101,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
     }
 
-    private func setupGlobalHotkey() {
+    /// Returns false when ⌃⌥S could not be registered (usually another app already owns it).
+    private func setupGlobalHotkey() -> Bool {
         var eventSpec = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed)
@@ -151,6 +152,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         if regStatus != noErr {
             NSLog("[SlumberApp] Failed to register global hotkey (⌃⌥S): OSStatus %d", regStatus)
         }
+        return installStatus == noErr && regStatus == noErr
     }
 
     func applicationWillTerminate(_ notification: Notification) {
