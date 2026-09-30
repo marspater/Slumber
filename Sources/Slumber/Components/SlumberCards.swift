@@ -19,7 +19,7 @@ public struct SettingsCard<Content: View>: View {
 
     public var body: some View {
         content
-            .padding(14)
+            .padding(SlumberTheme.Components.Card.padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(SlumberTheme.Colors.cardBackground(reduceTransparency: reduceTransparency))
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous))
@@ -27,11 +27,11 @@ public struct SettingsCard<Content: View>: View {
                 RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous)
                     .stroke(
                         SlumberTheme.Colors.cardBorder(isHovered: isHovered, reduceTransparency: reduceTransparency),
-                        lineWidth: reduceTransparency ? 1.0 : 0.75
+                        lineWidth: reduceTransparency ? SlumberTheme.Stroke.solid : SlumberTheme.Stroke.thin
                     )
             )
             .onHover { hovering in
-                withAnimation(.easeOut(duration: 0.18)) {
+                withAnimation(SlumberTheme.Motion.hover) {
                     isHovered = hovering
                 }
             }
@@ -41,6 +41,7 @@ public struct SettingsCard<Content: View>: View {
 // MARK: - Keycap Badge
 public struct KeycapBadge: View {
     public let keys: [String]
+    private typealias Spec = SlumberTheme.Components.Keycap
 
     public init(keys: [String]) {
         self.keys = keys
@@ -55,23 +56,23 @@ public struct KeycapBadge: View {
         .font(SlumberTheme.Typography.keycap)
         .foregroundColor(SlumberTheme.Colors.textPrimary)
         .padding(.horizontal, SlumberTheme.Metrics.spaceSM)
-        .padding(.vertical, 5)
+        .padding(.vertical, Spec.verticalPadding)
         .background(
             RoundedRectangle(cornerRadius: SlumberTheme.Radius.xs, style: .continuous)
-                .fill(Color.white.opacity(0.10))
+                .fill(Color.white.opacity(Spec.fillOpacity))
         )
         .overlay(
             RoundedRectangle(cornerRadius: SlumberTheme.Radius.xs, style: .continuous)
                 .stroke(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.30), Color.white.opacity(0.08)],
+                        colors: [Color.white.opacity(Spec.strokeTopOpacity), Color.white.opacity(Spec.strokeBottomOpacity)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 0.75
+                    lineWidth: SlumberTheme.Stroke.thin
                 )
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 2, y: 1)
+        .shadow(color: SlumberTheme.Colors.shadow.opacity(Spec.shadowOpacity), radius: Spec.shadowRadius, y: Spec.shadowOffsetY)
     }
 }
 
@@ -82,6 +83,7 @@ public struct ErrorBanner: View {
     public let onDismiss: () -> Void
     @State private var isDismissHovered = false
     @State private var isRetryHovered = false
+    private typealias Spec = SlumberTheme.Components.ErrorBanner
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     public init(
@@ -95,9 +97,9 @@ public struct ErrorBanner: View {
     }
 
     public var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 13, weight: .semibold))
+        HStack(spacing: Spec.spacing) {
+            Image(systemName: SlumberTheme.Icons.warning)
+                .font(SlumberTheme.Icons.warningFont)
                 .foregroundColor(SlumberTheme.Colors.amber)
 
             Text(reason)
@@ -111,53 +113,57 @@ public struct ErrorBanner: View {
                 Text("Retry")
                     .font(SlumberTheme.Typography.caption.weight(.semibold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, Spec.retryHorizontalPadding)
+                    .padding(.vertical, Spec.retryVerticalPadding)
                     .background(
                         ZStack {
                             RoundedRectangle(cornerRadius: SlumberTheme.Radius.sm, style: .continuous)
                                 .fill(
                                     reduceTransparency
                                         ? SlumberTheme.Colors.solidRetry
-                                        : SlumberTheme.Colors.amber.opacity(isRetryHovered ? 0.50 : 0.35)
+                                        : SlumberTheme.Colors.amber.opacity(Spec.retryFillOpacity(isRetryHovered))
                                 )
                             RoundedRectangle(cornerRadius: SlumberTheme.Radius.sm, style: .continuous)
                                 .stroke(
-                                    Color.white.opacity(reduceTransparency ? (isRetryHovered ? 0.70 : 0.45) : (isRetryHovered ? 0.40 : 0.25)),
-                                    lineWidth: 0.75
+                                    Color.white.opacity(
+                                        reduceTransparency
+                                            ? Spec.retryStrokeOpacitySolid(isRetryHovered)
+                                            : Spec.retryStrokeOpacity(isRetryHovered)
+                                    ),
+                                    lineWidth: SlumberTheme.Stroke.thin
                                 )
                         }
                     )
             }
-            .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.96))
+            .buttonStyle(SlumberTactileButtonStyle(scaleDown: Spec.retryPressScale))
             .accessibilityLabel("Retry put Mac to sleep")
             .onHover { hovering in
-                withAnimation(.easeOut(duration: 0.15)) {
+                withAnimation(SlumberTheme.Motion.hoverQuick) {
                     isRetryHovered = hovering
                 }
             }
 
             Button(action: onDismiss) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 15))
+                Image(systemName: SlumberTheme.Icons.dismiss)
+                    .font(SlumberTheme.Icons.dismissFont)
                     .foregroundColor(
                         isDismissHovered
                             ? Color.white
-                            : Color.white.opacity(reduceTransparency ? 0.75 : 0.45)
+                            : Color.white.opacity(reduceTransparency ? Spec.dismissOpacitySolid : Spec.dismissOpacity)
                     )
-                    .frame(width: 24, height: 24)
+                    .frame(width: Spec.dismissSize, height: Spec.dismissSize)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Dismiss error notification")
             .onHover { hovering in
-                withAnimation(.easeOut(duration: 0.15)) {
+                withAnimation(SlumberTheme.Motion.hoverQuick) {
                     isDismissHovered = hovering
                 }
             }
         }
         .padding(.horizontal, SlumberTheme.Metrics.spaceMD)
-        .padding(.vertical, 9)
+        .padding(.vertical, Spec.verticalPadding)
         .background(
             ZStack {
                 if reduceTransparency {
@@ -165,17 +171,17 @@ public struct ErrorBanner: View {
                         .fill(SlumberTheme.Colors.solidErrorBanner)
                 } else {
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
-                        .fill(Color.black.opacity(0.45))
+                        .fill(SlumberTheme.Colors.shadow.opacity(Spec.scrimOpacity))
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
-                        .fill(Color.white.opacity(0.06))
+                        .fill(Color.white.opacity(Spec.glassOpacity))
                 }
                 RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
                     .stroke(
-                        SlumberTheme.Colors.amber.opacity(reduceTransparency ? 0.7 : 0.4),
-                        lineWidth: reduceTransparency ? 1.0 : 0.75
+                        SlumberTheme.Colors.amber.opacity(reduceTransparency ? Spec.strokeOpacitySolid : Spec.strokeOpacity),
+                        lineWidth: reduceTransparency ? SlumberTheme.Stroke.solid : SlumberTheme.Stroke.thin
                     )
             }
         )
-        .shadow(color: Color.black.opacity(0.35), radius: 10, y: 4)
+        .shadow(color: SlumberTheme.Colors.shadow.opacity(Spec.shadowOpacity), radius: Spec.shadowRadius, y: Spec.shadowOffsetY)
     }
 }

@@ -16,8 +16,9 @@ public struct GlowingSlider: View {
     @State private var isHovered = false
 
     private let sliderWidth: CGFloat = SlumberTheme.Metrics.contentWidth
-    private let thumbSize: CGFloat = 16.0
-    private let trackHeight: CGFloat = 7.0
+    private let thumbSize: CGFloat = SlumberTheme.Components.Slider.thumbSize
+    private let trackHeight: CGFloat = SlumberTheme.Components.Slider.trackHeight
+    private typealias Spec = SlumberTheme.Components.Slider
 
     public init(
         value: Binding<Int>,
@@ -37,7 +38,7 @@ public struct GlowingSlider: View {
 
             // 2. Decoupled Accessibility Control Layer for Assistive Technologies
             Color.clear
-                .frame(width: sliderWidth, height: 28)
+                .frame(width: sliderWidth, height: Spec.height)
                 .contentShape(Rectangle())
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Sleep timer duration")
@@ -75,7 +76,7 @@ public struct GlowingSlider: View {
         return ZStack(alignment: .leading) {
             // Background Track
             RoundedRectangle(cornerRadius: trackHeight / 2.0, style: .continuous)
-                .fill(Color.white.opacity(0.10))
+                .fill(Color.white.opacity(Spec.trackOpacity))
                 .frame(width: sliderWidth, height: trackHeight)
 
             // Filled Track with Wide-gamut Glow
@@ -92,8 +93,10 @@ public struct GlowingSlider: View {
                 )
                 .frame(width: trackFillWidth, height: trackHeight)
                 .shadow(
-                    color: SlumberTheme.Colors.cyan.opacity(isDragging ? 0.6 : (isHovered ? 0.4 : 0.2)),
-                    radius: isDragging ? 8 : 4
+                    color: SlumberTheme.Colors.cyan.opacity(
+                        isDragging ? Spec.fillGlowOpacity.drag : (isHovered ? Spec.fillGlowOpacity.hover : Spec.fillGlowOpacity.rest)
+                    ),
+                    radius: isDragging ? Spec.fillGlowRadius.drag : Spec.fillGlowRadius.rest
                 )
 
             // Thumb
@@ -102,23 +105,23 @@ public struct GlowingSlider: View {
                 .frame(width: thumbSize, height: thumbSize)
                 .overlay(
                     RoundedRectangle(cornerRadius: thumbSize / 2.0, style: .continuous)
-                        .stroke(Color.white.opacity(0.85), lineWidth: 0.5)
+                        .stroke(Color.white.opacity(Spec.thumbStrokeOpacity), lineWidth: SlumberTheme.Stroke.hairline)
                 )
-                .shadow(color: Color.black.opacity(0.35), radius: 2.5, x: 0, y: 1)
+                .shadow(color: SlumberTheme.Colors.shadow.opacity(Spec.thumbShadowOpacity), radius: Spec.thumbShadowRadius, x: 0, y: Spec.thumbShadowOffsetY)
                 .shadow(
-                    color: SlumberTheme.Colors.accent.opacity(0.45),
-                    radius: isDragging ? 8 : 5
+                    color: SlumberTheme.Colors.accent.opacity(Spec.thumbGlowOpacity),
+                    radius: isDragging ? Spec.thumbGlowRadius.drag : Spec.thumbGlowRadius.rest
                 )
-                .scaleEffect(isDragging ? 1.25 : (isHovered ? 1.12 : 1.0))
+                .scaleEffect(isDragging ? Spec.thumbScale.drag : (isHovered ? Spec.thumbScale.hover : Spec.thumbScale.rest))
                 .offset(x: thumbOffset)
         }
-        .frame(width: sliderWidth, height: 28)
+        .frame(width: sliderWidth, height: Spec.height)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { gesture in
                     if !isDragging {
-                        withAnimation(.spring(response: 0.15, dampingFraction: 0.8)) {
+                        withAnimation(SlumberTheme.Motion.drag) {
                             isDragging = true
                         }
                         onEditingChanged(true)
@@ -131,14 +134,14 @@ public struct GlowingSlider: View {
                     value = min(max(computed, bounds.lowerBound), bounds.upperBound)
                 }
                 .onEnded { _ in
-                    withAnimation(.spring(response: 0.15, dampingFraction: 0.8)) {
+                    withAnimation(SlumberTheme.Motion.drag) {
                         isDragging = false
                     }
                     onEditingChanged(false)
                 }
         )
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(SlumberTheme.Motion.hoverSlider) {
                 isHovered = hovering
             }
         }

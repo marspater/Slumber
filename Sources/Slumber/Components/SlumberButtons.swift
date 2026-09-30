@@ -13,6 +13,7 @@ public struct StartButton: View {
     @State private var isHovered = false
     private let accent = SlumberTheme.Colors.accent
     private let cyan = SlumberTheme.Colors.cyan
+    private typealias Spec = SlumberTheme.Components.StartButton
 
     public init(action: @escaping () -> Void) {
         self.action = action
@@ -21,8 +22,8 @@ public struct StartButton: View {
     public var body: some View {
         Button(action: action) {
             HStack(spacing: SlumberTheme.Metrics.spaceSM) {
-                Image(systemName: "bed.double.fill")
-                    .font(.system(size: 13, weight: .semibold))
+                Image(systemName: SlumberTheme.Icons.start)
+                    .font(SlumberTheme.Icons.startFont)
                 Text("Start Sleep Timer")
                     .font(SlumberTheme.Typography.title)
             }
@@ -30,8 +31,8 @@ public struct StartButton: View {
             .background(
                 LinearGradient(
                     colors: [
-                        accent.opacity(isHovered ? 1.0 : 0.92),
-                        cyan.opacity(isHovered ? 1.0 : 0.92)
+                        accent.opacity(Spec.fillOpacity(isHovered)),
+                        cyan.opacity(Spec.fillOpacity(isHovered))
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -41,17 +42,17 @@ public struct StartButton: View {
             .foregroundColor(SlumberTheme.Colors.onAccent)
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous))
             .shadow(
-                color: accent.opacity(isHovered ? 0.55 : 0.35),
-                radius: isHovered ? 14 : 9,
+                color: accent.opacity(Spec.glowOpacity(isHovered)),
+                radius: Spec.glowRadius(isHovered),
                 x: 0,
-                y: isHovered ? 4 : 2
+                y: Spec.glowOffsetY(isHovered)
             )
         }
-        .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.97))
+        .buttonStyle(SlumberTactileButtonStyle(scaleDown: Spec.pressScale))
         .accessibilityLabel("Start Sleep Timer")
         .accessibilityHint("Starts the sleep countdown timer")
         .onHover { hovering in
-            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+            withAnimation(SlumberTheme.Motion.hoverButton) {
                 isHovered = hovering
             }
         }
@@ -63,6 +64,7 @@ public struct CancelButton: View {
     public let action: () -> Void
     @State private var isHovered = false
     private let coral = SlumberTheme.Colors.coral
+    private typealias Spec = SlumberTheme.Components.CancelButton
 
     public init(action: @escaping () -> Void) {
         self.action = action
@@ -71,26 +73,26 @@ public struct CancelButton: View {
     public var body: some View {
         Button(action: action) {
             HStack(spacing: SlumberTheme.Metrics.spaceXS) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
+                Image(systemName: SlumberTheme.Icons.cancel)
+                    .font(SlumberTheme.Icons.cancelFont)
                 Text("Cancel")
                     .font(SlumberTheme.Typography.title)
             }
-            .frame(width: 140, height: SlumberTheme.Metrics.buttonHeight)
-            .background(coral.opacity(isHovered ? 0.24 : 0.14))
+            .frame(width: Spec.width, height: SlumberTheme.Metrics.buttonHeight)
+            .background(coral.opacity(Spec.fillOpacity(isHovered)))
             .foregroundColor(coral)
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
-                    .stroke(coral.opacity(isHovered ? 0.45 : 0.25), lineWidth: 0.75)
+                    .stroke(coral.opacity(Spec.strokeOpacity(isHovered)), lineWidth: SlumberTheme.Stroke.thin)
             )
-            .shadow(color: coral.opacity(isHovered ? 0.25 : 0), radius: 8)
+            .shadow(color: coral.opacity(Spec.glowOpacity(isHovered)), radius: Spec.glowRadius)
         }
-        .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.96))
+        .buttonStyle(SlumberTactileButtonStyle(scaleDown: Spec.pressScale))
         .accessibilityLabel("Cancel Timer")
         .accessibilityHint("Stops the active sleep countdown")
         .onHover { hovering in
-            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+            withAnimation(SlumberTheme.Motion.hoverButton) {
                 isHovered = hovering
             }
         }
@@ -102,6 +104,7 @@ public struct QuitButton: View {
     public let action: () -> Void
     @State private var isHovered = false
     private let coral = SlumberTheme.Colors.coral
+    private typealias Spec = SlumberTheme.Components.QuitButton
 
     public init(action: @escaping () -> Void) {
         self.action = action
@@ -110,26 +113,26 @@ public struct QuitButton: View {
     public var body: some View {
         Button(action: action) {
             HStack(spacing: SlumberTheme.Metrics.spaceSM) {
-                Image(systemName: "power")
-                    .font(.system(size: 12, weight: .semibold))
+                Image(systemName: SlumberTheme.Icons.quit)
+                    .font(SlumberTheme.Icons.quitFont)
                 Text("Quit Slumber")
                     .font(SlumberTheme.Typography.title)
             }
             .frame(maxWidth: .infinity)
             .frame(height: SlumberTheme.Metrics.buttonHeight)
-            .background(coral.opacity(isHovered ? 0.18 : 0.08))
+            .background(coral.opacity(Spec.fillOpacity(isHovered)))
             .foregroundColor(coral)
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
-                    .stroke(coral.opacity(isHovered ? 0.32 : 0.18), lineWidth: 0.75)
+                    .stroke(coral.opacity(Spec.strokeOpacity(isHovered)), lineWidth: SlumberTheme.Stroke.thin)
             )
         }
-        .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.98))
+        .buttonStyle(SlumberTactileButtonStyle(scaleDown: Spec.pressScale))
         .accessibilityLabel("Quit Slumber")
         .accessibilityHint("Terminates the Slumber application")
         .onHover { hovering in
-            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+            withAnimation(SlumberTheme.Motion.hoverButton) {
                 isHovered = hovering
             }
         }
