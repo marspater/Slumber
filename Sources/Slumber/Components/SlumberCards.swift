@@ -112,7 +112,7 @@ public struct ErrorBanner: View {
             Button(action: onRetry) {
                 Text("Retry")
                     .font(SlumberTheme.Typography.caption.weight(.semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(SlumberTheme.Colors.textPrimary)
                     .padding(.horizontal, Spec.retryHorizontalPadding)
                     .padding(.vertical, Spec.retryVerticalPadding)
                     .background(
@@ -148,8 +148,8 @@ public struct ErrorBanner: View {
                     .font(SlumberTheme.Icons.dismissFont)
                     .foregroundColor(
                         isDismissHovered
-                            ? Color.white
-                            : Color.white.opacity(reduceTransparency ? Spec.dismissOpacitySolid : Spec.dismissOpacity)
+                            ? SlumberTheme.Colors.textPrimary
+                            : SlumberTheme.Colors.textPrimary.opacity(reduceTransparency ? Spec.dismissOpacitySolid : Spec.dismissOpacity)
                     )
                     .frame(width: Spec.dismissSize, height: Spec.dismissSize)
                     .contentShape(Rectangle())

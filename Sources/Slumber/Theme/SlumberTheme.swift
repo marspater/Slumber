@@ -245,6 +245,11 @@ public enum SlumberTheme {
     /// Per-control sizes, state opacities and shadows. Values are opacities of the named color
     /// unless noted; `HoverPair` holds the resting and hovered value.
     public enum Components {
+        public enum TimerPage {
+            /// Vertical rhythm between the timer page's stacked sections.
+            public static let spacing: CGFloat = 14
+        }
+
         public enum TabBar {
             public static let inset: CGFloat = 3
             public static let fillOpacity: Double = 0.05
@@ -255,7 +260,7 @@ public enum SlumberTheme {
         public enum Tab {
             public static let verticalPadding: CGFloat = 7
             public static let horizontalPadding: CGFloat = Metrics.spaceLG
-            public static let iconSpacing: CGFloat = Metrics.spaceXS + 2
+            public static let iconSpacing: CGFloat = 6
             /// Accent wash behind the active tab.
             public static let activeFillOpacity: Double = 0.18
             public static let activeStrokeOpacity: Double = 0.30
@@ -350,6 +355,8 @@ public enum SlumberTheme {
         }
 
         public enum Slider {
+            /// Gap between the slider and its 1 m / 120 m bounds labels.
+            public static let boundsSpacing: CGFloat = 6
             public static let thumbSize: CGFloat = 16
             public static let trackHeight: CGFloat = 7
             /// Hit and accessibility frame height.
