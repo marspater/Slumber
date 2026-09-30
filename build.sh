@@ -78,6 +78,10 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     </array>
     <key>LSUIElement</key>
     <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Mars Pater. Licensed under GPL-3.0.</string>
 </dict>
 </plist>
 EOF
@@ -105,7 +109,13 @@ cat > "${ENTITLEMENTS}" <<PLIST
 </plist>
 PLIST
 
-SIGN_IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | grep -E 'Developer ID Application|Apple Development' | head -n 1 | awk -F '"' '{print $2}' || true)"
+# Prefer Developer ID (distributable) over Apple Development (runs only on this team's registered Macs).
+IDENTITIES="$(security find-identity -v -p codesigning 2>/dev/null || true)"
+SIGN_IDENTITY=""
+for KIND in "Developer ID Application" "Apple Development"; do
+    SIGN_IDENTITY="$(printf '%s\n' "${IDENTITIES}" | grep "${KIND}" | head -n 1 | awk -F '"' '{print $2}' || true)"
+    if [ -n "${SIGN_IDENTITY}" ]; then break; fi
+done
 if [ -n "${SIGN_IDENTITY}" ]; then
     echo "Signing with Identity: ${SIGN_IDENTITY}"
     codesign --force --deep --options runtime --entitlements "${ENTITLEMENTS}" --sign "${SIGN_IDENTITY}" "${APP_DIR}"

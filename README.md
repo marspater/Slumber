@@ -45,6 +45,15 @@ open /Applications/Slumber.app
 
 ## 📝 Recent Changes (v3.2)
 
+- **🌈 Real EDR, Smooth on 60 Hz Panels**:
+  - Glow tiers now render brighter than SDR white (`exposureAdjust`). The previous `headroom(_:)` call only tagged colors, so nothing glowed and tagged colors came out dimmer on SDR panels. Displays without headroom (SDR monitors, a MacBook Air at full brightness) now get the plain P3 color through system tone mapping.
+  - The cloud ⇄ moon flight eases with smootherstep (peak speed 1.9× the average instead of 3×), and shooting stars run at 60 fps, so motion stays smooth on 60 Hz panels.
+
+- **🛏️ Wake & Companion Fixes**:
+  - If the Mac slept through the deadline, waking it finishes the timer instead of putting it straight back to sleep.
+  - The next companion is chosen while the popover is closed, so it never swaps species in view.
+  - Settings shows when another app already owns the `⌃⌥S` shortcut.
+
 - **🎛️ Refined Slider & Control UX**:
   - Decoupled accessibility and gesture layers in `SlumberSlider`, eliminating accessibility layout feedback loops and keyboard stepping conflicts.
   - Suppressed preset chip state flashing and background jitter when scrubbing the duration slider.
@@ -142,16 +151,16 @@ open /Applications/Slumber.app
 
 ### 🎨 1. Display P3 + EDR Graphics Engine
 - Pure SwiftUI vector path shapes for clouds, twinkling stars, and cosmic auroras.
-- Display P3 wide-gamut color definitions with Apple native `.headroom(_:)` integration.
+- Display P3 wide-gamut colors; glowing tiers are real EDR brightness (`exposureAdjust`), tone-mapped by macOS back to the plain P3 color on displays without headroom.
 - Context-aware EDR scaling preserving high contrast between dim backgrounds and glowing celestial lights.
 
 ### 🦊 2. Animated Animal Companions
 - **Sleeping Fox, Kitten & Dodo**: Interactive companions resting on soft clouds during idle state, smoothly transitioning to orbit and somersault around the sleeping moon when a countdown starts.
-- **Keplerian Orbital Motion & Zero-G Physics**: Continuous wall-clock time math using `TimelineView` for zero-g floating, breathing sine-wave motions, and a time-based cubic ease along a Bézier arc between the cloud and the moon.
+- **Keplerian Orbital Motion & Zero-G Physics**: Continuous wall-clock time math using `TimelineView` for zero-g floating, breathing sine-wave motions, and a time-based smootherstep ease along a Bézier arc between the cloud and the moon.
 
 ### 🖥️ 3. Native macOS Support
 - Native `.icon` bundle format support (`Assets/AppIcon.icon`) compiled directly with Apple `actool` into `Assets.car`.
-- System wake notifications gracefully communicate state transitions if the Mac is opened.
+- System wake notifications resume the countdown from its deadline; if the Mac slept through the deadline, the timer finishes instead of sleeping it again.
 - Native macOS `Toggle` switch style with system accessibility.
 
 ### 🎵 4. Soft Ambient Bedtime Audio
@@ -161,7 +170,7 @@ open /Applications/Slumber.app
 
 ## 📄 License
 
-Slumber is open-source software licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
+Copyright (C) 2026 Mars Pater. Slumber is open-source software licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
 
 ---
 
