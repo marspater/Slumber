@@ -95,6 +95,7 @@ public struct SlumberView: View {
                 SlumberTheme.Colors.solidBackground
             } else {
                 VisualEffectView(material: .popover, blendingMode: .behindWindow)
+                SlumberTheme.Colors.solidBackground.opacity(SlumberTheme.Sky.backdropScrimOpacity)
             }
 
             LinearGradient(

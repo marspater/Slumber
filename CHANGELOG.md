@@ -2,9 +2,9 @@
 
 Notable changes are recorded here so the README can stay focused on installing and using Slumber.
 
-## Unreleased
+## v3.5
 
-Changes currently on `main` after the `v3.2` tag.
+Everything since the `v3.2` tag.
 
 ### Added
 
@@ -15,6 +15,7 @@ Changes currently on `main` after the `v3.2` tag.
 
 ### Changed
 
+- The Start button is 38pt tall like Cancel and Quit, and uses the same accent-to-cyan gradient as a translucent tint with a stroke and a white label.
 - Consolidated UI, motion, component, sky, and artwork values under `Sources/Slumber/Theme/` without intentionally changing the visual output (#22).
 - Reworked EDR rendering to use exposure adjustment for real brightness above SDR white while allowing macOS to tone-map the same P3 colors on displays without headroom (#21).
 - Smoothed companion travel for 60 Hz displays and raised shooting-star updates to 60 fps (#21).
@@ -25,6 +26,8 @@ Changes currently on `main` after the `v3.2` tag.
 
 ### Fixed
 
+- The Dock icon could show another project's app icon: `build.sh` now passes `actool` an absolute path, because its shared compiler daemon resolved the relative one against a concurrent build's folder.
+- The sky no longer washes out to grey when macOS is in light mode; a dark scrim keeps light windows behind the popover from showing through.
 - Waking after a timer deadline no longer immediately sends the Mac back to sleep (#21).
 - Companion species no longer changes while visible; selection happens after the popover closes (#21).
 - Companion launch and landing no longer jump when the trail appears or disappears (#20).

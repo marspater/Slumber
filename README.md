@@ -9,7 +9,7 @@
   [![CodeQL](https://github.com/marspater/Slumber/actions/workflows/codeql.yml/badge.svg)](https://github.com/marspater/Slumber/actions/workflows/codeql.yml)
   [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
   [![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg)]()
-  [![Version](https://img.shields.io/badge/version-3.2-blue.svg)](https://github.com/marspater/Slumber/tags)
+  [![Version](https://img.shields.io/badge/version-3.5-blue.svg)](https://github.com/marspater/Slumber/tags)
   [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 </div>
 
@@ -88,7 +88,7 @@ See [`AGENTS.md`](AGENTS.md) for repository-specific engineering rules and [`doc
 
 ## Changes
 
-The latest work on `main` is documented in [`CHANGELOG.md`](CHANGELOG.md). The current source tree contains additional post-v3.2 changes, so the changelog is the better place to inspect what moved instead of embalming old implementation details in this README.
+The latest work on `main` is documented in [`CHANGELOG.md`](CHANGELOG.md). Version 3.5 collects everything since the v3.2 tag, so the changelog is the better place to inspect what moved instead of embalming old implementation details in this README.
 
 ## License
 

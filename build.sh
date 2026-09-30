@@ -33,6 +33,8 @@ cp ".build/release/${APP_NAME}" "${MACOS_DIR}/${APP_NAME}"
 # Compile the Icon Composer .icon package into Assets.car + AppIcon.icns
 echo "Compiling Icon Composer icon with actool..."
 TMP_PLIST="$(mktemp)"
+# Absolute input path: actool hands it to a shared ibtoold daemon, which can resolve a relative
+# path against another project's build running at the same time and compile that app's icon.
 xcrun actool \
     --compile "${RESOURCES_DIR}" \
     --platform macosx \
@@ -40,7 +42,7 @@ xcrun actool \
     --app-icon AppIcon \
     --output-format human-readable-text --errors --warnings \
     --output-partial-info-plist "${TMP_PLIST}" \
-    "Assets/AppIcon.icon"
+    "${REPO_ROOT}/Assets/AppIcon.icon"
 rm -f "${TMP_PLIST}"
 for f in Assets.car AppIcon.icns; do
     [[ -f "${RESOURCES_DIR}/${f}" ]] || { echo "error: actool did not produce ${f}" >&2; exit 1; }
@@ -65,9 +67,9 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>3.2</string>
+    <string>3.5</string>
     <key>CFBundleVersion</key>
-    <string>3.2</string>
+    <string>3.5</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>NSAppleEventsUsageDescription</key>
