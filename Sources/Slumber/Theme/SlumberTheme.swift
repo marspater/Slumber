@@ -20,8 +20,6 @@ public enum SlumberTheme {
         public static let accent = Color.p3(h: 0.75, s: 0.65, b: 0.92)
         /// Atmospheric accent (Cyan / Cosmic Blue)
         public static let cyan   = Color.p3(h: 0.53, s: 0.55, b: 0.97)
-        /// Label ink for text on the accent-to-cyan gradient (meets 4.5:1).
-        public static let onAccent = Color.p3(h: 0.72, s: 0.70, b: 0.14)
         /// Soft alert / destructive action (Coral / Soft Rosé)
         public static let coral  = Color.p3(h: 0.98, s: 0.65, b: 0.95)
         /// Warning / retry accent (Warm Amber)
@@ -101,6 +99,12 @@ public enum SlumberTheme {
         /// Opacity over the popover material (Reduce Transparency draws the sky opaque).
         public static let topOpacity: Double = 0.65
         public static let bottomOpacity: Double = 0.75
+
+        /// `Colors.solidBackground` laid over the popover material before the sky. The material
+        /// follows whatever is behind the popover: about 0.09 grey over a dark desktop but 0.44 over
+        /// the white windows of macOS light mode, which washed the sky out. At 0.85 the sky shifts by
+        /// about 0.02 between the two (0.12 without it) while a hint of the glass stays.
+        public static let backdropScrimOpacity: Double = 0.85
     }
 
     // MARK: - Typography
@@ -166,7 +170,6 @@ public enum SlumberTheme {
 
         // Control heights
         public static let buttonHeight: CGFloat = 38
-        public static let primaryButtonHeight: CGFloat = 42
 
         // Spacing scale
         public static let spaceXXS: CGFloat = 2
@@ -270,9 +273,12 @@ public enum SlumberTheme {
             public static let pressScale: CGFloat = 0.98
         }
 
+        /// Accent-to-cyan glass in the Cancel button's style: a translucent tint with a stroke.
+        /// Fills above ~0.5 drop the white label under 4.5:1 at the cyan end.
         public enum StartButton {
-            public static let fillOpacity = HoverPair<Double>(0.92, hover: 1.0)
-            public static let glowOpacity = HoverPair<Double>(0.35, hover: 0.55)
+            public static let fillOpacity = HoverPair<Double>(0.40, hover: 0.50)
+            public static let strokeOpacity = HoverPair<Double>(0.50, hover: 0.75)
+            public static let glowOpacity = HoverPair<Double>(0.20, hover: 0.40)
             public static let glowRadius = HoverPair<CGFloat>(9, hover: 14)
             public static let glowOffsetY = HoverPair<CGFloat>(2, hover: 4)
             public static let pressScale: CGFloat = 0.97

@@ -13,7 +13,9 @@ permissions:
 
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Only cancel superseded PR runs. A cancelled main run still uploads an "unsuccessful execution"
+  # SARIF, which the code scanning tool status page reports as "CodeQL exited with errors".
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze:

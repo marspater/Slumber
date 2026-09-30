@@ -27,20 +27,14 @@ public struct StartButton: View {
                 Text("Start Sleep Timer")
                     .font(SlumberTheme.Typography.title)
             }
-            .frame(width: SlumberTheme.Metrics.contentWidth, height: SlumberTheme.Metrics.primaryButtonHeight)
-            .background(
-                LinearGradient(
-                    colors: [
-                        accent.opacity(Spec.fillOpacity(isHovered)),
-                        cyan.opacity(Spec.fillOpacity(isHovered))
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            // Dark ink: white on the bright violet-cyan gradient measured about 2:1.
-            .foregroundColor(SlumberTheme.Colors.onAccent)
+            .frame(width: SlumberTheme.Metrics.contentWidth, height: SlumberTheme.Metrics.buttonHeight)
+            .background(gradient(opacity: Spec.fillOpacity(isHovered)))
+            .foregroundColor(SlumberTheme.Colors.textPrimary)
             .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SlumberTheme.Radius.lg, style: .continuous)
+                    .stroke(gradient(opacity: Spec.strokeOpacity(isHovered)), lineWidth: SlumberTheme.Stroke.thin)
+            )
             .shadow(
                 color: accent.opacity(Spec.glowOpacity(isHovered)),
                 radius: Spec.glowRadius(isHovered),
@@ -56,6 +50,10 @@ public struct StartButton: View {
                 isHovered = hovering
             }
         }
+    }
+
+    private func gradient(opacity: Double) -> LinearGradient {
+        LinearGradient(colors: [accent.opacity(opacity), cyan.opacity(opacity)], startPoint: .leading, endPoint: .trailing)
     }
 }
 

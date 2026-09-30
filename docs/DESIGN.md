@@ -19,7 +19,6 @@ All brand colors are Display P3. Never convert them to sRGB, and never drop the 
 |-------|----------------|-----|
 | `Colors.accent` | h 0.75 s 0.65 b 0.92 | Lavender. Primary accent, selected chip, active tab, slider fill start |
 | `Colors.cyan` | h 0.53 s 0.55 b 0.97 | Cosmic blue. Gradient partner of accent, ring and slider glow |
-| `Colors.onAccent` | h 0.72 s 0.70 b 0.14 | Label ink on the accent→cyan gradient (4.5:1) |
 | `Colors.coral` | h 0.98 s 0.65 b 0.95 | Cancel and Quit |
 | `Colors.amber` | h 0.08 s 0.85 b 0.98 | Error banner and Retry |
 | `Colors.textPrimary…Quaternary` | white at 1.0 / 0.72 / 0.50 / 0.35 | Text hierarchy |
@@ -39,7 +38,7 @@ The popover background is a vertical gradient that darkens as the chosen duratio
 | 3 | 51–75 | Midnight Blue |
 | 4 | 76–120 | Deep Cosmic Space |
 
-Top and bottom colors are `Sky.top[phase]` and `Sky.bottom[phase]`, drawn at 65% / 75% over the popover material (opaque under Reduce Transparency).
+Top and bottom colors are `Sky.top[phase]` and `Sky.bottom[phase]`, drawn at 65% / 75% over the popover material (opaque under Reduce Transparency). The material follows whatever is behind the popover, so a `solidBackground` scrim at `Sky.backdropScrimOpacity` (85%) sits between the two; without it, the white windows of macOS light mode wash the sky out to grey.
 
 ### HDR levels
 
@@ -84,7 +83,7 @@ The popover is 320×440 with 24pt side margins, which gives the **272pt content 
 | `spaceLG` | 16 | | `card` (cards, tab bar) | 14 |
 | `spaceXL` | 20 | | `popover` | 20 |
 
-Control heights: `buttonHeight` 38, `primaryButtonHeight` 42 (Start is 4pt taller on purpose). Off-scale values (3, 5, 6, 7, 9, 14) are optical sizing and live as named constants in the component specs; views never calculate spacing from the scale (no `spaceXS + 2`).
+Control height: `buttonHeight` 38 for Start, Cancel and Quit. Off-scale values (3, 5, 6, 7, 9, 14) are optical sizing and live as named constants in the component specs; views never calculate spacing from the scale (no `spaceXS + 2`).
 
 Strokes: `hairline` 0.5 (tab bar, slider thumb), `thin` 0.75 (default borders), `solid` 1.0 (Reduce Transparency borders). All rounded rectangles use `.continuous` corners.
 
@@ -116,7 +115,7 @@ Every perpetual or decorative animation must check `accessibilityReduceMotion` a
 | Spec | Control |
 |------|---------|
 | `TabBar`, `Tab` | Segmented Timer / Settings bar |
-| `StartButton`, `CancelButton`, `QuitButton` | Primary gradient button, coral secondary, coral destructive |
+| `StartButton`, `CancelButton`, `QuitButton` | Translucent accent→cyan primary, coral secondary, coral destructive |
 | `Card`, `Keycap` | Settings cards, shortcut badge |
 | `ErrorBanner` | Sleep-failure banner with Retry and Dismiss |
 | `Chip` | 48×32 preset chips |
