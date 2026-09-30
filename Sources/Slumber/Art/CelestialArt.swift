@@ -55,6 +55,7 @@ public struct StarField: View {
 }
 
 public struct TwinklingStar: View {
+    private typealias Stars = SlumberTheme.Art.Stars
     public let position: CGPoint
     public let size: CGFloat
     public let delay: Double
@@ -67,7 +68,7 @@ public struct TwinklingStar: View {
             if isSparkle {
                 SparkleStarShape()
                     .fill(Color.white)
-                    .frame(width: size * 2.2, height: size * 2.2)
+                    .frame(width: size * Stars.sparkleScale, height: size * Stars.sparkleScale)
             } else {
                 Circle()
                     .fill(Color.white)
@@ -75,16 +76,16 @@ public struct TwinklingStar: View {
             }
         }
         .shadow(
-            color: Color.p3(h: 0.75, s: 0.25, b: 1.0, a: on ? 0.35 : 0, level: isSparkle ? .rimHighlight : .sdr),
-            radius: on ? (isSparkle ? 4 : 2) : 0
+            color: Stars.glow(alpha: on ? Stars.glowOpacity : 0, level: isSparkle ? .rimHighlight : .sdr),
+            radius: on ? (isSparkle ? Stars.sparkleGlowRadius : Stars.glowRadius) : 0
         )
-        .opacity(on ? 0.75 : 0.12)
+        .opacity(on ? Stars.litOpacity : Stars.restOpacity)
         .position(position)
         .onAppear {
-            // Static but visible stars when motion is reduced (instead of the dim 0.12 rest state).
+            // Static but visible stars when motion is reduced (instead of the dim rest state).
             guard !reduceMotion else { on = true; return }
             withAnimation(
-                .easeInOut(duration: Double.random(in: 1.8...3.8))
+                .easeInOut(duration: Double.random(in: Stars.twinkleDuration))
                 .repeatForever(autoreverses: true)
                 .delay(delay)
             ) { on = true }
@@ -94,6 +95,7 @@ public struct TwinklingStar: View {
 
 // MARK: - Shooting Star
 public struct ShootingStar: View {
+    private typealias Streak = SlumberTheme.Art.ShootingStar
     public let angle: Double
     public let cycleDuration: Double
     public let initialDelay: Double
@@ -118,9 +120,7 @@ public struct ShootingStar: View {
     }
 
     public var body: some View {
-        // 60 fps: at 30 a streak crossing a 60 Hz panel holds every position for two frames and judders.
-        // Fireflies drift slowly enough to stay at 30.
-        TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / Streak.frameRate)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let adjusted = t - initialDelay
             let progress = adjusted > 0
@@ -128,7 +128,7 @@ public struct ShootingStar: View {
                 : -1
 
             let rad = angle * .pi / 180
-            let travel: CGFloat = 280
+            let travel = Streak.travel
 
             if progress >= 0 {
                 let headPhase = max(0.0, 1.0 - progress * 2.0)
@@ -136,27 +136,17 @@ public struct ShootingStar: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.p3(h: 0.75, s: 0.25, b: 0.95, a: 0, level: .subtleHighlight),
-                                Color.p3(
-                                    h: 0.72, s: 0.15, b: 1.0, a: 0.85,
-                                    headroomBetween: .subtleHighlight,
-                                    and: .effect,
-                                    phase: headPhase
-                                )
+                                Streak.tail,
+                                Streak.head(alpha: Streak.headOpacity, phase: headPhase)
                             ],
                             startPoint: .leading, endPoint: .trailing
                         )
                     )
-                    .frame(width: length * 0.85, height: 1.0)
-                    .blur(radius: 0.3)
+                    .frame(width: length * Streak.lengthRatio, height: Streak.thickness)
+                    .blur(radius: Streak.blur)
                     .shadow(
-                        color: Color.p3(
-                            h: 0.72, s: 0.15, b: 1.0, a: 0.45,
-                            headroomBetween: .subtleHighlight,
-                            and: .effect,
-                            phase: headPhase
-                        ),
-                        radius: 3.5
+                        color: Streak.head(alpha: Streak.glowOpacity, phase: headPhase),
+                        radius: Streak.glowRadius
                     )
                     .rotationEffect(.degrees(angle))
                     .position(
@@ -187,23 +177,12 @@ public struct FireflyField: View {
 }
 
 public struct Firefly: View {
+    private typealias Fly = SlumberTheme.Art.Firefly
     public let seed: Int
     public let bounds: CGSize
 
-    private var hue: Double {
-        switch seed % 3 {
-        case 0: return 0.08
-        case 1: return 0.75
-        default: return 0.52
-        }
-    }
-
-    private var baseRGB: (Double, Double, Double) {
-        switch seed % 3 {
-        case 0: return (1.0, 0.85, 0.25)
-        case 1: return (0.85, 0.55, 0.95)
-        default: return (0.35, 0.85, 0.95)
-        }
+    private var tone: (hue: Double, glow: (r: Double, g: Double, b: Double)) {
+        Fly.tones[seed % Fly.tones.count]
     }
 
     private var baseX: CGFloat { seededRandom(seed: seed * 3, max: bounds.width * 0.8) + bounds.width * 0.1 }
@@ -212,28 +191,22 @@ public struct Firefly: View {
     private var driftDY: CGFloat { seededRandom(seed: seed * 13, max: 20) - 10 }
 
     public var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / Fly.frameRate)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let period = Double(4 + (seed % 3))
             let phaseOffset = Double(seed) * 1.2
             let phaseInfo = computePhase(t: t, period: period, offset: phaseOffset)
 
-            let rgb = baseRGB
-            let glowColor = Color.p3(
-                r: rgb.0, g: rgb.1, b: rgb.2, a: 0.85,
-                headroomBetween: .visibleGlow,
-                and: .effect,
-                phase: phaseInfo.normPhase
-            )
-            let dotColor = Color.p3(h: hue, s: 0.5, b: 1.0, level: .rimHighlight)
+            let glowColor = Fly.glow(tone.glow, phase: phaseInfo.normPhase)
+            let dotColor = Fly.core(hue: tone.hue)
             let currentX: CGFloat = baseX + driftDX * CGFloat(phaseInfo.cycle)
             let currentY: CGFloat = baseY + driftDY * CGFloat(phaseInfo.cosTerm)
-            let glowRadius: CGFloat = 2.0 + 6.0 * CGFloat(phaseInfo.normPhase)
-            let currentOpacity: Double = 0.15 + 0.55 * phaseInfo.normPhase
+            let glowRadius: CGFloat = Fly.glowRadius.rest + Fly.glowRadius.peak * CGFloat(phaseInfo.normPhase)
+            let currentOpacity: Double = Fly.opacity.rest + Fly.opacity.peak * phaseInfo.normPhase
 
             Circle()
                 .fill(dotColor)
-                .frame(width: 2.5, height: 2.5)
+                .frame(width: Fly.size, height: Fly.size)
                 .shadow(color: glowColor, radius: glowRadius)
                 .opacity(currentOpacity)
                 .position(x: currentX, y: currentY)
@@ -255,6 +228,7 @@ public struct Firefly: View {
 
 // MARK: - Constellation Overlay
 public struct ConstellationOverlay: View {
+    private typealias Constellation = SlumberTheme.Art.Constellation
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var rotation: Double = 0
 
@@ -266,11 +240,11 @@ public struct ConstellationOverlay: View {
             ConstellationPattern(stars: [CGPoint(x: 0.62, y: 0.55), CGPoint(x: 0.67, y: 0.52), CGPoint(x: 0.72, y: 0.54), CGPoint(x: 0.75, y: 0.58), CGPoint(x: 0.77, y: 0.64), CGPoint(x: 0.82, y: 0.62), CGPoint(x: 0.84, y: 0.66)], lines: [(0,1),(1,2),(2,3),(3,4),(4,5),(5,6),(6,3)])
             ConstellationPattern(stars: [CGPoint(x: 0.12, y: 0.62), CGPoint(x: 0.17, y: 0.56), CGPoint(x: 0.22, y: 0.62), CGPoint(x: 0.27, y: 0.56), CGPoint(x: 0.32, y: 0.62)], lines: [(0,1),(1,2),(2,3),(3,4)])
         }
-        .opacity(0.3)
+        .opacity(Constellation.layerOpacity)
         .rotationEffect(.degrees(rotation))
         .onAppear {
             guard !reduceMotion else { return }
-            withAnimation(.linear(duration: 180).repeatForever(autoreverses: false)) {
+            withAnimation(.linear(duration: Constellation.rotationPeriod).repeatForever(autoreverses: false)) {
                 rotation = 360
             }
         }
@@ -296,6 +270,7 @@ public struct ConstellationLinesShape: Shape {
 }
 
 public struct ConstellationPattern: View {
+    private typealias Constellation = SlumberTheme.Art.Constellation
     public let stars: [CGPoint]
     public let lines: [(Int, Int)]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -308,19 +283,22 @@ public struct ConstellationPattern: View {
 
             ZStack {
                 ConstellationLinesShape(stars: stars, lines: lines)
-                    .stroke(Color.white.opacity(pulse ? 0.09 : 0.04), lineWidth: 0.6)
+                    .stroke(Color.white.opacity(pulse ? Constellation.lineOpacity.lit : Constellation.lineOpacity.dim), lineWidth: Constellation.lineWidth)
 
                 ForEach(0..<stars.count, id: \.self) { i in
                     Circle()
-                        .fill(Color.white.opacity(pulse ? 0.30 : 0.15))
-                        .frame(width: 2.5, height: 2.5)
-                        .shadow(color: Color.p3(h: 0.75, s: 0.3, b: 1.0, a: pulse ? 0.35 : 0.1, level: .subtleHighlight), radius: pulse ? 3 : 1)
+                        .fill(Color.white.opacity(pulse ? Constellation.starOpacity.lit : Constellation.starOpacity.dim))
+                        .frame(width: Constellation.starSize, height: Constellation.starSize)
+                        .shadow(
+                            color: Constellation.glow(alpha: pulse ? Constellation.glowOpacity.lit : Constellation.glowOpacity.dim),
+                            radius: pulse ? Constellation.glowRadius.lit : Constellation.glowRadius.dim
+                        )
                         .position(x: stars[i].x * w, y: stars[i].y * h)
                 }
             }
             .onAppear {
                 guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true).delay(Double(stars.count % 3) * 0.5)) {
+                withAnimation(.easeInOut(duration: Constellation.pulseDuration).repeatForever(autoreverses: true).delay(Double(stars.count % 3) * 0.5)) {
                     pulse = true
                 }
             }
@@ -330,12 +308,11 @@ public struct ConstellationPattern: View {
 
 // MARK: - Cute Moon
 public struct CuteMoon: View {
+    private typealias Moon = SlumberTheme.Art.Moon
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var bob = false
     @State private var glow = false
 
-    private let face = Color.p3(0.36, 0.26, 0.58)
-    private let cloth = Color.p3(0.98, 0.97, 1.0, level: .subtleHighlight)
 
     public init() {}
 
@@ -345,45 +322,41 @@ public struct CuteMoon: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color.p3(h: 0.75, s: 0.4, b: 1.0, a: 0.3, level: .visibleGlow), .clear],
-                        center: .center, startRadius: 10, endRadius: 40
+                        colors: [Moon.halo, .clear],
+                        center: .center, startRadius: Moon.haloRadii.start, endRadius: Moon.haloRadii.end
                     )
                 )
-                .frame(width: 80, height: 80)
-                .scaleEffect(glow ? 1.15 : 1.0)
+                .frame(width: Moon.haloSize, height: Moon.haloSize)
+                .scaleEffect(glow ? Moon.haloPulseScale : 1.0)
 
             ZStack {
                 MoonArt.crescent.fill(LinearGradient(
-                    Gradient(stops: [
-                        .init(color: .p3(0.88, 0.82, 1.0, level: .strongGlow), location: 0),
-                        .init(color: .p3(0.74, 0.62, 0.95, level: .strongGlow), location: 0.55),
-                        .init(color: .p3(0.60, 0.48, 0.88, level: .strongGlow), location: 1)
-                    ]),
+                    Moon.crescent,
                     from: CGPoint(x: 4, y: 6), to: CGPoint(x: 34, y: 40), in: box
                 ))
-                MoonArt.rim.stroke(Color.p3(1, 1, 1, 0.55, level: .strongGlow), style: .round(0.8))
-                MoonArt.craters.fill(Color.p3(0.62, 0.50, 0.90, 0.18))
-                MoonArt.eyes.stroke(face, style: .round(1.1))
-                MoonArt.mouth.stroke(face, style: .round(0.9))
-                MoonArt.blush.fill(Color.p3(1, 0.50, 0.70, 0.5))
+                MoonArt.rim.stroke(Moon.rim, style: .round(0.8))
+                MoonArt.craters.fill(Moon.craters)
+                MoonArt.eyes.stroke(Moon.face, style: .round(1.1))
+                MoonArt.mouth.stroke(Moon.face, style: .round(0.9))
+                MoonArt.blush.fill(Moon.blush)
 
                 // Nightcap (pokes out above the 44pt frame on purpose)
                 MoonArt.cap.fill(LinearGradient(
-                    Gradient(colors: [.p3(0.46, 0.74, 1.0, level: .rimHighlight), .p3(0.30, 0.46, 0.92, level: .rimHighlight)]),
+                    Moon.cap,
                     from: CGPoint(x: 8, y: -3), to: CGPoint(x: 30, y: 14), in: box
                 ))
-                MoonArt.capFold.stroke(Color.p3(0.20, 0.30, 0.78, 0.35), style: .round(0.9))
-                MoonArt.capBand.fill(cloth)
-                MoonArt.pompom.fill(cloth)
+                MoonArt.capFold.stroke(Moon.capFold, style: .round(0.9))
+                MoonArt.capBand.fill(Moon.cloth)
+                MoonArt.pompom.fill(Moon.cloth)
             }
             .frame(width: box.width, height: box.height)
         }
-        .offset(y: bob ? -5 : 5)
-        .rotationEffect(.degrees(bob ? 3 : -3))
+        .offset(y: bob ? -Moon.bob : Moon.bob)
+        .rotationEffect(.degrees(bob ? Moon.tilt : -Moon.tilt))
         .onAppear {
             guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 3.5).repeatForever(autoreverses: true)) { bob = true }
-            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) { glow = true }
+            withAnimation(.easeInOut(duration: Moon.bobDuration).repeatForever(autoreverses: true)) { bob = true }
+            withAnimation(.easeInOut(duration: Moon.haloPulseDuration).repeatForever(autoreverses: true)) { glow = true }
         }
     }
 }
@@ -391,38 +364,34 @@ public struct CuteMoon: View {
 // MARK: - Clouds
 /// Sleepy cloud: soft shadow, lilac-to-white body, a fading EDR top rim and a face.
 private struct SleepyCloud: View {
+    private typealias Palette = SlumberTheme.Art.Cloud
     let art: CloudArt
     let opacity: Double
 
     var body: some View {
         let box = art.box
-        let face = Color.p3(0.40, 0.32, 0.62)
         ZStack {
             art.outline
-                .fill(Color.p3(0.10, 0.06, 0.24, 0.22))
-                .offset(y: 2.5)
-                .blur(radius: 3)
+                .fill(Palette.shadow)
+                .offset(y: Palette.shadowOffsetY)
+                .blur(radius: Palette.shadowBlur)
 
             art.outline.fill(LinearGradient(
-                Gradient(stops: [
-                    .init(color: .p3(0.99, 0.98, 1.0, opacity), location: 0),
-                    .init(color: .p3(0.88, 0.85, 0.97, opacity), location: 0.6),
-                    .init(color: .p3(0.70, 0.64, 0.90, opacity), location: 1)
-                ]),
+                Palette.body(opacity: opacity),
                 from: CGPoint(x: 0, y: 4), to: CGPoint(x: 0, y: box.height - 4), in: box
             ))
 
             art.outline.stroke(
                 LinearGradient(
-                    Gradient(colors: [.p3(1, 1, 1, 0.9 * opacity, level: .rimHighlight), .p3(1, 1, 1, 0)]),
+                    Palette.rim(opacity: opacity),
                     from: CGPoint(x: 0, y: 4), to: CGPoint(x: 0, y: box.height * 0.7), in: box
                 ),
-                lineWidth: 1
+                lineWidth: Palette.rimWidth
             )
 
-            art.eyes.stroke(face, style: .round(1.1))
-            art.mouth.stroke(face, style: .round(0.9))
-            art.blush.fill(Color.p3(1, 0.50, 0.70, 0.45))
+            art.eyes.stroke(Palette.face, style: .round(1.1))
+            art.mouth.stroke(Palette.face, style: .round(0.9))
+            art.blush.fill(Palette.blush)
         }
         .frame(width: box.width, height: box.height)
     }
@@ -438,13 +407,13 @@ public struct CuteCloud1: View {
     }
 
     public var body: some View {
-        SleepyCloud(art: .large, opacity: 0.95)
+        SleepyCloud(art: .large, opacity: SlumberTheme.Art.Cloud.largeOpacity)
             .scaleEffect(scale)
             .offset(y: bob ? -5 : 4)
             .rotationEffect(.degrees(bob ? 2 : -2))
             .onAppear {
                 guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 4.5).repeatForever(autoreverses: true)) { bob = true }
+                withAnimation(.easeInOut(duration: SlumberTheme.Art.Cloud.largeBobDuration).repeatForever(autoreverses: true)) { bob = true }
             }
     }
 }
@@ -459,19 +428,24 @@ public struct CuteCloud2: View {
     }
 
     public var body: some View {
-        SleepyCloud(art: .small, opacity: 0.6)
+        SleepyCloud(art: .small, opacity: SlumberTheme.Art.Cloud.smallOpacity)
             .scaleEffect(scale)
             .offset(y: bob ? -4 : 3)
             .rotationEffect(.degrees(bob ? -1.5 : 2))
             .onAppear {
                 guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 5.5).repeatForever(autoreverses: true).delay(0.5)) { bob = true }
+                withAnimation(
+                    .easeInOut(duration: SlumberTheme.Art.Cloud.smallBobDuration)
+                    .repeatForever(autoreverses: true)
+                    .delay(SlumberTheme.Art.Cloud.smallBobDelay)
+                ) { bob = true }
             }
     }
 }
 
 // MARK: - Aurora Effect
 public struct AuroraEffect: View {
+    private typealias Aurora = SlumberTheme.Art.Aurora
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var s1 = false
     @State private var s2 = false
@@ -482,23 +456,25 @@ public struct AuroraEffect: View {
 
     public var body: some View {
         ZStack {
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.75, s: 0.65, b: 0.7, a: 0.08, level: .subtleHighlight), Color.p3(h: 0.72, s: 0.5, b: 0.7, a: 0.03, level: .subtleHighlight)], startPoint: .leading, endPoint: .trailing)).frame(width: 320, height: 100).blur(radius: 45).offset(x: s1 ? 20 : -20, y: s1 ? -15 : 15)
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.55, s: 0.55, b: 0.7, a: 0.07, level: .subtleHighlight), Color.p3(h: 0.60, s: 0.4, b: 0.7, a: 0.02, level: .subtleHighlight)], startPoint: .trailing, endPoint: .leading)).frame(width: 260, height: 80).blur(radius: 40).offset(x: s2 ? -30 : 15, y: s2 ? 30 : -10)
-            Ellipse().fill(Color.p3(h: 0.82, s: 0.55, b: 0.65, a: 0.05, level: .subtleHighlight)).frame(width: 180, height: 60).blur(radius: 35).offset(x: s3 ? 10 : -15, y: s3 ? -30 : 20)
-            Ellipse().fill(LinearGradient(colors: [Color.p3(h: 0.93, s: 0.50, b: 0.7, a: 0.05, level: .subtleHighlight), Color.p3(h: 0.88, s: 0.40, b: 0.7, a: 0.02, level: .subtleHighlight)], startPoint: .top, endPoint: .bottom)).frame(width: 220, height: 70).blur(radius: 40).offset(x: s4 ? -20 : 25, y: s4 ? 20 : -25)
+            Ellipse().fill(LinearGradient(colors: Aurora.bands[0], startPoint: .leading, endPoint: .trailing)).frame(width: 320, height: 100).blur(radius: 45).offset(x: s1 ? 20 : -20, y: s1 ? -15 : 15)
+            Ellipse().fill(LinearGradient(colors: Aurora.bands[1], startPoint: .trailing, endPoint: .leading)).frame(width: 260, height: 80).blur(radius: 40).offset(x: s2 ? -30 : 15, y: s2 ? 30 : -10)
+            Ellipse().fill(Aurora.bands[2][0]).frame(width: 180, height: 60).blur(radius: 35).offset(x: s3 ? 10 : -15, y: s3 ? -30 : 20)
+            Ellipse().fill(LinearGradient(colors: Aurora.bands[3], startPoint: .top, endPoint: .bottom)).frame(width: 220, height: 70).blur(radius: 40).offset(x: s4 ? -20 : 25, y: s4 ? 20 : -25)
         }
         .onAppear {
             guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 6).repeatForever(autoreverses: true))  { s1 = true }
-            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true))  { s2 = true }
-            withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true))  { s3 = true }
-            withAnimation(.easeInOut(duration: 12).repeatForever(autoreverses: true)) { s4 = true }
+            let drift = Aurora.driftDurations
+            withAnimation(.easeInOut(duration: drift[0]).repeatForever(autoreverses: true)) { s1 = true }
+            withAnimation(.easeInOut(duration: drift[1]).repeatForever(autoreverses: true)) { s2 = true }
+            withAnimation(.easeInOut(duration: drift[2]).repeatForever(autoreverses: true)) { s3 = true }
+            withAnimation(.easeInOut(duration: drift[3]).repeatForever(autoreverses: true)) { s4 = true }
         }
     }
 }
 
 // MARK: - Pulsing Ring
 public struct PulsingRing: View {
+    private typealias Ring = SlumberTheme.Components.Ring
     public let progress: CGFloat
 
     public init(progress: CGFloat) {
@@ -509,41 +485,36 @@ public struct PulsingRing: View {
         ZStack {
             // Background track
             Circle()
-                .stroke(Color.white.opacity(0.08), lineWidth: 4)
-                .frame(width: 170, height: 170)
+                .stroke(Color.white.opacity(Ring.trackOpacity), lineWidth: Ring.trackWidth)
+                .frame(width: Ring.diameter, height: Ring.diameter)
 
             // Progress ring with glowing gradient
             Circle()
                 .trim(from: 0, to: max(0.001, progress))
                 .stroke(
                     AngularGradient(
-                        gradient: Gradient(colors: [
-                            SlumberTheme.Colors.cyan,
-                            SlumberTheme.Colors.accent,
-                            SlumberTheme.Colors.coral,
-                            SlumberTheme.Colors.cyan
-                        ]),
+                        gradient: Gradient(colors: Ring.gradient),
                         center: .center,
                         // Gradient is defined pre-rotation: 0° here lands at 12 o'clock after
                         // the -90° rotation below, so it starts where the trim starts.
                         startAngle: .degrees(0),
                         endAngle: .degrees(360)
                     ),
-                    style: StrokeStyle(lineWidth: 4.5, lineCap: .round)
+                    style: StrokeStyle(lineWidth: Ring.progressWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .frame(width: 170, height: 170)
-                .shadow(color: SlumberTheme.Colors.cyan.opacity(0.4), radius: 6)
-                .animation(.linear(duration: 1.0), value: progress)
+                .frame(width: Ring.diameter, height: Ring.diameter)
+                .shadow(color: SlumberTheme.Colors.cyan.opacity(Ring.glowOpacity), radius: Ring.glowRadius)
+                .animation(SlumberTheme.Motion.ringProgress, value: progress)
 
             // Glow dot at leading edge
             Circle()
-                .fill(Color.p3(h: 0.53, s: 0.40, b: 1.0, level: .subtleHighlight))
-                .frame(width: 7, height: 7)
-                .shadow(color: SlumberTheme.Colors.cyan.opacity(0.8), radius: 4)
-                .offset(y: -85)
+                .fill(Ring.dot)
+                .frame(width: Ring.dotSize, height: Ring.dotSize)
+                .shadow(color: SlumberTheme.Colors.cyan.opacity(Ring.dotGlowOpacity), radius: Ring.dotGlowRadius)
+                .offset(y: -Ring.diameter / 2)
                 .rotationEffect(.degrees(Double(progress) * 360))
-                .animation(.linear(duration: 1.0), value: progress)
+                .animation(SlumberTheme.Motion.ringProgress, value: progress)
         }
     }
 }

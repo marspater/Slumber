@@ -14,6 +14,7 @@ public struct PresetChip: View {
     public let isSliding: Bool
     @State private var isHovered = false
     private let accent = SlumberTheme.Colors.accent
+    private typealias Spec = SlumberTheme.Components.Chip
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     public init(
@@ -36,34 +37,34 @@ public struct PresetChip: View {
         let selected = isSelected
         Button {
             if !selected { playSound("space_button") }
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
+            withAnimation(SlumberTheme.Motion.select) {
                 selectedMinutes = value
             }
         } label: {
             Text(label)
                 .font(SlumberTheme.Typography.caption.weight(selected ? .semibold : .medium))
-                .frame(width: 48, height: 32)
+                .frame(width: Spec.size.width, height: Spec.size.height)
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                             .fill(
                                 selected
-                                    ? (reduceTransparency ? SlumberTheme.Colors.solidChipSelected : accent.opacity(0.34))
-                                    : (isHovered
-                                        ? (reduceTransparency ? Color.white.opacity(0.18) : Color.white.opacity(0.10))
-                                        : (reduceTransparency ? Color.white.opacity(0.12) : Color.white.opacity(0.065)))
+                                    ? (reduceTransparency ? SlumberTheme.Colors.solidChipSelected : accent.opacity(Spec.selectedFillOpacity))
+                                    : Color.white.opacity(
+                                        reduceTransparency ? Spec.fillOpacitySolid(isHovered) : Spec.fillOpacity(isHovered)
+                                    )
                             )
 
                         VStack {
                             RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.white.opacity(0.22), Color.clear],
+                                        colors: [Color.white.opacity(Spec.glossOpacity), Color.clear],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
-                                .frame(height: 10)
+                                .frame(height: Spec.glossHeight)
                             Spacer()
                         }
                         .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous))
@@ -79,32 +80,32 @@ public struct PresetChip: View {
                     if reduceTransparency {
                         RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                             .stroke(
-                                selected ? Color.white.opacity(0.6) : Color.white.opacity(0.25),
-                                lineWidth: 1.0
+                                Color.white.opacity(selected ? Spec.selectedStrokeOpacitySolid : Spec.strokeOpacitySolid),
+                                lineWidth: SlumberTheme.Stroke.solid
                             )
                     } else {
                         RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                             .stroke(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(selected ? 0.38 : (isHovered ? 0.20 : 0.10)),
-                                        Color.white.opacity(0.03)
+                                        Color.white.opacity(selected ? Spec.selectedStrokeOpacity : Spec.strokeOpacity(isHovered)),
+                                        Color.white.opacity(Spec.strokeFadeOpacity)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
-                                lineWidth: 0.75
+                                lineWidth: SlumberTheme.Stroke.thin
                             )
                     }
                 }
-                .shadow(color: selected ? accent.opacity(0.25) : .clear, radius: 6)
-                .animation(.easeInOut(duration: 0.2), value: selected)
+                .shadow(color: selected ? accent.opacity(Spec.glowOpacity) : .clear, radius: Spec.glowRadius)
+                .animation(SlumberTheme.Motion.selectFade, value: selected)
         }
-        .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.95))
+        .buttonStyle(SlumberTactileButtonStyle(scaleDown: Spec.pressScale))
         .accessibilityLabel("\(value) minutes preset")
         .accessibilityValue(selected ? "Selected" : "Not selected")
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.18)) {
+            withAnimation(SlumberTheme.Motion.hover) {
                 isHovered = hovering
             }
         }

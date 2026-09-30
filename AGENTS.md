@@ -85,7 +85,7 @@ Keep the separation between `SlumberCore` and the UI target intact.
 
 Slumber has an intentional visual language. Preserve it.
 
-The design system is centralized in `Sources/Slumber/Theme/SlumberTheme.swift` and uses shared tokens for:
+The design system is centralized in `Sources/Slumber/Theme/` (`SlumberTheme.swift`, `SlumberTheme+Art.swift`, `Color+HDR.swift`) and documented in `docs/DESIGN.md`. It uses shared tokens for:
 
 - Display P3 colors and semantic HDR/EDR levels
 - Typography

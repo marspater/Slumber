@@ -86,31 +86,7 @@ public struct SlumberView: View {
 
     private var skyPhase: Int {
         let m = timerModel.isRunning ? Int(timerModel.totalTime / 60.0) : selectedMinutes
-        if m <= 20 { return 0 }     // Sunset Glow (1-20 min)
-        if m <= 38 { return 1 }     // Evening Twilight (21-38 min)
-        if m <= 50 { return 2 }     // Late Dusk (39-50 min)
-        if m <= 75 { return 3 }     // Midnight Blue (51-75 min)
-        return 4                    // Deep Cosmic Space (76-120 min)
-    }
-
-    private var skyTop: Color {
-        switch skyPhase {
-        case 0:  return Color.p3(h: 0.83, s: 0.50, b: 0.24)
-        case 1:  return Color.p3(h: 0.70, s: 0.72, b: 0.20)
-        case 2:  return Color.p3(r: 0.05, g: 0.04, b: 0.14)
-        case 3:  return Color.p3(r: 0.02, g: 0.03, b: 0.12)
-        default: return Color.p3(r: 0.005, g: 0.002, b: 0.02)
-        }
-    }
-
-    private var skyBot: Color {
-        switch skyPhase {
-        case 0:  return Color.p3(h: 0.88, s: 0.60, b: 0.10)
-        case 1:  return Color.p3(h: 0.78, s: 0.55, b: 0.12)
-        case 2:  return Color.p3(r: 0.14, g: 0.08, b: 0.22)
-        case 3:  return Color.p3(r: 0.05, g: 0.05, b: 0.25)
-        default: return Color.p3(h: 0.76, s: 0.90, b: 0.06)
-        }
+        return SlumberTheme.Sky.phase(forMinutes: m)
     }
 
     public var body: some View {
@@ -123,13 +99,13 @@ public struct SlumberView: View {
 
             LinearGradient(
                 colors: [
-                    skyTop.opacity(reduceTransparency ? 1.0 : 0.65),
-                    skyBot.opacity(reduceTransparency ? 1.0 : 0.75)
+                    SlumberTheme.Sky.top[skyPhase].opacity(reduceTransparency ? 1.0 : SlumberTheme.Sky.topOpacity),
+                    SlumberTheme.Sky.bottom[skyPhase].opacity(reduceTransparency ? 1.0 : SlumberTheme.Sky.bottomOpacity)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .animation(.easeInOut(duration: 1.0), value: skyPhase)
+            .animation(SlumberTheme.Motion.skyPhase, value: skyPhase)
 
             AnimatedScene(
                 timerModel: timerModel,
@@ -144,27 +120,30 @@ public struct SlumberView: View {
                 HStack(spacing: SlumberTheme.Metrics.spaceXS) {
                     TabButton(
                         title: "Timer",
-                        icon: "moon.zzz",
+                        icon: SlumberTheme.Icons.timerTab,
                         tag: 0,
                         currentTab: $currentTab,
                         animationNamespace: tabNamespace
                     )
                     TabButton(
                         title: "Settings",
-                        icon: "gearshape",
+                        icon: SlumberTheme.Icons.settingsTab,
                         tag: 1,
                         currentTab: $currentTab,
                         animationNamespace: tabNamespace
                     )
                 }
-                .padding(3)
+                .padding(SlumberTheme.Components.TabBar.inset)
                 .background(
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous)
-                        .fill(reduceTransparency ? SlumberTheme.Colors.solidTabBar : Color.white.opacity(0.05))
+                        .fill(reduceTransparency ? SlumberTheme.Colors.solidTabBar : Color.white.opacity(SlumberTheme.Components.TabBar.fillOpacity))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous)
-                        .stroke(reduceTransparency ? Color.white.opacity(0.22) : Color.white.opacity(0.08), lineWidth: 0.5)
+                        .stroke(
+                            Color.white.opacity(reduceTransparency ? SlumberTheme.Components.TabBar.strokeOpacitySolid : SlumberTheme.Components.TabBar.strokeOpacity),
+                            lineWidth: SlumberTheme.Stroke.hairline
+                        )
                 )
                 .padding(.top, SlumberTheme.Metrics.spaceLG)
                 .padding(.horizontal, SlumberTheme.Metrics.horizontalPadding)
@@ -232,10 +211,10 @@ public struct SlumberView: View {
                                 .foregroundColor(SlumberTheme.Colors.textPrimary)
                                 .contentTransition(reduceMotion ? .identity : .numericText(countsDown: true))
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.75)
-                                .frame(maxWidth: 136)
-                                .animation(.easeInOut(duration: 0.3), value: hasHours)
-                                .animation(reduceMotion ? nil : .snappy(duration: 0.35), value: countdown)
+                                .minimumScaleFactor(SlumberTheme.Components.Countdown.minimumScaleFactor)
+                                .frame(maxWidth: SlumberTheme.Components.Countdown.maxWidth)
+                                .animation(SlumberTheme.Motion.countdownResize, value: hasHours)
+                                .animation(reduceMotion ? nil : SlumberTheme.Motion.countdownTick, value: countdown)
                             Text("drifting off…")
                                 .font(SlumberTheme.Typography.body)
                                 .foregroundColor(SlumberTheme.Colors.textTertiary)
@@ -302,14 +281,14 @@ public struct SlumberView: View {
                 .frame(width: SlumberTheme.Metrics.contentWidth)
                 .padding(.top, SlumberTheme.Metrics.spaceSM)
                 .transition(reduceMotion ? .opacity : .asymmetric(
-                    insertion: .move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: 0.95)),
+                    insertion: .move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: SlumberTheme.Motion.bannerInsertScale)),
                     removal: .move(edge: .top).combined(with: .opacity)
                 ))
             }
         }
         .allowsHitTesting(currentTab == 0)
-        .animation(reduceMotion ? nil : .spring(response: 0.38, dampingFraction: 0.8), value: timerModel.state)
-        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75), value: timerModel.isRunning)
+        .animation(reduceMotion ? nil : SlumberTheme.Motion.stateChange, value: timerModel.state)
+        .animation(reduceMotion ? nil : SlumberTheme.Motion.runningChange, value: timerModel.isRunning)
     }
 
     // MARK: - Settings Page
@@ -325,7 +304,7 @@ public struct SlumberView: View {
                             Text("Display dock icon alongside the menu bar.")
                                 .font(SlumberTheme.Typography.caption)
                                 .foregroundColor(SlumberTheme.Colors.textSecondary)
-                                .lineSpacing(2)
+                                .lineSpacing(SlumberTheme.Typography.captionLineSpacing)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
@@ -346,12 +325,12 @@ public struct SlumberView: View {
                             Text(hotKeyAvailable ? "Open Slumber from anywhere." : "Unavailable: another app uses this shortcut.")
                                 .font(SlumberTheme.Typography.caption)
                                 .foregroundColor(SlumberTheme.Colors.textSecondary)
-                                .lineSpacing(2)
+                                .lineSpacing(SlumberTheme.Typography.captionLineSpacing)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         KeycapBadge(keys: ["⌃", "⌥", "S"])
-                            .opacity(hotKeyAvailable ? 1.0 : 0.4)
+                            .opacity(hotKeyAvailable ? 1.0 : SlumberTheme.Opacity.disabled)
                             .accessibilityElement(children: .ignore)
                             .accessibilityLabel("Shortcut Control Option S")
                     }

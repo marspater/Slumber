@@ -14,6 +14,7 @@ public struct TabButton: View {
     @Binding public var currentTab: Int
     public var animationNamespace: Namespace.ID
     @State private var isHovered = false
+    private typealias Spec = SlumberTheme.Components.Tab
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     public init(
@@ -35,13 +36,13 @@ public struct TabButton: View {
         Button {
             guard !active else { return }
             playSound("space_button")
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            withAnimation(SlumberTheme.Motion.tabSwitch) {
                 currentTab = tag
             }
         } label: {
-            HStack(spacing: SlumberTheme.Metrics.spaceXS + 2) {
+            HStack(spacing: Spec.iconSpacing) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(SlumberTheme.Icons.tabFont)
                 // Reserve the bold width so the bar doesn't reflow when the weight changes.
                 Text(title)
                     .font(SlumberTheme.Typography.title.weight(.bold))
@@ -58,36 +59,36 @@ public struct TabButton: View {
                         ? SlumberTheme.Colors.textPrimary
                         : SlumberTheme.Colors.textSecondary)
             )
-            .padding(.vertical, 7)
-            .padding(.horizontal, SlumberTheme.Metrics.spaceLG)
+            .padding(.vertical, Spec.verticalPadding)
+            .padding(.horizontal, Spec.horizontalPadding)
             .background {
                 if active {
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                         .fill(
                             reduceTransparency
                                 ? SlumberTheme.Colors.solidTabActive
-                                : SlumberTheme.Colors.accent.opacity(0.18)
+                                : SlumberTheme.Colors.accent.opacity(Spec.activeFillOpacity)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
                                 .stroke(
-                                    reduceTransparency ? Color.white.opacity(0.45) : Color.white.opacity(0.30),
-                                    lineWidth: reduceTransparency ? 1.0 : 0.75
+                                    Color.white.opacity(reduceTransparency ? Spec.activeStrokeOpacitySolid : Spec.activeStrokeOpacity),
+                                    lineWidth: reduceTransparency ? SlumberTheme.Stroke.solid : SlumberTheme.Stroke.thin
                                 )
                         )
                         .matchedGeometryEffect(id: "activeTabIndicator", in: animationNamespace)
                 } else if isHovered {
                     RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
-                        .fill(reduceTransparency ? Color.white.opacity(0.12) : Color.white.opacity(0.05))
+                        .fill(Color.white.opacity(reduceTransparency ? Spec.hoverFillOpacitySolid : Spec.hoverFillOpacity))
                 }
             }
             .contentShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous))
         }
-        .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.98))
+        .buttonStyle(SlumberTactileButtonStyle(scaleDown: Spec.pressScale))
         .accessibilityLabel("\(title) tab")
         .accessibilityValue(active ? "Selected" : "Not selected")
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.18)) {
+            withAnimation(SlumberTheme.Motion.hover) {
                 isHovered = hovering
             }
         }
