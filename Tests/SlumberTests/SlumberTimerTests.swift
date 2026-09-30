@@ -204,7 +204,7 @@ final class SlumberTimerTests: XCTestCase {
     }
 
     @MainActor
-    func testWakeHandlingTriggersSleepIfDeadlinePassed() {
+    func testWakeAfterDeadlineFinishesWithoutSleepingAgain() {
         let clock = MockClock()
         var sleepExecuted = false
         let timer = SlumberTimer(
@@ -217,11 +217,34 @@ final class SlumberTimerTests: XCTestCase {
         
         timer.start(minutes: 10) // 600s
         
-        // Advance clock beyond 10 min
+        // The Mac slept through the deadline; the user has just woken it.
         clock.advance(by: 700)
         timer.handleSystemWake()
         
-        XCTAssertTrue(sleepExecuted)
+        XCTAssertFalse(sleepExecuted)
+        XCTAssertEqual(timer.state, TimerState.completed)
+        XCTAssertEqual(timer.timeRemaining, 0)
+    }
+
+    @MainActor
+    func testLateTickAfterSleepFinishesWithoutSleepingAgain() {
+        let clock = MockClock()
+        var sleepExecuted = false
+        let timer = SlumberTimer(
+            sleepAction: {
+                sleepExecuted = true
+                return SleepResult.success
+            },
+            dateProvider: { clock.now() }
+        )
+
+        timer.start(minutes: 10) // 600s
+
+        // The once-a-second tick can fire right after wake, before the wake notification.
+        clock.advance(by: 700)
+        timer.tick()
+
+        XCTAssertFalse(sleepExecuted)
         XCTAssertEqual(timer.state, TimerState.completed)
         XCTAssertEqual(timer.timeRemaining, 0)
     }

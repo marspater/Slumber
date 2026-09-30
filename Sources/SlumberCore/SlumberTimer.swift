@@ -124,7 +124,6 @@ public class SlumberTimer: ObservableObject {
         guard state == .running, let deadline = endTime else { return }
         let remaining = deadline.timeIntervalSince(dateProvider())
         if remaining <= 0 {
-            NSLog("[SlumberTimer] System woke but timer deadline passed. Triggering sleep.")
             tick()
         } else {
             NSLog("[SlumberTimer] System woke. Resuming countdown with %.0f seconds remaining.", remaining)
@@ -150,11 +149,20 @@ public class SlumberTimer: ObservableObject {
         }
     }
     
+    /// Ticks run every second, so a deadline further past than this means the Mac slept through it.
+    private static let sleptThroughGrace: TimeInterval = 2
+
     public func tick() {
         guard state == .running, let endTime = endTime else { return }
         let remaining = endTime.timeIntervalSince(dateProvider())
         
-        if remaining <= 0 {
+        if remaining < -Self.sleptThroughGrace {
+            // The Mac was already asleep at the deadline and the user has just woken it:
+            // the timer's job is done, and sleeping again would knock them straight back out.
+            NSLog("[SlumberTimer] Deadline passed while the Mac was asleep. Finishing without sleeping again.")
+            resetTimerResources()
+            state = .completed
+        } else if remaining <= 0 {
             state = .requestingSleep
             executeSleep()
         } else {
