@@ -84,7 +84,7 @@ The popover is 320×440 with 24pt side margins, which gives the **272pt content 
 | `spaceLG` | 16 | | `card` (cards, tab bar) | 14 |
 | `spaceXL` | 20 | | `popover` | 20 |
 
-Control heights: `buttonHeight` 38, `primaryButtonHeight` 42 (Start is 4pt taller on purpose). Off-scale paddings (3, 5, 7, 9, 14) are optical sizing and live in the component specs.
+Control heights: `buttonHeight` 38, `primaryButtonHeight` 42 (Start is 4pt taller on purpose). Off-scale values (3, 5, 6, 7, 9, 14) are optical sizing and live as named constants in the component specs; views never calculate spacing from the scale (no `spaceXS + 2`).
 
 Strokes: `hairline` 0.5 (tab bar, slider thumb), `thin` 0.75 (default borders), `solid` 1.0 (Reduce Transparency borders). All rounded rectangles use `.continuous` corners.
 

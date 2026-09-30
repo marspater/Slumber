@@ -171,8 +171,6 @@ public struct SlumberView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .slumberClosed)) { _ in
             isPopoverVisible = false
-            // Pick the next companion while nobody can see it swap.
-            if !timerModel.isRunning { companionType = Int.random(in: 0...2) }
         }
         .onChange(of: timerModel.sleepError) { _, error in
             if let error { AccessibilityNotification.Announcement(error).post() }
@@ -193,7 +191,7 @@ public struct SlumberView: View {
     // MARK: - Timer Page
     private var timerPage: some View {
         ZStack(alignment: .top) {
-            VStack(spacing: SlumberTheme.Metrics.spaceMD + 2) {
+            VStack(spacing: SlumberTheme.Components.TimerPage.spacing) {
                 Spacer()
 
                 if timerModel.isRunning || timerModel.state == .requestingSleep {
@@ -237,7 +235,7 @@ public struct SlumberView: View {
                             .foregroundColor(SlumberTheme.Colors.textTertiary)
                     }
 
-                    VStack(spacing: SlumberTheme.Metrics.spaceXS + 2) {
+                    VStack(spacing: SlumberTheme.Components.Slider.boundsSpacing) {
                         GlowingSlider(value: $selectedMinutes, bounds: 1...120, onEditingChanged: { editing in
                             isSliding = editing
                             if !editing { playSound("space_button") }
@@ -264,6 +262,8 @@ public struct SlumberView: View {
 
                     StartButton(action: {
                         playSound("space_timer_start")
+                        // A different companion flies on every start.
+                        companionType = (companionType + Int.random(in: 1...2)) % 3
                         timerModel.start(minutes: Double(selectedMinutes))
                     })
                     .padding(.top, SlumberTheme.Metrics.spaceXS)
