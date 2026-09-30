@@ -12,22 +12,20 @@ public struct PresetChip: View {
     public let value: Int
     @Binding public var selectedMinutes: Int
     public let isSliding: Bool
-    public let accent: Color
     @State private var isHovered = false
+    private let accent = SlumberTheme.Colors.accent
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     public init(
         label: String,
         value: Int,
         selectedMinutes: Binding<Int>,
-        isSliding: Bool = false,
-        accent: Color = SlumberTheme.Colors.accent
+        isSliding: Bool = false
     ) {
         self.label = label
         self.value = value
         self._selectedMinutes = selectedMinutes
         self.isSliding = isSliding
-        self.accent = accent
     }
 
     private var isSelected: Bool {
@@ -103,7 +101,7 @@ public struct PresetChip: View {
                 .animation(.easeInOut(duration: 0.2), value: selected)
         }
         .buttonStyle(SlumberTactileButtonStyle(scaleDown: 0.95))
-        .accessibilityLabel("\(label), \(value) minutes preset")
+        .accessibilityLabel("\(value) minutes preset")
         .accessibilityValue(selected ? "Selected" : "Not selected")
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.18)) {

@@ -73,12 +73,15 @@ public struct SlumberView: View {
     @State private var currentTab: Int = 0
     @State private var companionType: Int = Int.random(in: 0...2)
     @State private var isPopoverVisible: Bool = false
+    /// False when another app already owns ⌃⌥S, so Settings can say the shortcut is unavailable.
+    private let hotKeyAvailable: Bool
     @Namespace private var tabNamespace
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(timerModel: SlumberTimer) {
+    public init(timerModel: SlumberTimer, hotKeyAvailable: Bool) {
         self.timerModel = timerModel
+        self.hotKeyAvailable = hotKeyAvailable
     }
 
     private var skyPhase: Int {
@@ -189,9 +192,11 @@ public struct SlumberView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .slumberClosed)) { _ in
             isPopoverVisible = false
+            // Pick the next companion while nobody can see it swap.
+            if !timerModel.isRunning { companionType = Int.random(in: 0...2) }
         }
         .onChange(of: timerModel.sleepError) { _, error in
-            if let error { AccessibilityNotification.Announcement("Could not put Mac to sleep. \(error)").post() }
+            if let error { AccessibilityNotification.Announcement(error).post() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .slumberNudgeDuration)) { note in
             guard currentTab == 0, !timerModel.isRunning, let delta = note.object as? Int else { return }
@@ -280,7 +285,6 @@ public struct SlumberView: View {
 
                     StartButton(action: {
                         playSound("space_timer_start")
-                        companionType = Int.random(in: 0...2)
                         timerModel.start(minutes: Double(selectedMinutes))
                     })
                     .padding(.top, SlumberTheme.Metrics.spaceXS)
@@ -339,7 +343,7 @@ public struct SlumberView: View {
                             Text("Global Shortcut")
                                 .font(SlumberTheme.Typography.title)
                                 .foregroundColor(SlumberTheme.Colors.textPrimary)
-                            Text("Open Slumber from anywhere.")
+                            Text(hotKeyAvailable ? "Open Slumber from anywhere." : "Unavailable: another app uses this shortcut.")
                                 .font(SlumberTheme.Typography.caption)
                                 .foregroundColor(SlumberTheme.Colors.textSecondary)
                                 .lineSpacing(2)
@@ -347,6 +351,7 @@ public struct SlumberView: View {
                         }
                         Spacer()
                         KeycapBadge(keys: ["⌃", "⌥", "S"])
+                            .opacity(hotKeyAvailable ? 1.0 : 0.4)
                             .accessibilityElement(children: .ignore)
                             .accessibilityLabel("Shortcut Control Option S")
                     }

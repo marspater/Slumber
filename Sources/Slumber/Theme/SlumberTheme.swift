@@ -98,7 +98,6 @@ public enum SlumberTheme {
         public static let spaceMD:  CGFloat = 12
         public static let spaceLG:  CGFloat = 16
         public static let spaceXL:  CGFloat = 20
-        public static let spaceXXL: CGFloat = 24
     }
 
     // MARK: - Corner Radii
@@ -109,7 +108,6 @@ public enum SlumberTheme {
         public static let lg:      CGFloat = 12
         public static let card:    CGFloat = 14
         public static let popover: CGFloat = 20
-        public static let pill:    CGFloat = 999
     }
 }
 
