@@ -11,7 +11,9 @@ The repository is a Swift Package Manager project with:
 - `Tests/SlumberTests` - XCTest coverage for `SlumberCore`
 - `Assets` - app icon, audio, and image resources
 - `build.sh` - local `.app` bundle construction and code-signing
-- `.github/workflows/swift.yml` - CI tests and build
+- `CHANGELOG.md` - notable changes after tagged releases
+- `.github/workflows/swift.yml` - CI tests and app-bundle build
+- `.github/workflows/codeql.yml` - CodeQL security scanning for Swift
 
 `Package.swift` is the source of truth for the supported platform and language version.
 

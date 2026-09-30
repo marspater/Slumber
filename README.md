@@ -1,179 +1,97 @@
 <div align="center">
-  <img src="Assets/screenshot.png" alt="Slumber Sleep Timer Preview" width="340"/>
-  <h1>Slumber 🌙✨</h1>
-  <p><b>An aesthetic macOS menu bar sleep timer with vector graphics, companion animations, Display P3 wide-gamut & native EDR/HDR rendering.</b></p>
+  <img src="Assets/screenshot.png" alt="Slumber sleep timer preview" width="340"/>
 
-  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+  # Slumber 🌙
+
+  **A native macOS menu bar sleep timer built with Swift 6 and SwiftUI, with Display P3 color, EDR highlights, vector artwork, and animated companions.**
+
+  [![Swift CI](https://github.com/marspater/Slumber/actions/workflows/swift.yml/badge.svg)](https://github.com/marspater/Slumber/actions/workflows/swift.yml)
+  [![CodeQL](https://github.com/marspater/Slumber/actions/workflows/codeql.yml/badge.svg)](https://github.com/marspater/Slumber/actions/workflows/codeql.yml)
   [![macOS 26+](https://img.shields.io/badge/macOS-26.0%2B-purple.svg)]()
-  [![Display P3 + EDR](https://img.shields.io/badge/Display-P3%20%2B%20EDR-violet.svg)]()
-  [![Version](https://img.shields.io/badge/Version-3.2-orange.svg)](https://github.com/marspater/Slumber/tags)
-  [![Download](https://img.shields.io/badge/Download-Slumber.zip-brightgreen.svg)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)
+  [![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg)]()
+  [![Version](https://img.shields.io/badge/version-3.2-blue.svg)](https://github.com/marspater/Slumber/tags)
+  [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 </div>
 
----
+## What it does
 
-## 🌟 Overview
+Slumber lives in the macOS menu bar and puts the Mac to sleep after a configurable countdown. The UI is intentionally compact, native, and lightweight while still being mildly excessive about moonlight.
 
-**Slumber** is an ambient, minimalist menu bar application for macOS. Built with native Swift 6 and SwiftUI, it puts your Mac to sleep after a customizable countdown timer while providing a relaxing visual experience.
+### Highlights
 
-Slumber features a **Display P3 + EDR** wide-gamut cosmic sky, soft vector clouds, dynamic shooting stars, and orbiting **animal companions** (the sleeping fox, purple kitten, and sleeping dodo bird) that somersault and float around the moon in zero-gravity as you drift off to sleep.
+- Native Swift 6 + SwiftUI/AppKit menu bar app.
+- 1–120 minute countdown with presets and keyboard control.
+- Display P3 color with EDR brightness tiers and system tone mapping on displays without headroom.
+- Vector moon, clouds, fox, cat, and dodo artwork with Reduce Motion support.
+- Global `⌃⌥S` shortcut with conflict detection.
+- Deadline-based timer logic that handles wake events without immediately putting the Mac back to sleep after a missed deadline.
+- IOKit sleep request with an AppleScript fallback.
+- Automated Swift CI and CodeQL security scanning.
 
----
+## Requirements
 
-## 📦 Download & Quick Install
+- macOS 26.0 or later.
+- Xcode / Apple command-line developer tools when building from source.
 
-### Option 1: Direct Download (Ad-hoc signed)
-1. Download **[Slumber.zip (v3.2)](https://github.com/marspater/Slumber/raw/main/Slumber.zip)**.
-2. Unzip and move `Slumber.app` to your `/Applications` folder:
-   ```bash
-   # Quick one-liner to download, install and remove download quarantine.
-   # The build is ad-hoc signed and not notarized, so clearing quarantine is required.
-   curl -L -o /tmp/Slumber.zip "https://github.com/marspater/Slumber/raw/main/Slumber.zip" && unzip -oq /tmp/Slumber.zip -d /Applications/ && xattr -cr /Applications/Slumber.app
-   ```
-3. Open Slumber from Spotlight or Launchpad!
+## Download
 
-### Option 2: Build from Source
+The current packaged build is tracked as [`Slumber.zip`](Slumber.zip).
+
+1. Download and unzip `Slumber.zip`.
+2. Move `Slumber.app` to `/Applications`.
+3. Open Slumber from Finder, Spotlight, or Launchpad.
+
+The tracked build is not notarized, so macOS may require an explicit first-launch approval. If you prefer not to use a prebuilt artifact, build from source instead.
+
+## Build from source
+
 ```bash
 git clone https://github.com/marspater/Slumber.git
 cd Slumber
+swift test
 chmod +x build.sh
-./build.sh --install   # add --package to refresh the tracked Slumber.zip
-open /Applications/Slumber.app
+./build.sh --install
 ```
 
----
+Useful build options:
 
-## 📝 Recent Changes (v3.2)
+- `./build.sh` builds `.build/artifacts/Slumber.app`.
+- `./build.sh --install` also installs it to `/Applications`.
+- `./build.sh --package` refreshes the tracked `Slumber.zip`.
 
-- **🌈 Real EDR, Smooth on 60 Hz Panels**:
-  - Glow tiers now render brighter than SDR white (`exposureAdjust`). The previous `headroom(_:)` call only tagged colors, so nothing glowed and tagged colors came out dimmer on SDR panels. Displays without headroom (SDR monitors, a MacBook Air at full brightness) now get the plain P3 color through system tone mapping.
-  - The cloud ⇄ moon flight eases with smootherstep (peak speed 1.9× the average instead of 3×), and shooting stars run at 60 fps, so motion stays smooth on 60 Hz panels.
+When a Developer ID signing identity is available, the build script prefers it. Otherwise it falls back to ad-hoc signing.
 
-- **🛏️ Wake & Companion Fixes**:
-  - If the Mac slept through the deadline, waking it finishes the timer instead of putting it straight back to sleep.
-  - The next companion is chosen while the popover is closed, so it never swaps species in view.
-  - Settings shows when another app already owns the `⌃⌥S` shortcut.
+## Repository layout
 
-- **🎛️ Refined Slider & Control UX**:
-  - Decoupled accessibility and gesture layers in `SlumberSlider`, eliminating accessibility layout feedback loops and keyboard stepping conflicts.
-  - Suppressed preset chip state flashing and background jitter when scrubbing the duration slider.
-  - Removed rectangular focus ring on the custom slider.
+| Path | Purpose |
+| --- | --- |
+| `Sources/SlumberCore` | Timer/domain logic and sleep integration |
+| `Sources/Slumber` | SwiftUI/AppKit UI, menu bar integration, art, and theme |
+| `Sources/Slumber/Theme` | Central design tokens, P3/EDR levels, component and art specs |
+| `Tests/SlumberTests` | XCTest coverage for core behavior and vector parsing |
+| `Assets` | Icon Composer source, screenshot, and audio assets |
+| `docs/DESIGN.md` | Design system and artwork reference |
+| `.github/workflows` | CI and CodeQL workflows |
 
-- **⚡ Asynchronous Sleep & Concurrency Safety**:
-  - Offloaded blocking fallback AppleScript execution (`NSAppleScript.executeAndReturnError`) to a background queue, preventing `@MainActor` thread stalls during fallback sleep.
-  - Resolved `Sendable` data race warning in async sleep dispatch.
+## Development
 
-- **🌌 Vector Performance & Code Health**:
-  - Extracted celestial constellation line path calculations into `ConstellationLinesShape` conforming to SwiftUI's `Shape` protocol, avoiding redundant path calculations on redraws.
-  - Deduplicated base P3 `Color` construction and unified HSB-to-RGB conversion logic in `Color+HDR.swift`.
-  - Streamlined `SlumberTimer.clearStatus()` by reusing existing `stop()` logic.
+Run the standard validation sequence on macOS:
 
-- **🛠️ Resilient Build Pipeline**:
-  - Icon Composer `.icon` compiled with `actool`; `build.sh` fails if `Assets.car` or `AppIcon.icns` is missing.
-  - Updated release packaging to version 3.2.
+```bash
+swift package describe
+swift test
+swift build -c release
+./build.sh
+```
 
----
+See [`AGENTS.md`](AGENTS.md) for repository-specific engineering rules and [`docs/DESIGN.md`](docs/DESIGN.md) for the visual system.
 
-## 📝 Earlier Changes (v3.1)
+## Changes
 
-- **🎨 Unified Design System & Pixel-Perfect 272pt Grid (`SlumberTheme`)**:
-  - Centralized design tokens for colors, typography, metrics, and radii under `SlumberTheme.swift`.
-  - Harmonized standard 272pt content grid across all controls: Glowing Slider, 5-chip Preset Bar (48pt × 5 + 8pt × 4), Settings Cards, and Floating Error Overlays.
-  - Zero-jitter countdown typography using `.monospacedDigit()` in display font.
-  - Tactile haptic press states (`SlumberTactileButtonStyle`) providing physical spring feedback on all buttons.
-  - Clean modular architecture separating components, theme, and celestial vector art into dedicated subdirectories.
+The latest work on `main` is documented in [`CHANGELOG.md`](CHANGELOG.md). The current source tree contains additional post-v3.2 changes, so the changelog is the better place to inspect what moved instead of embalming old implementation details in this README.
 
-- **⚡ Zero Background CPU & Battery Optimization**:
-  - Automatically unmounts and pauses all celestial canvas animations (`ShootingStar`, `FireflyField`, `ConstellationOverlay`, `AuroraEffect`, and companion orbital physics) when the popover is closed or when navigating to the Settings tab, so the popover adds no animation work while closed (a running countdown still ticks once per second).
+## License
 
-- **🛡️ Concurrency & Platform Event Safety**:
-  - Global Carbon hotkey (`⌃⌥S`) notification dispatch safely isolated to the main queue, eliminating background AppKit threading hazards.
-  - Replaced re-entrant status bar menu recursion hack with canonical `NSMenu.popUp(positioning:at:in:)`.
-  - Event monitors (`globalMonitor` and `keyMonitor`) strictly bounded to popover presentation lifecycle.
-  - Screen coordinate calculation using `button.convert(button.bounds, to: nil)` to prevent misclicks.
-  - Automatic fallback to `NSScreen.screens.first` when `NSScreen.main` is temporarily `nil` in accessory mode, preventing false SDR downgrades on HDR displays.
+Copyright © 2026 Mars Pater.
 
-- **⏱️ Precision Timer Formatting & Leak Remediation**:
-  - Replaced integer truncation with `max(0, Int(ceil(t)))` in `SlumberTimeFormatter`, eliminating the countdown second-skipping bug (`15:00` -> `14:58`) and negative display artifacts.
-  - Guaranteed `ProcessInfo` activity and `NSWorkspace` observer deallocation via `isolated deinit` on `SlumberTimer`.
-
-- **⌨️ Full Keyboard Access**:
-  - Added `.focusable()` and Left/Right arrow key step adjustments to `GlowingSlider`.
-
-- **🧪 Expanded Test Suite**:
-  - 14/14 automated deterministic tests covering state transitions, wake handling, countdown ceil precision, and deinit cleanup.
-
----
-
-## 📝 Earlier Changes (v3.0)
-
-- **🌌 Display P3 + Semantic EDR/HDR Pipeline**:
-  - Root view dynamic range enabled via `.allowedDynamicRange(.high)`.
-  - Semantic headroom design tiers (`HDRLevel`):
-    - `.sdr` (`1.0×`): Sky background, companion fur/body, native UI controls, text.
-    - `.rimHighlight` (`1.1×`): Moonlit cloud rims, companion alert eye glints.
-    - `.subtleHighlight` (`1.25×`): Aurora ambient washes, timer progress ring glow, active slider thumb.
-    - `.visibleGlow` (`1.75×`): Firefly resting glow, outer moon halo.
-    - `.strongGlow` (`2.25×`): Inner moon crescent core.
-    - `.effect` (`3.0×`): Firefly peak twinkle, shooting star flash.
-  - Continuous linear headroom interpolation (`Color.p3(..., headroomBetween:and:phase:)`) for silky smooth 60/120 fps firefly twinkles and shooting star trails.
-  - Automatic display capability detection (`DisplayHeadroom.supportsEDR`) with graceful SDR fallback on non-HDR external monitors.
-
-- **🏗️ Modular Architecture (`SlumberCore`)**:
-  - Decoupled business logic and timer state into standalone `SlumberCore` module.
-  - Comprehensive 12-test deterministic test suite powered by injectable `@MainActor MockClock`.
-
-- **⏱️ Smart Wake Resumption**:
-  - When your Mac wakes while a timer is active, Slumber recalculates the exact remaining time from the stored deadline and resumes the countdown seamlessly.
-
-- **🪟 Non-Shifting Error Banner Overlay & Retry UX**:
-  - Converted error reporting into a floating frosted glass overlay, keeping the countdown dial and controls perfectly anchored without layout shifts.
-  - Added one-click **Retry** button for immediate recovery if sleep dispatch is blocked.
-
-- **🎨 Apple Icon Composer Pipeline (macOS 26.0+)**:
-  - Direct compilation of canonical `Assets/AppIcon.icon` into `Assets.car` via `actool` targeting modern macOS 26.0+ wide-gamut Display P3 displays.
-
-- **🦤 3rd Companion: Sleeping Dodo Bird**:
-  - Added the **Sleeping Dodo** (`SleepingDodo`) with celestial turquoise plumage, hooked amber beak, and sleepy `"zzz"` particles.
-  - The app randomly selects from all 3 companions (**Fox**, **Cat**, **Dodo**) on launch and timer start.
-
-- **🛰️ Zero-Gravity 360° Space Somersault & Floating Physics**:
-  - Orbiting companions perform continuous, playful 360° axial somersaults and Lissajous floating micro-drifts.
-
-- **💎 UI Polish & Refined Tokens**:
-  - Enhanced slider track & thumb proportions with P3 glow.
-  - Improved preset chip contrast and spacing.
-  - Frosted glass keycap badge (`[ ⌃⌥S ]`) for the global hotkey.
-
----
-
-## ✨ Features & Architecture
-
-### 🎨 1. Display P3 + EDR Graphics Engine
-- Pure SwiftUI vector path shapes for clouds, twinkling stars, and cosmic auroras.
-- Display P3 wide-gamut colors; glowing tiers are real EDR brightness (`exposureAdjust`), tone-mapped by macOS back to the plain P3 color on displays without headroom.
-- Context-aware EDR scaling preserving high contrast between dim backgrounds and glowing celestial lights.
-
-### 🦊 2. Animated Animal Companions
-- **Sleeping Fox, Kitten & Dodo**: Interactive companions resting on soft clouds during idle state, smoothly transitioning to orbit and somersault around the sleeping moon when a countdown starts.
-- **Keplerian Orbital Motion & Zero-G Physics**: Continuous wall-clock time math using `TimelineView` for zero-g floating, breathing sine-wave motions, and a time-based smootherstep ease along a Bézier arc between the cloud and the moon.
-
-### 🖥️ 3. Native macOS Support
-- Native `.icon` bundle format support (`Assets/AppIcon.icon`) compiled directly with Apple `actool` into `Assets.car`.
-- System wake notifications resume the countdown from its deadline; if the Mac slept through the deadline, the timer finishes instead of sleeping it again.
-- Native macOS `Toggle` switch style with system accessibility.
-
-### 🎵 4. Soft Ambient Bedtime Audio
-- Synthesized low-volume sine-wave audio cues for timer start, preset selection, and button presses.
-
----
-
-## 📄 License
-
-Copyright (C) 2026 Mars Pater. Slumber is open-source software licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
-
----
-
-## 👤 Author
-
-Developed with ❤️ by **Mars Pater** ([@marspater](https://github.com/marspater)).
+Slumber is licensed under the [GNU General Public License v3.0](LICENSE).
