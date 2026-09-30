@@ -42,7 +42,8 @@ Everything since the `v3.2` tag.
 
 - Historical implementation notes were removed from the README and replaced with links to this changelog and the design reference.
 - Swift CI now uses explicit least-privilege permissions, current checkout action versions, concurrency cancellation, and a job timeout.
-- CodeQL uses GitHub's Swift analysis on macOS with a manual release build.
+- CodeQL uses GitHub's Swift analysis on macOS with a manual release build. A newer push to `main` no longer cancels a running `main` scan, which had surfaced as "CodeQL exited with errors".
+- The repository's Sponsor button links to Ko-fi (`.github/FUNDING.yml`).
 
 ## v3.2
 
