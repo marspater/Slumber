@@ -8,7 +8,7 @@ The repository is a native Xcode project (`Slumbr.xcodeproj`, built with `xcodeb
 
 - `Sources/SlumbrCore` - timer/domain logic and platform sleep integration (`SlumbrCore` static framework target)
 - `Sources/Slumbr` - macOS AppKit/SwiftUI UI, menu bar integration, animations, theme (`Slumbr` app target)
-- `Tests/SlumbrTests` - unit tests (`SlumbrTests`, hosted in the app)
+- `Tests/SlumbrTests` - Swift Testing suites (`SlumbrTests`, hosted in the app, so UI-target logic is reachable with `@testable import Slumbr`). Do not add XCTest.
 - `Slumbr.entitlements` - app entitlements (Apple Events for the AppleScript sleep fallback)
 - `Assets` - app icon, audio, and image resources
 - `build.sh` - thin `xcodebuild` wrapper: Release build, signing identity choice, `--package`, `--install`
@@ -168,7 +168,7 @@ Before declaring a task complete:
 - **In Jules / Linux Sandbox:**
   1. Skip native build and packaging executions.
   2. Thoroughly verify code diffs against Swift 6 concurrency, type safety, and target SDK API availability.
-  3. Add or update XCTest coverage in `Tests/SlumbrTests` for behavioral changes in `SlumbrCore`.
+  3. Add or update Swift Testing coverage (`import Testing`, `@Suite`/`@Test`/`#expect`) in `Tests/SlumbrTests` for behavioral changes in `SlumbrCore`.
   4. Note in the final summary that runtime packaging/build verification must be executed on macOS.
 
 When fixing a bug, first reproduce it or create a regression test where practical. The regression test should fail before the fix and pass after it.

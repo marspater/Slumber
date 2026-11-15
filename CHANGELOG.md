@@ -10,6 +10,7 @@ Notable changes are recorded here so the README can stay focused on installing a
 - The project is a native Xcode project (`Slumbr.xcodeproj`) built with `xcodebuild`, replacing the Swift package. `build.sh` is now a thin wrapper around it. Built with the macOS 27 SDK, it still runs on macOS 26 and later, and the packaged app is now universal (Apple silicon and Intel).
 - CI and CodeQL build with Xcode 27 on GitHub's `xcode-27` runner.
 - Deprecated and soft-deprecated APIs are replaced: `foregroundStyle` instead of `foregroundColor`, closure-based `overlay`/`background`, and `NSApp.activate()`. The timer model uses the Observation framework (`@Observable`) instead of `ObservableObject`. The macOS 27 SDK deprecates nothing else the app uses, so no macOS 27-only code paths were needed.
+- Tests use Swift Testing instead of XCTest. They add parameterized formatter and path-parsing cases, and check the sky phases, the 320/272pt layout grid, and that every artwork path parses.
 - Logging uses `os.Logger` (subsystem `com.marspater.slumbr`), so timer and sleep events persist and can be read with `log show --predicate 'subsystem == "com.marspater.slumbr"'`.
 
 ### Fixed
