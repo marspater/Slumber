@@ -1,10 +1,10 @@
 //
-//  SlumberTheme.swift
-//  Slumber
+//  SlumbrTheme.swift
+//  Slumbr
 //
 //  Design system tokens: colors, sky palette, typography, iconography, metrics, radii, strokes,
 //  motion, per-component specs, and the tactile press style. Artwork tokens (moon, clouds,
-//  companions, stars, scene layout) live in SlumberTheme+Art.swift; the P3/EDR color API in
+//  companions, stars, scene layout) live in SlumbrTheme+Art.swift; the P3/EDR color API in
 //  Color+HDR.swift. docs/DESIGN.md documents all of it.
 //
 //  Animations are `static var` so each use builds a fresh value; everything else is `static let`.
@@ -13,7 +13,7 @@
 import SwiftUI
 import AppKit
 
-public enum SlumberTheme {
+public enum SlumbrTheme {
     // MARK: - Colors
     public enum Colors {
         /// Primary celestial accent (Lavender / Moonlit Violet)
@@ -210,7 +210,7 @@ public enum SlumberTheme {
         public static var hoverSlider: Animation { .easeOut(duration: 0.2) }
         /// Hover lift on the Start, Cancel and Quit buttons.
         public static var hoverButton: Animation { .spring(response: 0.2, dampingFraction: 0.8) }
-        /// Press-down scale of `SlumberTactileButtonStyle`.
+        /// Press-down scale of `SlumbrTactileButtonStyle`.
         public static var press: Animation { .spring(response: 0.20, dampingFraction: 0.75) }
         /// Preset chip selection.
         public static var select: Animation { .spring(response: 0.25, dampingFraction: 0.75) }
@@ -421,7 +421,7 @@ public struct HoverPair<Value: Sendable>: Sendable {
 }
 
 // MARK: - Tactile Button Style
-public struct SlumberTactileButtonStyle: ButtonStyle {
+public struct SlumbrTactileButtonStyle: ButtonStyle {
     public let scaleDown: CGFloat
 
     public init(scaleDown: CGFloat = 0.97) {
@@ -431,7 +431,7 @@ public struct SlumberTactileButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? scaleDown : 1.0)
-            .opacity(configuration.isPressed ? SlumberTheme.Motion.pressedOpacity : 1.0)
-            .animation(SlumberTheme.Motion.press, value: configuration.isPressed)
+            .opacity(configuration.isPressed ? SlumbrTheme.Motion.pressedOpacity : 1.0)
+            .animation(SlumbrTheme.Motion.press, value: configuration.isPressed)
     }
 }

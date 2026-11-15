@@ -2,13 +2,13 @@
 
 ## Repository
 
-Slumber is a native macOS menu bar application written in Swift 6 and SwiftUI.
+Slumbr is a native macOS menu bar application written in Swift 6 and SwiftUI.
 
 The repository is a Swift Package Manager project with:
 
-- `Sources/SlumberCore` - timer/domain logic and platform sleep integration
-- `Sources/Slumber` - macOS AppKit/SwiftUI UI, menu bar integration, animations, theme, assets
-- `Tests/SlumberTests` - XCTest coverage for `SlumberCore`
+- `Sources/SlumbrCore` - timer/domain logic and platform sleep integration
+- `Sources/Slumbr` - macOS AppKit/SwiftUI UI, menu bar integration, animations, theme, assets
+- `Tests/SlumbrTests` - XCTest coverage for `SlumbrCore`
 - `Assets` - app icon, audio, and image resources
 - `build.sh` - local `.app` bundle construction and code-signing
 - `CHANGELOG.md` - notable changes after tagged releases
@@ -59,7 +59,7 @@ When a change affects actual app behavior, prefer validating the built `.app` ra
 
 - **Do NOT execute `swift build`, `swift test`, or `./build.sh`**.
 - Perform static verification of imports, actor boundaries, method signatures, and API compatibility.
-- Ensure test files in `Tests/` are structurally updated to match `SlumberCore` changes.
+- Ensure test files in `Tests/` are structurally updated to match `SlumbrCore` changes.
 
 ## Swift 6 Concurrency Rules
 
@@ -75,19 +75,19 @@ Treat Swift 6 strict concurrency diagnostics as real defects, not noise.
 
 ## Architecture Rules
 
-Keep the separation between `SlumberCore` and the UI target intact.
+Keep the separation between `SlumbrCore` and the UI target intact.
 
-- Put timer/state/business logic in `SlumberCore` when it does not inherently depend on SwiftUI UI rendering.
-- Keep UI composition, animations, menu bar behavior, popover lifecycle, theme, and presentation concerns in `Slumber`.
+- Put timer/state/business logic in `SlumbrCore` when it does not inherently depend on SwiftUI UI rendering.
+- Keep UI composition, animations, menu bar behavior, popover lifecycle, theme, and presentation concerns in `Slumbr`.
 - Avoid moving platform logic into views simply because it is convenient.
 - Do not add third-party dependencies without a strong technical reason.
 - Prefer native Apple APIs and existing project patterns.
 
 ## UI / Design Rules
 
-Slumber has an intentional visual language. Preserve it.
+Slumbr has an intentional visual language. Preserve it.
 
-The design system is centralized in `Sources/Slumber/Theme/` (`SlumberTheme.swift`, `SlumberTheme+Art.swift`, `Color+HDR.swift`) and documented in `docs/DESIGN.md`. It uses shared tokens for:
+The design system is centralized in `Sources/Slumbr/Theme/` (`SlumbrTheme.swift`, `SlumbrTheme+Art.swift`, `Color+HDR.swift`) and documented in `docs/DESIGN.md`. It uses shared tokens for:
 
 - Display P3 colors and semantic HDR/EDR levels
 - Typography
@@ -100,13 +100,13 @@ Do not introduce arbitrary one-off dimensions, colors, fonts, shadows, radii, or
 
 Preserve the existing wide-gamut P3 and EDR/HDR rendering behavior. Do not silently convert rendering to generic sRGB or SDR.
 
-Do not reintroduce the custom slider focus-ring/accessibility problems that previous work explicitly addressed. The visual interaction layer and accessibility layer are intentionally decoupled in `SlumberSlider`.
+Do not reintroduce the custom slider focus-ring/accessibility problems that previous work explicitly addressed. The visual interaction layer and accessibility layer are intentionally decoupled in `SlumbrSlider`.
 
 Respect accessibility behavior while keeping the visual control free from unwanted system focus chrome.
 
 ## AppKit / Menu Bar Rules
 
-Slumber is a menu bar application and uses AppKit APIs such as:
+Slumbr is a menu bar application and uses AppKit APIs such as:
 
 - `NSStatusItem`
 - `NSPopover`
@@ -125,7 +125,7 @@ Changes to these areas must be lifecycle-safe.
 
 ## Timer / Sleep Rules
 
-`SlumberTimer` is user-visible core behavior. Preserve these invariants:
+`SlumbrTimer` is user-visible core behavior. Preserve these invariants:
 
 - Invalid or non-finite durations must not start a timer.
 - Countdown state is derived from an absolute deadline rather than accumulated tick error.
@@ -163,7 +163,7 @@ Before declaring a task complete:
 - **In Jules / Linux Sandbox:**
   1. Skip native build and packaging executions.
   2. Thoroughly verify code diffs against Swift 6 concurrency, type safety, and target SDK API availability.
-  3. Add or update XCTest coverage in `Tests/SlumberTests` for behavioral changes in `SlumberCore`.
+  3. Add or update XCTest coverage in `Tests/SlumbrTests` for behavioral changes in `SlumbrCore`.
   4. Note in the final summary that runtime packaging/build verification must be executed on macOS.
 
 When fixing a bug, first reproduce it or create a regression test where practical. The regression test should fail before the fix and pass after it.

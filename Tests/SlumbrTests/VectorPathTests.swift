@@ -1,6 +1,6 @@
 import XCTest
 import CoreGraphics
-import SlumberCore
+import SlumbrCore
 
 final class VectorPathTests: XCTestCase {
     func testParsesAllCommands() {

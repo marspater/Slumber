@@ -1,5 +1,5 @@
 import XCTest
-import SlumberCore
+import SlumbrCore
 
 @MainActor
 final class MockClock {
@@ -28,10 +28,10 @@ final class MockClock {
     }
 }
 
-final class SlumberTimerTests: XCTestCase {
+final class SlumbrTimerTests: XCTestCase {
     @MainActor
     func testInitialStateIsIdle() {
-        let timer = SlumberTimer()
+        let timer = SlumbrTimer()
         XCTAssertEqual(timer.state, TimerState.idle)
         XCTAssertFalse(timer.isRunning)
         XCTAssertEqual(timer.timeRemaining, 0)
@@ -42,7 +42,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testStartTransitionsToRunningAndSetsTotalTime() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 15)
         XCTAssertEqual(timer.state, TimerState.running)
         XCTAssertTrue(timer.isRunning)
@@ -54,7 +54,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testStopTransitionsToIdle() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 30)
         XCTAssertEqual(timer.state, TimerState.running)
         timer.stop()
@@ -66,7 +66,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testClearStatusResetsToIdle() {
         let clock = MockClock()
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: { SleepResult.failure(reason: "nope") },
             dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
@@ -81,7 +81,7 @@ final class SlumberTimerTests: XCTestCase {
 
     @MainActor
     func testInvalidMinutesDoesNotStart() {
-        let timer = SlumberTimer()
+        let timer = SlumbrTimer()
         timer.start(minutes: 0)
         XCTAssertEqual(timer.state, TimerState.idle)
         timer.start(minutes: -10)
@@ -97,7 +97,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testTickCalculatesExactRemainingTime() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 10) // 600s
         
         clock.advance(by: 120) // 2 minutes elapsed
@@ -112,7 +112,7 @@ final class SlumberTimerTests: XCTestCase {
     func testTimerExpiryTransitionsToCompletedOnSuccess() {
         let clock = MockClock()
         var sleepExecuted = false
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: {
                 sleepExecuted = true
                 return SleepResult.success
@@ -141,7 +141,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testSleepFailureSetsSleepFailedState() {
         let clock = MockClock()
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: {
                 return SleepResult.failure(reason: "Simulated IOKit Error")
             },
@@ -167,7 +167,7 @@ final class SlumberTimerTests: XCTestCase {
         }
         let controller = SleepController()
         let clock = MockClock()
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: {
                 return controller.shouldSucceed ? SleepResult.success : SleepResult.failure(reason: "Temporary Lock")
             },
@@ -194,7 +194,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testRepeatedStartsCleanlyResetPreviousSession() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 15)
         XCTAssertEqual(timer.totalTime, 900)
         
@@ -208,7 +208,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testWakeHandlingResumesIfTimeRemains() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 60) // 3600 seconds
         XCTAssertEqual(timer.state, TimerState.running)
         
@@ -225,7 +225,7 @@ final class SlumberTimerTests: XCTestCase {
     func testWakeAfterDeadlineFinishesWithoutSleepingAgain() {
         let clock = MockClock()
         var sleepExecuted = false
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: {
                 sleepExecuted = true
                 return SleepResult.success
@@ -248,7 +248,7 @@ final class SlumberTimerTests: XCTestCase {
     func testLateTickAfterSleepFinishesWithoutSleepingAgain() {
         let clock = MockClock()
         var sleepExecuted = false
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: {
                 sleepExecuted = true
                 return SleepResult.success
@@ -271,7 +271,7 @@ final class SlumberTimerTests: XCTestCase {
     func testLateTickWhileAwakeStillSleeps() {
         let clock = MockClock()
         var sleepExecuted = false
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: {
                 sleepExecuted = true
                 return SleepResult.success
@@ -294,7 +294,7 @@ final class SlumberTimerTests: XCTestCase {
     func testAcceptedSleepRequestThatNeverSleepsFailsAndStaysRetryable() {
         let clock = MockClock()
         var sleeps = 0
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: { sleeps += 1; return SleepResult.success },
             dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
@@ -324,7 +324,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testSleepLandingAfterTimeoutStillCompletes() {
         let clock = MockClock()
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: { SleepResult.success },
             dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
@@ -345,7 +345,7 @@ final class SlumberTimerTests: XCTestCase {
     func testSleepAndWakeBeforeDeadlineKeepsCountingThenSleeps() {
         let clock = MockClock()
         var sleeps = 0
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: { sleeps += 1; return SleepResult.success },
             dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
@@ -368,7 +368,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testStopWhileAwaitingSleepReturnsToIdle() {
         let clock = MockClock()
-        let timer = SlumberTimer(
+        let timer = SlumbrTimer(
             sleepAction: { SleepResult.success },
             dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
@@ -388,46 +388,46 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testCountdownFormattingDoesNotSkipFirstSecond() {
         // Initial state at 15m
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(900.0), "15:00")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(900.0), "15:00")
         
         // 1 second later: 898.99s remaining. Truncation previously caused this to skip to 14:58.
         // Ceil rounding correctly preserves 14:59.
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(898.99), "14:59")
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(898.01), "14:59")
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(898.00), "14:58")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(898.99), "14:59")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(898.01), "14:59")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(898.00), "14:58")
         
         // Sub-minute boundary
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(60.0), "01:00")
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(59.9), "01:00")
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(59.0), "00:59")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(60.0), "01:00")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(59.9), "01:00")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(59.0), "00:59")
         
         // Final seconds down to zero
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(1.0), "00:01")
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(0.5), "00:01")
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(0.0), "00:00")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(1.0), "00:01")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(0.5), "00:01")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(0.0), "00:00")
         
         // Negative edge cases should clamp to zero, never displaying negative numbers
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(-0.5), "00:00")
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(-10.0), "00:00")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(-0.5), "00:00")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(-10.0), "00:00")
         
         // Multi-hour display
-        XCTAssertEqual(SlumberTimeFormatter.formatCountdown(3665.0), "1:01:05")
+        XCTAssertEqual(SlumbrTimeFormatter.formatCountdown(3665.0), "1:01:05")
     }
 
     @MainActor
     func testHasHoursAccuratelyDetectsHourScaleTime() {
-        XCTAssertTrue(SlumberTimeFormatter.hasHours(7200.0))
-        XCTAssertTrue(SlumberTimeFormatter.hasHours(3600.0))
-        XCTAssertTrue(SlumberTimeFormatter.hasHours(3599.1))
-        XCTAssertFalse(SlumberTimeFormatter.hasHours(3599.0))
-        XCTAssertFalse(SlumberTimeFormatter.hasHours(900.0))
-        XCTAssertFalse(SlumberTimeFormatter.hasHours(0.0))
-        XCTAssertFalse(SlumberTimeFormatter.hasHours(-5.0))
+        XCTAssertTrue(SlumbrTimeFormatter.hasHours(7200.0))
+        XCTAssertTrue(SlumbrTimeFormatter.hasHours(3600.0))
+        XCTAssertTrue(SlumbrTimeFormatter.hasHours(3599.1))
+        XCTAssertFalse(SlumbrTimeFormatter.hasHours(3599.0))
+        XCTAssertFalse(SlumbrTimeFormatter.hasHours(900.0))
+        XCTAssertFalse(SlumbrTimeFormatter.hasHours(0.0))
+        XCTAssertFalse(SlumbrTimeFormatter.hasHours(-5.0))
     }
 
     @MainActor
     func testDeinitCancelsTimerAndCleansUpResources() {
-        var timer: SlumberTimer? = SlumberTimer()
+        var timer: SlumbrTimer? = SlumbrTimer()
         weak var weakTimer = timer
         timer?.start(minutes: 10)
         XCTAssertEqual(timer?.state, TimerState.running)
@@ -441,7 +441,7 @@ final class SlumberTimerTests: XCTestCase {
     func testDoesNotSleepBeforeDeadlineButDoesAtDeadline() {
         let clock = MockClock()
         var sleeps = 0
-        let timer = SlumberTimer(sleepAction: { sleeps += 1; return SleepResult.success }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(sleepAction: { sleeps += 1; return SleepResult.success }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 10)
 
         clock.advance(by: 599)
@@ -463,7 +463,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testRetrySleepIsIgnoredUnlessFailed() {
         var sleeps = 0
-        let timer = SlumberTimer(sleepAction: { sleeps += 1; return SleepResult.success })
+        let timer = SlumbrTimer(sleepAction: { sleeps += 1; return SleepResult.success })
         timer.retrySleep()
         XCTAssertEqual(sleeps, 0)
         XCTAssertEqual(timer.state, TimerState.idle)
@@ -471,14 +471,14 @@ final class SlumberTimerTests: XCTestCase {
 
     @MainActor
     func testRepeatedFailureStaysRetryable() {
-        let timer = SlumberTimer(sleepAction: { SleepResult.failure(reason: "busy") })
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "busy") })
         timer.start(minutes: 1)
         timer.retrySleep() // ignored while running
         XCTAssertTrue(timer.isRunning)
         timer.stop()
 
         let clock = MockClock()
-        let failing = SlumberTimer(sleepAction: { SleepResult.failure(reason: "busy") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let failing = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "busy") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         failing.start(minutes: 1)
         clock.advance(by: 61)
         failing.tick()

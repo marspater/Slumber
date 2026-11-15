@@ -1,6 +1,6 @@
 //
 //  ArtPaths.swift
-//  Slumber
+//  Slumbr
 //
 //  Path data for the moon, clouds and companions, authored as SVG in a fixed viewBox
 //  (1 unit = 1pt) and parsed once on first use. Main-actor isolated: only view bodies read it.

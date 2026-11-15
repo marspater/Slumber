@@ -1,8 +1,8 @@
 //
 //  Color+HDR.swift
-//  Slumber
+//  Slumbr
 //
-//  Display P3 + EDR (Extended Dynamic Range) color system for Slumber.
+//  Display P3 + EDR (Extended Dynamic Range) color system for Slumbr.
 //  Glowing tiers are brightened above SDR white; macOS tone-maps them back to the plain
 //  P3 color wherever the display has no headroom left (SDR monitors, or a MacBook Air at
 //  full brightness), so no per-display detection is needed.
@@ -12,7 +12,7 @@ import SwiftUI
 
 // MARK: - Semantic HDR tiers
 
-/// Named brightness levels for Slumber's UI, as multiples of SDR white.
+/// Named brightness levels for Slumbr's UI, as multiples of SDR white.
 public enum HDRLevel: Double, Sendable {
     /// Background sky, companion bodies (fox/cat/dodo), base controls, chips, text.
     case sdr = 1.0

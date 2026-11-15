@@ -3,7 +3,7 @@ set -e
 
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "${REPO_ROOT}"
-APP_NAME="Slumber"
+APP_NAME="Slumbr"
 ARTIFACTS_DIR="${REPO_ROOT}/.build/artifacts"
 APP_DIR="${ARTIFACTS_DIR}/${APP_NAME}.app"
 CONTENTS_DIR="${APP_DIR}/Contents"
@@ -57,7 +57,7 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleExecutable</key>
     <string>${APP_NAME}</string>
     <key>CFBundleIdentifier</key>
-    <string>com.marspater.slumber2</string>
+    <string>com.marspater.slumbr</string>
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
     <key>CFBundleDisplayName</key>
@@ -67,13 +67,13 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleShortVersionString</key>
-    <string>3.5</string>
+    <string>4.0</string>
     <key>CFBundleVersion</key>
-    <string>3.5</string>
+    <string>4.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Slumber asks System Events to put your Mac to sleep when the timer ends.</string>
+    <string>Slumbr asks System Events to put your Mac to sleep when the timer ends.</string>
     <key>CFBundleSupportedPlatforms</key>
     <array>
         <string>MacOSX</string>
@@ -129,11 +129,11 @@ rm -f "${ENTITLEMENTS}"
 
 touch "${APP_DIR}"
 
-# Package Slumber.zip (tracked release artifact) only on request, so ordinary builds leave the tree clean
+# Package Slumbr.zip (tracked release artifact) only on request, so ordinary builds leave the tree clean
 if [[ " $* " == *" --package "* ]]; then
-    echo "Packaging Slumber.zip..."
-    rm -f "${REPO_ROOT}/Slumber.zip"
-    (cd "${ARTIFACTS_DIR}" && zip -r -y -q "${REPO_ROOT}/Slumber.zip" "${APP_NAME}.app")
+    echo "Packaging Slumbr.zip..."
+    rm -f "${REPO_ROOT}/Slumbr.zip"
+    (cd "${ARTIFACTS_DIR}" && zip -r -y -q "${REPO_ROOT}/Slumbr.zip" "${APP_NAME}.app")
 fi
 
 # Handle optional --install / -i flag
