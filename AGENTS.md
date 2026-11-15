@@ -113,6 +113,10 @@ Slumbr is a menu bar application and uses AppKit APIs such as:
 - Carbon global hotkey APIs
 - `NSWorkspace` wake notifications
 
+The ⌃⌥S global hotkey deliberately stays on Carbon `RegisterEventHotKey`. It is not deprecated, needs no permission, and consumes the key press. The only modern alternative, an `NSEvent` global monitor, needs Accessibility/Input Monitoring permission and cannot swallow the event.
+
+Use current APIs: no deprecated or soft-deprecated (`deprecated: 100000`, `API_TO_BE_DEPRECATED`) calls. If a replacement needs a newer macOS than the deployment target (26.0), wrap it in `if #available(macOS NN, *)` with the old call as the fallback. Check by also building with `MACOSX_DEPLOYMENT_TARGET` set to the newest SDK version, because deprecation warnings only appear at or above the deployment target.
+
 Changes to these areas must be lifecycle-safe.
 
 - Install monitors/observers only when needed.

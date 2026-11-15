@@ -109,10 +109,10 @@ public struct GlowingSlider: View {
             RoundedRectangle(cornerRadius: thumbSize / 2.0, style: .continuous)
                 .fill(Color.white)
                 .frame(width: thumbSize, height: thumbSize)
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: thumbSize / 2.0, style: .continuous)
                         .stroke(Color.white.opacity(Spec.thumbStrokeOpacity), lineWidth: SlumbrTheme.Stroke.hairline)
-                )
+                }
                 .shadow(color: SlumbrTheme.Colors.shadow.opacity(Spec.thumbShadowOpacity), radius: Spec.thumbShadowRadius, x: 0, y: Spec.thumbShadowOffsetY)
                 .shadow(
                     color: SlumbrTheme.Colors.accent.opacity(Spec.thumbGlowOpacity),

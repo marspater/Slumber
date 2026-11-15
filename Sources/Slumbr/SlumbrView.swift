@@ -69,7 +69,7 @@ func preloadSounds() {
 // ===================================================================
 
 public struct SlumbrView: View {
-    @ObservedObject public var timerModel: SlumbrTimer
+    public let timerModel: SlumbrTimer
     @AppStorage("showInDock") private var showInDock: Bool = false
     @State private var selectedMinutes: Int = 15
     @State private var isSliding: Bool = false
@@ -138,17 +138,17 @@ public struct SlumbrView: View {
                     )
                 }
                 .padding(SlumbrTheme.Components.TabBar.inset)
-                .background(
+                .background {
                     RoundedRectangle(cornerRadius: SlumbrTheme.Radius.card, style: .continuous)
                         .fill(reduceTransparency ? SlumbrTheme.Colors.solidTabBar : Color.white.opacity(SlumbrTheme.Components.TabBar.fillOpacity))
-                )
-                .overlay(
+                }
+                .overlay {
                     RoundedRectangle(cornerRadius: SlumbrTheme.Radius.card, style: .continuous)
                         .stroke(
                             Color.white.opacity(reduceTransparency ? SlumbrTheme.Components.TabBar.strokeOpacitySolid : SlumbrTheme.Components.TabBar.strokeOpacity),
                             lineWidth: SlumbrTheme.Stroke.hairline
                         )
-                )
+                }
                 .padding(.top, SlumbrTheme.Metrics.spaceLG)
                 .padding(.horizontal, SlumbrTheme.Metrics.horizontalPadding)
 
@@ -210,7 +210,7 @@ public struct SlumbrView: View {
                         VStack(spacing: SlumbrTheme.Metrics.spaceXS) {
                             Text(countdown)
                                 .font(hasHours ? SlumbrTheme.Typography.displayHours : SlumbrTheme.Typography.display)
-                                .foregroundColor(SlumbrTheme.Colors.textPrimary)
+                                .foregroundStyle(SlumbrTheme.Colors.textPrimary)
                                 .contentTransition(reduceMotion ? .identity : .numericText(countsDown: true))
                                 .lineLimit(1)
                                 .minimumScaleFactor(SlumbrTheme.Components.Countdown.minimumScaleFactor)
@@ -219,7 +219,7 @@ public struct SlumbrView: View {
                                 .animation(reduceMotion ? nil : SlumbrTheme.Motion.countdownTick, value: countdown)
                             Text("drifting off…")
                                 .font(SlumbrTheme.Typography.body)
-                                .foregroundColor(SlumbrTheme.Colors.textTertiary)
+                                .foregroundStyle(SlumbrTheme.Colors.textTertiary)
                         }
                     }
                     .padding(.bottom, SlumbrTheme.Metrics.spaceSM)
@@ -232,11 +232,11 @@ public struct SlumbrView: View {
                     HStack(alignment: .firstTextBaseline, spacing: SlumbrTheme.Metrics.spaceXXS) {
                         Text("\(selectedMinutes)")
                             .font(SlumbrTheme.Typography.display)
-                            .foregroundColor(SlumbrTheme.Colors.textPrimary)
+                            .foregroundStyle(SlumbrTheme.Colors.textPrimary)
                             .contentTransition(reduceMotion ? .identity : .numericText())
                         Text("min")
                             .font(SlumbrTheme.Typography.displayUnit)
-                            .foregroundColor(SlumbrTheme.Colors.textTertiary)
+                            .foregroundStyle(SlumbrTheme.Colors.textTertiary)
                     }
 
                     VStack(spacing: SlumbrTheme.Components.Slider.boundsSpacing) {
@@ -252,7 +252,7 @@ public struct SlumbrView: View {
                             Text("120 min")
                         }
                         .font(SlumbrTheme.Typography.micro)
-                        .foregroundColor(SlumbrTheme.Colors.textTertiary)
+                        .foregroundStyle(SlumbrTheme.Colors.textTertiary)
                         .frame(width: SlumbrTheme.Metrics.contentWidth)
                     }
 
@@ -304,10 +304,10 @@ public struct SlumbrView: View {
                         VStack(alignment: .leading, spacing: SlumbrTheme.Metrics.spaceXS) {
                             Text("Show in Dock")
                                 .font(SlumbrTheme.Typography.title)
-                                .foregroundColor(SlumbrTheme.Colors.textPrimary)
+                                .foregroundStyle(SlumbrTheme.Colors.textPrimary)
                             Text("Display dock icon alongside the menu bar.")
                                 .font(SlumbrTheme.Typography.caption)
-                                .foregroundColor(SlumbrTheme.Colors.textSecondary)
+                                .foregroundStyle(SlumbrTheme.Colors.textSecondary)
                                 .lineSpacing(SlumbrTheme.Typography.captionLineSpacing)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -325,10 +325,10 @@ public struct SlumbrView: View {
                         VStack(alignment: .leading, spacing: SlumbrTheme.Metrics.spaceXS) {
                             Text("Global Shortcut")
                                 .font(SlumbrTheme.Typography.title)
-                                .foregroundColor(SlumbrTheme.Colors.textPrimary)
+                                .foregroundStyle(SlumbrTheme.Colors.textPrimary)
                             Text(hotKeyAvailable ? "Open Slumbr from anywhere." : "Unavailable: another app uses this shortcut.")
                                 .font(SlumbrTheme.Typography.caption)
-                                .foregroundColor(SlumbrTheme.Colors.textSecondary)
+                                .foregroundStyle(SlumbrTheme.Colors.textSecondary)
                                 .lineSpacing(SlumbrTheme.Typography.captionLineSpacing)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -352,11 +352,11 @@ public struct SlumbrView: View {
             let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
             Text(appVersion.map { "Slumbr v\($0)" } ?? "Slumbr")
                 .font(SlumbrTheme.Typography.caption.weight(.semibold))
-                .foregroundColor(SlumbrTheme.Colors.textTertiary)
+                .foregroundStyle(SlumbrTheme.Colors.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .center)
             Text("Made with ❤️ for peaceful nights")
                 .font(SlumbrTheme.Typography.micro)
-                .foregroundColor(SlumbrTheme.Colors.textQuaternary)
+                .foregroundStyle(SlumbrTheme.Colors.textQuaternary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, SlumbrTheme.Metrics.spaceXXS)
                 .padding(.bottom, SlumbrTheme.Metrics.spaceLG)
@@ -369,7 +369,7 @@ public struct SlumbrView: View {
         DispatchQueue.main.async {
             NSApp.setActivationPolicy(show ? .regular : .accessory)
             if show {
-                NSApp.activate(ignoringOtherApps: true)
+                NSApp.activate()
             }
         }
     }

@@ -83,14 +83,14 @@ public struct SleepingFox: View {
             // 'z' particles
             if !isNearEnd {
                 Text("z").font(Shared.letterFont(size: Palette.zSizes.0))
-                    .foregroundColor(Shared.z1).offset(x: zzz ? 14 : 2, y: zzz ? -28 : -18).opacity(zzz ? 0 : 0.5)
+                    .foregroundStyle(Shared.z1).offset(x: zzz ? 14 : 2, y: zzz ? -28 : -18).opacity(zzz ? 0 : 0.5)
                 Text("z").font(Shared.letterFont(size: Palette.zSizes.1))
-                    .foregroundColor(Shared.z2).offset(x: zzz ? 20 : 8, y: zzz ? -34 : -24).opacity(zzz ? 0 : 0.35)
+                    .foregroundStyle(Shared.z2).offset(x: zzz ? 20 : 8, y: zzz ? -34 : -24).opacity(zzz ? 0 : 0.35)
             }
 
             if isNearEnd {
                 Text("?").font(Shared.letterFont(size: Palette.questionSize))
-                    .foregroundColor(Palette.question).offset(x: -5, y: -23)
+                    .foregroundStyle(Palette.question).offset(x: -5, y: -23)
             }
         }
         .frame(width: box.width, height: box.height)
@@ -181,14 +181,14 @@ public struct SleepingCat: View {
 
             if !isNearEnd {
                 Text("z").font(Shared.letterFont(size: Palette.zSizes.0))
-                    .foregroundColor(Shared.z1).offset(x: zzz ? 12 : 0, y: zzz ? -25 : -16).opacity(zzz ? 0 : 0.5)
+                    .foregroundStyle(Shared.z1).offset(x: zzz ? 12 : 0, y: zzz ? -25 : -16).opacity(zzz ? 0 : 0.5)
                 Text("z").font(Shared.letterFont(size: Palette.zSizes.1))
-                    .foregroundColor(Shared.z2).offset(x: zzz ? 18 : 5, y: zzz ? -31 : -22).opacity(zzz ? 0 : 0.35)
+                    .foregroundStyle(Shared.z2).offset(x: zzz ? 18 : 5, y: zzz ? -31 : -22).opacity(zzz ? 0 : 0.35)
             }
 
             if isNearEnd {
                 Text("?").font(Shared.letterFont(size: Palette.questionSize))
-                    .foregroundColor(Palette.question).offset(x: 0, y: -21)
+                    .foregroundStyle(Palette.question).offset(x: 0, y: -21)
             }
         }
         .frame(width: box.width, height: box.height)
@@ -271,14 +271,14 @@ public struct SleepingDodo: View {
 
             if !isNearEnd {
                 Text("z").font(Shared.letterFont(size: Palette.zSizes.0))
-                    .foregroundColor(Shared.z1).offset(x: zzz ? 12 : 0, y: zzz ? -26 : -16).opacity(zzz ? 0 : 0.5)
+                    .foregroundStyle(Shared.z1).offset(x: zzz ? 12 : 0, y: zzz ? -26 : -16).opacity(zzz ? 0 : 0.5)
                 Text("z").font(Shared.letterFont(size: Palette.zSizes.1))
-                    .foregroundColor(Shared.z2).offset(x: zzz ? 18 : 6, y: zzz ? -32 : -22).opacity(zzz ? 0 : 0.35)
+                    .foregroundStyle(Shared.z2).offset(x: zzz ? 18 : 6, y: zzz ? -32 : -22).opacity(zzz ? 0 : 0.35)
             }
 
             if isNearEnd {
                 Text("?").font(Shared.letterFont(size: Palette.questionSize))
-                    .foregroundColor(Palette.question).offset(x: -6, y: -23)
+                    .foregroundStyle(Palette.question).offset(x: -6, y: -23)
             }
         }
         .frame(width: box.width, height: box.height)
@@ -328,7 +328,7 @@ private extension View {
 
 // MARK: - Animated Scene with Orbiting Companions
 public struct AnimatedScene: View {
-    @ObservedObject public var timerModel: SlumbrTimer
+    public let timerModel: SlumbrTimer
     public let companionType: Int
     public let isVisible: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

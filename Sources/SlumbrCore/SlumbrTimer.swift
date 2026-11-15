@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import IOKit.pwr_mgt
+import Observation
 import os
 
 public enum TimerState: Equatable, Sendable {
@@ -19,15 +20,16 @@ public enum SleepResult: Sendable, Equatable {
 private let log = Logger(subsystem: "com.marspater.slumbr", category: "timer")
 
 @MainActor
-public class SlumbrTimer: ObservableObject {
+@Observable
+public class SlumbrTimer {
     public typealias SleepAction = @MainActor () -> SleepResult
     public typealias DateProvider = @MainActor () -> Date
     /// Total seconds the system has spent asleep since boot. Only grows during real system sleep.
     public typealias SleepClock = @MainActor () -> TimeInterval
 
-    @Published public private(set) var state: TimerState = .idle
-    @Published public private(set) var timeRemaining: TimeInterval = 0
-    @Published public private(set) var totalTime: TimeInterval = 0
+    public private(set) var state: TimerState = .idle
+    public private(set) var timeRemaining: TimeInterval = 0
+    public private(set) var totalTime: TimeInterval = 0
     
     public var isRunning: Bool {
         state == .running
@@ -46,18 +48,18 @@ public class SlumbrTimer: ObservableObject {
     static let sleepConfirmationTimeout: TimeInterval = 15
     static let sleepNotObservedReason = "Your Mac didn't go to sleep. Another app may be keeping it awake."
     
-    private var timer: DispatchSourceTimer?
-    private var endTime: Date?
-    private var activity: NSObjectProtocol?
-    private var wakeObserver: NSObjectProtocol?
+    @ObservationIgnored private var timer: DispatchSourceTimer?
+    @ObservationIgnored private var endTime: Date?
+    @ObservationIgnored private var activity: NSObjectProtocol?
+    @ObservationIgnored private var wakeObserver: NSObjectProtocol?
     /// Sleep-clock reading at the last countdown tick, used to tell "slept through the deadline" from "tick ran late".
-    private var sleepAtLastTick: TimeInterval = 0
+    @ObservationIgnored private var sleepAtLastTick: TimeInterval = 0
     /// Sleep-clock reading taken just before the sleep request.
-    private var sleepAtRequest: TimeInterval = 0
+    @ObservationIgnored private var sleepAtRequest: TimeInterval = 0
     /// When the timer started waiting for the requested sleep to happen.
-    private var sleepRequestedAt: Date?
+    @ObservationIgnored private var sleepRequestedAt: Date?
     /// Bumped whenever resources reset, so a slow AppleScript fallback cannot overwrite newer state.
-    private var sleepGeneration = 0
+    @ObservationIgnored private var sleepGeneration = 0
     private let customSleepAction: SleepAction?
     private let dateProvider: DateProvider
     private let sleepClock: SleepClock
