@@ -43,8 +43,9 @@ struct ArtworkTests {
             .appending(path: "../../Sources/Slumbr/Art/ArtPaths.swift")
             .standardized
         let text = try String(contentsOf: source, encoding: .utf8)
-        let paths = text.matches(of: /VectorShape\("([^"]*)"/).map { String($0.output.1) }
-        #expect(paths.count > 40)
+        // Every path literal starts with an absolute moveto, including the cloud outlines that are not VectorShape(...) calls.
+        let paths = text.matches(of: /"(M [^"]*)"/).map { String($0.output.1) }
+        #expect(paths.count >= 71)
         for data in paths {
             #expect(!VectorPath.parse(data).isEmpty, "Unparseable path: \(data)")
         }
