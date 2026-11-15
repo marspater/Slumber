@@ -1,7 +1,10 @@
 import SwiftUI
 import AppKit
 import Carbon
+import os
 import SlumberCore
+
+private let appLog = Logger(subsystem: "com.marspater.slumbr", category: "app")
 
 extension Notification.Name {
     static let slumberOpening = Notification.Name("SlumberOpening")
@@ -136,7 +139,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             &eventHandlerRef
         )
         if installStatus != noErr {
-            NSLog("[SlumberApp] Failed to install Carbon event handler: OSStatus %d", installStatus)
+            appLog.error("Failed to install Carbon event handler: OSStatus \(installStatus, privacy: .public)")
         }
         
         let hotKeyID = EventHotKeyID(signature: hotKeySignature, id: 1)
@@ -149,7 +152,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             &hotKeyRef
         )
         if regStatus != noErr {
-            NSLog("[SlumberApp] Failed to register global hotkey (⌃⌥S): OSStatus %d", regStatus)
+            appLog.error("Failed to register global hotkey (⌃⌥S): OSStatus \(regStatus, privacy: .public)")
         }
         return installStatus == noErr && regStatus == noErr
     }

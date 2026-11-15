@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import IOKit.pwr_mgt
+import os
 
 public enum TimerState: Equatable, Sendable {
     case idle
@@ -15,10 +16,14 @@ public enum SleepResult: Sendable, Equatable {
     case failure(reason: String)
 }
 
+private let log = Logger(subsystem: "com.marspater.slumbr", category: "timer")
+
 @MainActor
 public class SlumberTimer: ObservableObject {
     public typealias SleepAction = @MainActor () -> SleepResult
     public typealias DateProvider = @MainActor () -> Date
+    /// Total seconds the system has spent asleep since boot. Only grows during real system sleep.
+    public typealias SleepClock = @MainActor () -> TimeInterval
 
     @Published public private(set) var state: TimerState = .idle
     @Published public private(set) var timeRemaining: TimeInterval = 0
@@ -34,51 +39,73 @@ public class SlumberTimer: ObservableObject {
         }
         return nil
     }
+
+    /// Sleep-clock growth above this means the system really slept (not a stall or clock jump).
+    private static let sleepDetectionThreshold: TimeInterval = 1
+    /// How long a successful sleep request may go without the Mac actually sleeping.
+    static let sleepConfirmationTimeout: TimeInterval = 15
+    static let sleepNotObservedReason = "Your Mac didn't go to sleep. Another app may be keeping it awake."
     
     private var timer: DispatchSourceTimer?
     private var endTime: Date?
     private var activity: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
+    /// Sleep-clock reading at the last countdown tick, used to tell "slept through the deadline" from "tick ran late".
+    private var sleepAtLastTick: TimeInterval = 0
+    /// Sleep-clock reading taken just before the sleep request.
+    private var sleepAtRequest: TimeInterval = 0
+    /// When the timer started waiting for the requested sleep to happen.
+    private var sleepRequestedAt: Date?
     /// Bumped whenever resources reset, so a slow AppleScript fallback cannot overwrite newer state.
     private var sleepGeneration = 0
     private let customSleepAction: SleepAction?
     private let dateProvider: DateProvider
+    private let sleepClock: SleepClock
     
     public init(
         sleepAction: SleepAction? = nil,
-        dateProvider: @escaping DateProvider = { Date() }
+        dateProvider: @escaping DateProvider = { Date() },
+        sleepClock: @escaping SleepClock = { SlumberTimer.systemSleepDuration() }
     ) {
         self.customSleepAction = sleepAction
         self.dateProvider = dateProvider
+        self.sleepClock = sleepClock
+    }
+
+    /// `mach_continuous_time` keeps counting while the system sleeps and `mach_absolute_time` does not,
+    /// so their difference is the total time spent asleep since boot.
+    public nonisolated static func systemSleepDuration() -> TimeInterval {
+        var info = mach_timebase_info_data_t()
+        mach_timebase_info(&info)
+        let awake = mach_absolute_time()
+        let total = mach_continuous_time()
+        let asleep = total &- awake
+        return Double(asleep) * Double(info.numer) / Double(info.denom) / 1_000_000_000
     }
     
     public func start(minutes: Double) {
         guard minutes > 0, minutes.isFinite else {
-            NSLog("[SlumberTimer] Invalid timer duration: %f minutes", minutes)
+            log.error("Invalid timer duration: \(minutes, privacy: .public) minutes")
             return
         }
 
         let seconds = minutes * 60
         guard seconds.isFinite else {
-            NSLog("[SlumberTimer] Duration overflows: %f minutes", minutes)
+            log.error("Duration overflows: \(minutes, privacy: .public) minutes")
             return
         }
 
         resetTimerResources()
 
+        let deadline = dateProvider().addingTimeInterval(seconds)
         self.totalTime = seconds
         self.timeRemaining = seconds
-        self.endTime = dateProvider().addingTimeInterval(seconds)
+        self.endTime = deadline
+        self.sleepAtLastTick = sleepClock()
         self.state = .running
-        
-        // DispatchSourceTimer on main queue
-        let source = DispatchSource.makeTimerSource(queue: .main)
-        source.schedule(deadline: .now() + 1, repeating: 1.0)
-        source.setEventHandler { [weak self] in
-            self?.tick()
-        }
-        source.resume()
-        self.timer = source
+        log.notice("Timer started: \(seconds, privacy: .public)s, deadline \(deadline, privacy: .public)")
+
+        startTicking()
         
         // Prevent macOS App Nap and system idle sleep while countdown is active
         if activity == nil {
@@ -86,20 +113,6 @@ public class SlumberTimer: ObservableObject {
                 options: [.userInitiated, .idleSystemSleepDisabled],
                 reason: "Running Sleep Timer"
             )
-        }
-        
-        // Register for system wake notifications: if system wakes while timer is active,
-        // recalculate remaining time from the original deadline and resume seamlessly.
-        if wakeObserver == nil {
-            wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
-                forName: NSWorkspace.didWakeNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    self?.handleSystemWake()
-                }
-            }
         }
     }
     
@@ -120,14 +133,35 @@ public class SlumberTimer: ObservableObject {
         executeSleep()
     }
     
+    /// Wake recalculates everything from the original deadline and the sleep clock.
     public func handleSystemWake() {
-        guard state == .running, let deadline = endTime else { return }
-        let remaining = deadline.timeIntervalSince(dateProvider())
-        if remaining <= 0 {
-            tick()
-        } else {
-            NSLog("[SlumberTimer] System woke. Resuming countdown with %.0f seconds remaining.", remaining)
-            self.timeRemaining = remaining
+        let current = String(describing: state)
+        log.notice("System woke while timer state is \(current, privacy: .public)")
+        tick()
+    }
+
+    /// Starts the once-a-second tick and the wake observer. Used both for the countdown and
+    /// while waiting for a requested sleep to actually happen.
+    private func startTicking() {
+        let source = DispatchSource.makeTimerSource(queue: .main)
+        source.schedule(deadline: .now() + 1, repeating: 1.0)
+        source.setEventHandler { [weak self] in
+            self?.tick()
+        }
+        source.resume()
+        self.timer = source
+
+        // If the system wakes while the timer is active, recalculate from the original deadline.
+        if wakeObserver == nil {
+            wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.handleSystemWake()
+                }
+            }
         }
     }
     
@@ -136,6 +170,7 @@ public class SlumberTimer: ObservableObject {
         timer?.cancel()
         timer = nil
         endTime = nil
+        sleepRequestedAt = nil
         timeRemaining = 0
         
         if let currentActivity = activity {
@@ -148,36 +183,78 @@ public class SlumberTimer: ObservableObject {
             wakeObserver = nil
         }
     }
-    
-    /// Ticks run every second, so a deadline further past than this means the Mac slept through it.
-    private static let sleptThroughGrace: TimeInterval = 2
 
     public func tick() {
-        guard state == .running, let endTime = endTime else { return }
+        switch state {
+        case .running:
+            tickCountdown()
+        case .requestingSleep:
+            checkRequestedSleep()
+        case .sleepFailed where sleepRequestedAt != nil:
+            // Timed out waiting, but a slow sleep can still land: keep watching so the
+            // user doesn't wake up to a stale "didn't sleep" error.
+            checkRequestedSleep()
+        default:
+            return
+        }
+    }
+
+    private func tickCountdown() {
+        guard let endTime = endTime else { return }
         let remaining = endTime.timeIntervalSince(dateProvider())
-        
-        if remaining < -Self.sleptThroughGrace {
-            // The Mac was already asleep at the deadline and the user has just woken it:
+        let sleptSinceLastTick = sleepClock() - sleepAtLastTick
+
+        if remaining <= 0 && sleptSinceLastTick > Self.sleepDetectionThreshold {
+            // The Mac was asleep when the deadline passed and the user has just woken it:
             // the timer's job is done, and sleeping again would knock them straight back out.
-            NSLog("[SlumberTimer] Deadline passed while the Mac was asleep. Finishing without sleeping again.")
+            // ponytail: a wake less than ~1s before the deadline with no tick in between also lands here;
+            // track the wake instant from didWake if that ever matters.
+            log.notice("Deadline passed while the Mac was asleep (\(sleptSinceLastTick, privacy: .public)s asleep). Finishing without sleeping again.")
             resetTimerResources()
             state = .completed
         } else if remaining <= 0 {
+            // However late this tick is, the Mac stayed awake, so it still has to go to sleep.
+            log.notice("Deadline reached (\(-remaining, privacy: .public)s overdue). Requesting sleep.")
             state = .requestingSleep
             executeSleep()
         } else {
+            sleepAtLastTick = sleepClock()
             self.timeRemaining = remaining
         }
+    }
+
+    /// A sleep request reporting success is not proof the Mac slept, so confirm it from the sleep clock.
+    private func checkRequestedSleep() {
+        guard let requestedAt = sleepRequestedAt else { return }
+        let slept = sleepClock() - sleepAtRequest
+        if slept > Self.sleepDetectionThreshold {
+            log.notice("Sleep confirmed (\(slept, privacy: .public)s asleep).")
+            resetTimerResources()
+            state = .completed
+        } else if state == .requestingSleep,
+                  dateProvider().timeIntervalSince(requestedAt) > Self.sleepConfirmationTimeout {
+            // Ticking and the wake observer stay alive, so a sleep that lands late still completes.
+            log.error("Sleep was requested but the Mac did not sleep within \(Self.sleepConfirmationTimeout, privacy: .public)s.")
+            state = .sleepFailed(reason: Self.sleepNotObservedReason)
+        }
+    }
+
+    /// The request was accepted: keep ticking (without blocking idle sleep) until the sleep shows up.
+    private func awaitSleepConfirmation() {
+        sleepRequestedAt = dateProvider()
+        startTicking()
     }
     
     private func executeSleep() {
         resetTimerResources()
+        sleepAtRequest = sleepClock()
         
         if let customAction = customSleepAction {
             switch customAction() {
             case .success:
-                self.state = .completed
+                awaitSleepConfirmation()
             case .failure(let reason):
+                log.error("Sleep action failed: \(reason, privacy: .public)")
                 self.state = .sleepFailed(reason: reason)
             }
             return
@@ -190,15 +267,17 @@ public class SlumberTimer: ObservableObject {
             let result = IOPMSleepSystem(port)
             IOServiceClose(port)
             sleepSucceeded = (result == kIOReturnSuccess)
-            if !sleepSucceeded {
-                NSLog("[SlumberTimer] IOPMSleepSystem returned error code: %d, falling back to AppleScript.", result)
+            if sleepSucceeded {
+                log.notice("IOPMSleepSystem accepted the sleep request.")
+            } else {
+                log.error("IOPMSleepSystem returned error code \(result, privacy: .public), falling back to AppleScript.")
             }
         } else {
-            NSLog("[SlumberTimer] IOPMFindPowerManagement returned null port, falling back to AppleScript.")
+            log.error("IOPMFindPowerManagement returned a null port, falling back to AppleScript.")
         }
         
         if sleepSucceeded {
-            self.state = .completed
+            awaitSleepConfirmation()
             return
         }
 
@@ -214,12 +293,14 @@ public class SlumberTimer: ObservableObject {
             DispatchQueue.main.async {
                 guard let self = self, self.sleepGeneration == generation, self.state == .requestingSleep else { return }
                 if let desc = errorMessage {
-                    NSLog("[SlumberTimer] AppleScript fallback sleep failed: %@", desc)
+                    log.error("AppleScript fallback sleep failed: \(desc, privacy: .public)")
                     self.state = .sleepFailed(reason: "Could not put Mac to sleep: \(desc)")
                 } else if !isSuccess {
+                    log.error("AppleScript fallback sleep failed without an error message.")
                     self.state = .sleepFailed(reason: "Could not put Mac to sleep.")
                 } else {
-                    self.state = .completed
+                    log.notice("AppleScript fallback accepted the sleep request.")
+                    self.awaitSleepConfirmation()
                 }
             }
         }
