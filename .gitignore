@@ -12,12 +12,11 @@ MyIcon.iconset/
 *.o
 *.out
 
-# Xcode / Swift PM
+# Xcode
 .build/
-.swiftpm/
 DerivedData/
-*.xcodeproj/
-*.xcworkspace/
+xcuserdata/
+*.xcuserstate
 
 # Working resources
 working resources/

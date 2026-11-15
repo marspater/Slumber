@@ -137,7 +137,7 @@ To preview art changes without a Mac, redraw the paths as SVG with the same view
 
 | Asset | Notes |
 |-------|-------|
-| `Assets/AppIcon.icon` | Icon Composer package, compiled by `build.sh` with `actool`. Four layers over a P3 violet gradient (dark-mode variant darker): Sparkles, Moon, Timer Ring (glass, specular, translucent) and flat Stars. Edit it in Icon Composer only. |
+| `Assets/AppIcon.icon` | Icon Composer package, added to the `Slumbr` app target and compiled by Xcode's asset catalog step. Four layers over a P3 violet gradient (dark-mode variant darker): Sparkles, Moon, Timer Ring (glass, specular, translucent) and flat Stars. Edit it in Icon Composer only. |
 | Menu bar | SF Symbol `moon.circle` at 16pt medium as a template image, falling back to `moon.fill`, then 🌙 (`SlumbrTheme.MenuBar`). |
 | `Assets/*.wav` | `space_timer_start` (Start), `cancel` (Cancel), `space_button` (chips, tabs, slider release). |
 | `Assets/screenshot.png` | README preview. |

@@ -48,14 +48,14 @@ The tracked build is not notarized, so macOS may require an explicit first-launc
 ```bash
 git clone https://github.com/marspater/Slumbr.git
 cd Slumbr
-swift test
+xcodebuild test -project Slumbr.xcodeproj -scheme Slumbr -destination 'platform=macOS'
 chmod +x build.sh
 ./build.sh --install
 ```
 
 Useful build options:
 
-- `./build.sh` builds `.build/artifacts/Slumbr.app`.
+- `./build.sh` builds `.build/artifacts/Slumbr.app` from `Slumbr.xcodeproj` with `xcodebuild`.
 - `./build.sh --install` also installs it to `/Applications`.
 - `./build.sh --package` refreshes the tracked `Slumbr.zip`.
 
@@ -65,6 +65,7 @@ When a Developer ID signing identity is available, the build script prefers it. 
 
 | Path | Purpose |
 | --- | --- |
+| `Slumbr.xcodeproj` | Xcode project: `Slumbr` app, `SlumbrCore` framework, `SlumbrTests` |
 | `Sources/SlumbrCore` | Timer/domain logic and sleep integration |
 | `Sources/Slumbr` | SwiftUI/AppKit UI, menu bar integration, art, and theme |
 | `Sources/Slumbr/Theme` | Central design tokens, P3/EDR levels, component and art specs |
@@ -78,9 +79,8 @@ When a Developer ID signing identity is available, the build script prefers it. 
 Run the standard validation sequence on macOS:
 
 ```bash
-swift package describe
-swift test
-swift build -c release
+xcodebuild -list -project Slumbr.xcodeproj
+xcodebuild test -project Slumbr.xcodeproj -scheme Slumbr -destination 'platform=macOS'
 ./build.sh
 ```
 
