@@ -1,11 +1,11 @@
-# Slumber Design Reference
+# Slumbr Design Reference
 
-Every visual value in Slumber lives in `Sources/Slumber/Theme/`. Views read tokens from there and should not hardcode colors, sizes, opacities, radii, shadows or timings. To change how Slumber looks, change a token; to add a control, add its spec next to the others.
+Every visual value in Slumbr lives in `Sources/Slumbr/Theme/`. Views read tokens from there and should not hardcode colors, sizes, opacities, radii, shadows or timings. To change how Slumbr looks, change a token; to add a control, add its spec next to the others.
 
 | File | Holds |
 |------|-------|
-| `Theme/SlumberTheme.swift` | UI tokens: colors, sky, typography, icons, menu bar, metrics, radii, strokes, motion, per-component specs, `HoverPair`, `SlumberTactileButtonStyle` |
-| `Theme/SlumberTheme+Art.swift` | Artwork tokens: scene layout, companion orbit, stars, shooting stars, fireflies, constellations, aurora, moon, clouds, fox, cat, dodo |
+| `Theme/SlumbrTheme.swift` | UI tokens: colors, sky, typography, icons, menu bar, metrics, radii, strokes, motion, per-component specs, `HoverPair`, `SlumbrTactileButtonStyle` |
+| `Theme/SlumbrTheme+Art.swift` | Artwork tokens: scene layout, companion orbit, stars, shooting stars, fireflies, constellations, aurora, moon, clouds, fox, cat, dodo |
 | `Theme/Color+HDR.swift` | `Color.p3(...)` constructors and the `HDRLevel` brightness tiers |
 | `Art/ArtPaths.swift` | SVG path data for the moon, clouds and companions (viewBox units = points) |
 
@@ -110,7 +110,7 @@ Every perpetual or decorative animation must check `accessibilityReduceMotion` a
 
 ## Components
 
-`SlumberTheme.Components` holds one spec per control: sizes, state opacities and shadows. `HoverPair(rest, hover:)` stores a resting and hovered value and is called with the hover state, for example `Spec.fillOpacity(isHovered)`.
+`SlumbrTheme.Components` holds one spec per control: sizes, state opacities and shadows. `HoverPair(rest, hover:)` stores a resting and hovered value and is called with the hover state, for example `Spec.fillOpacity(isHovered)`.
 
 | Spec | Control |
 |------|---------|
@@ -124,7 +124,7 @@ Every perpetual or decorative animation must check `accessibilityReduceMotion` a
 
 ## Artwork
 
-The scene is vector art authored as SVG paths in `ArtPaths.swift` and colored from `SlumberTheme.Art`.
+The scene is vector art authored as SVG paths in `ArtPaths.swift` and colored from `SlumbrTheme.Art`.
 
 - **Moon** (`Art.Moon`): lavender crescent at `.strongGlow` with a halo, sleepy face, blush and a blue nightcap with pompom. Bobs 5pt and tilts 3° over 3.5 s.
 - **Clouds** (`Art.Cloud`): lilac-to-white sleepy clouds with a fading EDR rim; large at 95% opacity, small at 60%.
@@ -138,7 +138,7 @@ To preview art changes without a Mac, redraw the paths as SVG with the same view
 | Asset | Notes |
 |-------|-------|
 | `Assets/AppIcon.icon` | Icon Composer package, compiled by `build.sh` with `actool`. Four layers over a P3 violet gradient (dark-mode variant darker): Sparkles, Moon, Timer Ring (glass, specular, translucent) and flat Stars. Edit it in Icon Composer only. |
-| Menu bar | SF Symbol `moon.circle` at 16pt medium as a template image, falling back to `moon.fill`, then 🌙 (`SlumberTheme.MenuBar`). |
+| Menu bar | SF Symbol `moon.circle` at 16pt medium as a template image, falling back to `moon.fill`, then 🌙 (`SlumbrTheme.MenuBar`). |
 | `Assets/*.wav` | `space_timer_start` (Start), `cancel` (Cancel), `space_button` (chips, tabs, slider release). |
 | `Assets/screenshot.png` | README preview. |
 

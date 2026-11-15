@@ -1,8 +1,8 @@
 //
 //  VectorPath.swift
-//  SlumberCore
+//  SlumbrCore
 //
-//  Minimal SVG path-data parser for Slumber's vector artwork.
+//  Minimal SVG path-data parser for Slumbr's vector artwork.
 //
 
 import CoreGraphics

@@ -1,6 +1,6 @@
 //
-//  SlumberTheme+Art.swift
-//  Slumber
+//  SlumbrTheme+Art.swift
+//  Slumbr
 //
 //  Artwork tokens: the palettes, glow levels, loop timings and scene layout of the moon, clouds,
 //  companions, stars, fireflies, constellations and aurora. Path data stays in Art/ArtPaths.swift,
@@ -12,7 +12,7 @@
 
 import SwiftUI
 
-extension SlumberTheme {
+extension SlumbrTheme {
     public enum Art {
         // MARK: - Scene layout
         /// Positions are offsets from the popover's center, in points.

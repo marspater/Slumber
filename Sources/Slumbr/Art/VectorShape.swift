@@ -1,12 +1,12 @@
 //
 //  VectorShape.swift
-//  Slumber
+//  Slumbr
 //
 //  Draws `VectorPath` data authored in a fixed viewBox, scaled to the frame it is given.
 //
 
 import SwiftUI
-import SlumberCore
+import SlumbrCore
 
 struct VectorShape: Shape {
     let commands: [VectorPathCommand]

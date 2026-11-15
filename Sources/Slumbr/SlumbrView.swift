@@ -1,15 +1,15 @@
 //
-//  SlumberView.swift
-//  Slumber
+//  SlumbrView.swift
+//  Slumbr
 //
-//  Root container view for the Slumber macOS menu bar popover.
+//  Root container view for the Slumbr macOS menu bar popover.
 //
 
 import SwiftUI
 import AppKit
 import AVFoundation
 import os
-import SlumberCore
+import SlumbrCore
 
 // ===================================================================
 // MARK: - Audio Helper
@@ -65,11 +65,11 @@ func preloadSounds() {
 }
 
 // ===================================================================
-// MARK: - Main Slumber Container View
+// MARK: - Main Slumbr Container View
 // ===================================================================
 
-public struct SlumberView: View {
-    @ObservedObject public var timerModel: SlumberTimer
+public struct SlumbrView: View {
+    @ObservedObject public var timerModel: SlumbrTimer
     @AppStorage("showInDock") private var showInDock: Bool = false
     @State private var selectedMinutes: Int = 15
     @State private var isSliding: Bool = false
@@ -82,34 +82,34 @@ public struct SlumberView: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(timerModel: SlumberTimer, hotKeyAvailable: Bool) {
+    public init(timerModel: SlumbrTimer, hotKeyAvailable: Bool) {
         self.timerModel = timerModel
         self.hotKeyAvailable = hotKeyAvailable
     }
 
     private var skyPhase: Int {
         let m = timerModel.isRunning ? Int(timerModel.totalTime / 60.0) : selectedMinutes
-        return SlumberTheme.Sky.phase(forMinutes: m)
+        return SlumbrTheme.Sky.phase(forMinutes: m)
     }
 
     public var body: some View {
         ZStack {
             if reduceTransparency {
-                SlumberTheme.Colors.solidBackground
+                SlumbrTheme.Colors.solidBackground
             } else {
                 VisualEffectView(material: .popover, blendingMode: .behindWindow)
-                SlumberTheme.Colors.solidBackground.opacity(SlumberTheme.Sky.backdropScrimOpacity)
+                SlumbrTheme.Colors.solidBackground.opacity(SlumbrTheme.Sky.backdropScrimOpacity)
             }
 
             LinearGradient(
                 colors: [
-                    SlumberTheme.Sky.top[skyPhase].opacity(reduceTransparency ? 1.0 : SlumberTheme.Sky.topOpacity),
-                    SlumberTheme.Sky.bottom[skyPhase].opacity(reduceTransparency ? 1.0 : SlumberTheme.Sky.bottomOpacity)
+                    SlumbrTheme.Sky.top[skyPhase].opacity(reduceTransparency ? 1.0 : SlumbrTheme.Sky.topOpacity),
+                    SlumbrTheme.Sky.bottom[skyPhase].opacity(reduceTransparency ? 1.0 : SlumbrTheme.Sky.bottomOpacity)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .animation(SlumberTheme.Motion.skyPhase, value: skyPhase)
+            .animation(SlumbrTheme.Motion.skyPhase, value: skyPhase)
 
             AnimatedScene(
                 timerModel: timerModel,
@@ -121,36 +121,36 @@ public struct SlumberView: View {
 
             VStack(spacing: 0) {
                 // Top Segmented Bar
-                HStack(spacing: SlumberTheme.Metrics.spaceXS) {
+                HStack(spacing: SlumbrTheme.Metrics.spaceXS) {
                     TabButton(
                         title: "Timer",
-                        icon: SlumberTheme.Icons.timerTab,
+                        icon: SlumbrTheme.Icons.timerTab,
                         tag: 0,
                         currentTab: $currentTab,
                         animationNamespace: tabNamespace
                     )
                     TabButton(
                         title: "Settings",
-                        icon: SlumberTheme.Icons.settingsTab,
+                        icon: SlumbrTheme.Icons.settingsTab,
                         tag: 1,
                         currentTab: $currentTab,
                         animationNamespace: tabNamespace
                     )
                 }
-                .padding(SlumberTheme.Components.TabBar.inset)
+                .padding(SlumbrTheme.Components.TabBar.inset)
                 .background(
-                    RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous)
-                        .fill(reduceTransparency ? SlumberTheme.Colors.solidTabBar : Color.white.opacity(SlumberTheme.Components.TabBar.fillOpacity))
+                    RoundedRectangle(cornerRadius: SlumbrTheme.Radius.card, style: .continuous)
+                        .fill(reduceTransparency ? SlumbrTheme.Colors.solidTabBar : Color.white.opacity(SlumbrTheme.Components.TabBar.fillOpacity))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: SlumberTheme.Radius.card, style: .continuous)
+                    RoundedRectangle(cornerRadius: SlumbrTheme.Radius.card, style: .continuous)
                         .stroke(
-                            Color.white.opacity(reduceTransparency ? SlumberTheme.Components.TabBar.strokeOpacitySolid : SlumberTheme.Components.TabBar.strokeOpacity),
-                            lineWidth: SlumberTheme.Stroke.hairline
+                            Color.white.opacity(reduceTransparency ? SlumbrTheme.Components.TabBar.strokeOpacitySolid : SlumbrTheme.Components.TabBar.strokeOpacity),
+                            lineWidth: SlumbrTheme.Stroke.hairline
                         )
                 )
-                .padding(.top, SlumberTheme.Metrics.spaceLG)
-                .padding(.horizontal, SlumberTheme.Metrics.horizontalPadding)
+                .padding(.top, SlumbrTheme.Metrics.spaceLG)
+                .padding(.horizontal, SlumbrTheme.Metrics.horizontalPadding)
 
                 // Tab Pages
                 ZStack {
@@ -164,22 +164,22 @@ public struct SlumberView: View {
                 }
             }
         }
-        .frame(width: SlumberTheme.Metrics.popoverWidth, height: SlumberTheme.Metrics.popoverHeight)
+        .frame(width: SlumbrTheme.Metrics.popoverWidth, height: SlumbrTheme.Metrics.popoverHeight)
         .fixedSize()
-        .clipShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.popover, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SlumbrTheme.Radius.popover, style: .continuous))
         .preferredColorScheme(.dark)
         .allowedDynamicRange(.high)
         .onChange(of: showInDock) { _, v in applyDock(v) }
-        .onReceive(NotificationCenter.default.publisher(for: .slumberOpening)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .slumbrOpening)) { _ in
             isPopoverVisible = true
         }
-        .onReceive(NotificationCenter.default.publisher(for: .slumberClosed)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .slumbrClosed)) { _ in
             isPopoverVisible = false
         }
         .onChange(of: timerModel.sleepError) { _, error in
             if let error { AccessibilityNotification.Announcement(error).post() }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .slumberNudgeDuration)) { note in
+        .onReceive(NotificationCenter.default.publisher(for: .slumbrNudgeDuration)) { note in
             guard currentTab == 0, !timerModel.isRunning, let delta = note.object as? Int else { return }
             selectedMinutes = min(max(selectedMinutes + delta, 1), 120)
         }
@@ -195,68 +195,68 @@ public struct SlumberView: View {
     // MARK: - Timer Page
     private var timerPage: some View {
         ZStack(alignment: .top) {
-            VStack(spacing: SlumberTheme.Components.TimerPage.spacing) {
+            VStack(spacing: SlumbrTheme.Components.TimerPage.spacing) {
                 Spacer()
 
                 if timerModel.isRunning || timerModel.state == .requestingSleep {
                     let total = timerModel.totalTime
                     let prog = total > 0 ? CGFloat(timerModel.timeRemaining / total) : 0
 
-                    let hasHours = SlumberTimeFormatter.hasHours(timerModel.timeRemaining)
-                    let countdown = SlumberTimeFormatter.formatCountdown(timerModel.timeRemaining)
+                    let hasHours = SlumbrTimeFormatter.hasHours(timerModel.timeRemaining)
+                    let countdown = SlumbrTimeFormatter.formatCountdown(timerModel.timeRemaining)
 
                     ZStack {
                         PulsingRing(progress: prog)
-                        VStack(spacing: SlumberTheme.Metrics.spaceXS) {
+                        VStack(spacing: SlumbrTheme.Metrics.spaceXS) {
                             Text(countdown)
-                                .font(hasHours ? SlumberTheme.Typography.displayHours : SlumberTheme.Typography.display)
-                                .foregroundColor(SlumberTheme.Colors.textPrimary)
+                                .font(hasHours ? SlumbrTheme.Typography.displayHours : SlumbrTheme.Typography.display)
+                                .foregroundColor(SlumbrTheme.Colors.textPrimary)
                                 .contentTransition(reduceMotion ? .identity : .numericText(countsDown: true))
                                 .lineLimit(1)
-                                .minimumScaleFactor(SlumberTheme.Components.Countdown.minimumScaleFactor)
-                                .frame(maxWidth: SlumberTheme.Components.Countdown.maxWidth)
-                                .animation(SlumberTheme.Motion.countdownResize, value: hasHours)
-                                .animation(reduceMotion ? nil : SlumberTheme.Motion.countdownTick, value: countdown)
+                                .minimumScaleFactor(SlumbrTheme.Components.Countdown.minimumScaleFactor)
+                                .frame(maxWidth: SlumbrTheme.Components.Countdown.maxWidth)
+                                .animation(SlumbrTheme.Motion.countdownResize, value: hasHours)
+                                .animation(reduceMotion ? nil : SlumbrTheme.Motion.countdownTick, value: countdown)
                             Text("drifting off…")
-                                .font(SlumberTheme.Typography.body)
-                                .foregroundColor(SlumberTheme.Colors.textTertiary)
+                                .font(SlumbrTheme.Typography.body)
+                                .foregroundColor(SlumbrTheme.Colors.textTertiary)
                         }
                     }
-                    .padding(.bottom, SlumberTheme.Metrics.spaceSM)
+                    .padding(.bottom, SlumbrTheme.Metrics.spaceSM)
 
                     CancelButton(action: {
                         playSound("cancel")
                         timerModel.stop()
                     })
                 } else {
-                    HStack(alignment: .firstTextBaseline, spacing: SlumberTheme.Metrics.spaceXXS) {
+                    HStack(alignment: .firstTextBaseline, spacing: SlumbrTheme.Metrics.spaceXXS) {
                         Text("\(selectedMinutes)")
-                            .font(SlumberTheme.Typography.display)
-                            .foregroundColor(SlumberTheme.Colors.textPrimary)
+                            .font(SlumbrTheme.Typography.display)
+                            .foregroundColor(SlumbrTheme.Colors.textPrimary)
                             .contentTransition(reduceMotion ? .identity : .numericText())
                         Text("min")
-                            .font(SlumberTheme.Typography.displayUnit)
-                            .foregroundColor(SlumberTheme.Colors.textTertiary)
+                            .font(SlumbrTheme.Typography.displayUnit)
+                            .foregroundColor(SlumbrTheme.Colors.textTertiary)
                     }
 
-                    VStack(spacing: SlumberTheme.Components.Slider.boundsSpacing) {
+                    VStack(spacing: SlumbrTheme.Components.Slider.boundsSpacing) {
                         GlowingSlider(value: $selectedMinutes, bounds: 1...120, onEditingChanged: { editing in
                             isSliding = editing
                             if !editing { playSound("space_button") }
                         })
-                        .frame(width: SlumberTheme.Metrics.contentWidth)
+                        .frame(width: SlumbrTheme.Metrics.contentWidth)
 
                         HStack {
                             Text("1 min")
                             Spacer()
                             Text("120 min")
                         }
-                        .font(SlumberTheme.Typography.micro)
-                        .foregroundColor(SlumberTheme.Colors.textTertiary)
-                        .frame(width: SlumberTheme.Metrics.contentWidth)
+                        .font(SlumbrTheme.Typography.micro)
+                        .foregroundColor(SlumbrTheme.Colors.textTertiary)
+                        .frame(width: SlumbrTheme.Metrics.contentWidth)
                     }
 
-                    HStack(spacing: SlumberTheme.Metrics.spaceSM) {
+                    HStack(spacing: SlumbrTheme.Metrics.spaceSM) {
                         PresetChip(label: "15m", value: 15, selectedMinutes: $selectedMinutes, isSliding: isSliding)
                         PresetChip(label: "30m", value: 30, selectedMinutes: $selectedMinutes, isSliding: isSliding)
                         PresetChip(label: "45m", value: 45, selectedMinutes: $selectedMinutes, isSliding: isSliding)
@@ -270,7 +270,7 @@ public struct SlumberView: View {
                         companionType = (companionType + Int.random(in: 1...2)) % 3
                         timerModel.start(minutes: Double(selectedMinutes))
                     })
-                    .padding(.top, SlumberTheme.Metrics.spaceXS)
+                    .padding(.top, SlumbrTheme.Metrics.spaceXS)
                 }
 
                 Spacer()
@@ -282,86 +282,86 @@ public struct SlumberView: View {
                     onRetry: { timerModel.retrySleep() },
                     onDismiss: { timerModel.clearStatus() }
                 )
-                .frame(width: SlumberTheme.Metrics.contentWidth)
-                .padding(.top, SlumberTheme.Metrics.spaceSM)
+                .frame(width: SlumbrTheme.Metrics.contentWidth)
+                .padding(.top, SlumbrTheme.Metrics.spaceSM)
                 .transition(reduceMotion ? .opacity : .asymmetric(
-                    insertion: .move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: SlumberTheme.Motion.bannerInsertScale)),
+                    insertion: .move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: SlumbrTheme.Motion.bannerInsertScale)),
                     removal: .move(edge: .top).combined(with: .opacity)
                 ))
             }
         }
         .allowsHitTesting(currentTab == 0)
-        .animation(reduceMotion ? nil : SlumberTheme.Motion.stateChange, value: timerModel.state)
-        .animation(reduceMotion ? nil : SlumberTheme.Motion.runningChange, value: timerModel.isRunning)
+        .animation(reduceMotion ? nil : SlumbrTheme.Motion.stateChange, value: timerModel.state)
+        .animation(reduceMotion ? nil : SlumbrTheme.Motion.runningChange, value: timerModel.isRunning)
     }
 
     // MARK: - Settings Page
     private var settingsPage: some View {
         VStack(spacing: 0) {
-            VStack(spacing: SlumberTheme.Metrics.spaceMD) {
+            VStack(spacing: SlumbrTheme.Metrics.spaceMD) {
                 SettingsCard {
-                    HStack(alignment: .center, spacing: SlumberTheme.Metrics.spaceMD) {
-                        VStack(alignment: .leading, spacing: SlumberTheme.Metrics.spaceXS) {
+                    HStack(alignment: .center, spacing: SlumbrTheme.Metrics.spaceMD) {
+                        VStack(alignment: .leading, spacing: SlumbrTheme.Metrics.spaceXS) {
                             Text("Show in Dock")
-                                .font(SlumberTheme.Typography.title)
-                                .foregroundColor(SlumberTheme.Colors.textPrimary)
+                                .font(SlumbrTheme.Typography.title)
+                                .foregroundColor(SlumbrTheme.Colors.textPrimary)
                             Text("Display dock icon alongside the menu bar.")
-                                .font(SlumberTheme.Typography.caption)
-                                .foregroundColor(SlumberTheme.Colors.textSecondary)
-                                .lineSpacing(SlumberTheme.Typography.captionLineSpacing)
+                                .font(SlumbrTheme.Typography.caption)
+                                .foregroundColor(SlumbrTheme.Colors.textSecondary)
+                                .lineSpacing(SlumbrTheme.Typography.captionLineSpacing)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         Toggle("", isOn: $showInDock)
                             .toggleStyle(.switch)
-                            .tint(SlumberTheme.Colors.accent)
+                            .tint(SlumbrTheme.Colors.accent)
                             .labelsHidden()
                             .accessibilityLabel("Show in Dock")
                     }
                 }
 
                 SettingsCard {
-                    HStack(alignment: .center, spacing: SlumberTheme.Metrics.spaceMD) {
-                        VStack(alignment: .leading, spacing: SlumberTheme.Metrics.spaceXS) {
+                    HStack(alignment: .center, spacing: SlumbrTheme.Metrics.spaceMD) {
+                        VStack(alignment: .leading, spacing: SlumbrTheme.Metrics.spaceXS) {
                             Text("Global Shortcut")
-                                .font(SlumberTheme.Typography.title)
-                                .foregroundColor(SlumberTheme.Colors.textPrimary)
-                            Text(hotKeyAvailable ? "Open Slumber from anywhere." : "Unavailable: another app uses this shortcut.")
-                                .font(SlumberTheme.Typography.caption)
-                                .foregroundColor(SlumberTheme.Colors.textSecondary)
-                                .lineSpacing(SlumberTheme.Typography.captionLineSpacing)
+                                .font(SlumbrTheme.Typography.title)
+                                .foregroundColor(SlumbrTheme.Colors.textPrimary)
+                            Text(hotKeyAvailable ? "Open Slumbr from anywhere." : "Unavailable: another app uses this shortcut.")
+                                .font(SlumbrTheme.Typography.caption)
+                                .foregroundColor(SlumbrTheme.Colors.textSecondary)
+                                .lineSpacing(SlumbrTheme.Typography.captionLineSpacing)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         KeycapBadge(keys: ["⌃", "⌥", "S"])
-                            .opacity(hotKeyAvailable ? 1.0 : SlumberTheme.Opacity.disabled)
+                            .opacity(hotKeyAvailable ? 1.0 : SlumbrTheme.Opacity.disabled)
                             .accessibilityElement(children: .ignore)
                             .accessibilityLabel("Shortcut Control Option S")
                     }
                 }
             }
-            .padding(.top, SlumberTheme.Metrics.spaceXL)
+            .padding(.top, SlumbrTheme.Metrics.spaceXL)
 
             Spacer()
 
             QuitButton(action: {
                 NSApp.terminate(nil)
             })
-            .padding(.bottom, SlumberTheme.Metrics.spaceMD)
+            .padding(.bottom, SlumbrTheme.Metrics.spaceMD)
 
             let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
-            Text(appVersion.map { "Slumber v\($0)" } ?? "Slumber")
-                .font(SlumberTheme.Typography.caption.weight(.semibold))
-                .foregroundColor(SlumberTheme.Colors.textTertiary)
+            Text(appVersion.map { "Slumbr v\($0)" } ?? "Slumbr")
+                .font(SlumbrTheme.Typography.caption.weight(.semibold))
+                .foregroundColor(SlumbrTheme.Colors.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .center)
             Text("Made with ❤️ for peaceful nights")
-                .font(SlumberTheme.Typography.micro)
-                .foregroundColor(SlumberTheme.Colors.textQuaternary)
+                .font(SlumbrTheme.Typography.micro)
+                .foregroundColor(SlumbrTheme.Colors.textQuaternary)
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, SlumberTheme.Metrics.spaceXXS)
-                .padding(.bottom, SlumberTheme.Metrics.spaceLG)
+                .padding(.top, SlumbrTheme.Metrics.spaceXXS)
+                .padding(.bottom, SlumbrTheme.Metrics.spaceLG)
         }
-        .padding(.horizontal, SlumberTheme.Metrics.horizontalPadding)
+        .padding(.horizontal, SlumbrTheme.Metrics.horizontalPadding)
         .allowsHitTesting(currentTab == 1)
     }
 

@@ -1,6 +1,6 @@
 //
-//  SlumberSegmentedBar.swift
-//  Slumber
+//  SlumbrSegmentedBar.swift
+//  Slumbr
 //
 //  Tactile segmented tab navigation between Timer and Settings.
 //
@@ -14,7 +14,7 @@ public struct TabButton: View {
     @Binding public var currentTab: Int
     public var animationNamespace: Namespace.ID
     @State private var isHovered = false
-    private typealias Spec = SlumberTheme.Components.Tab
+    private typealias Spec = SlumbrTheme.Components.Tab
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     public init(
@@ -36,57 +36,57 @@ public struct TabButton: View {
         Button {
             guard !active else { return }
             playSound("space_button")
-            withAnimation(SlumberTheme.Motion.tabSwitch) {
+            withAnimation(SlumbrTheme.Motion.tabSwitch) {
                 currentTab = tag
             }
         } label: {
             HStack(spacing: Spec.iconSpacing) {
                 Image(systemName: icon)
-                    .font(SlumberTheme.Icons.tabFont)
+                    .font(SlumbrTheme.Icons.tabFont)
                 // Reserve the bold width so the bar doesn't reflow when the weight changes.
                 Text(title)
-                    .font(SlumberTheme.Typography.title.weight(.bold))
+                    .font(SlumbrTheme.Typography.title.weight(.bold))
                     .hidden()
                     .overlay {
                         Text(title)
-                            .font(SlumberTheme.Typography.title.weight(active ? .bold : .medium))
+                            .font(SlumbrTheme.Typography.title.weight(active ? .bold : .medium))
                     }
             }
             .foregroundColor(
                 active || isHovered
-                    ? SlumberTheme.Colors.textPrimary
-                    : SlumberTheme.Colors.textSecondary
+                    ? SlumbrTheme.Colors.textPrimary
+                    : SlumbrTheme.Colors.textSecondary
             )
             .padding(.vertical, Spec.verticalPadding)
             .padding(.horizontal, Spec.horizontalPadding)
             .background {
                 if active {
-                    RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
+                    RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous)
                         .fill(
                             reduceTransparency
-                                ? SlumberTheme.Colors.solidTabActive
-                                : SlumberTheme.Colors.accent.opacity(Spec.activeFillOpacity)
+                                ? SlumbrTheme.Colors.solidTabActive
+                                : SlumbrTheme.Colors.accent.opacity(Spec.activeFillOpacity)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
+                            RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous)
                                 .stroke(
                                     Color.white.opacity(reduceTransparency ? Spec.activeStrokeOpacitySolid : Spec.activeStrokeOpacity),
-                                    lineWidth: reduceTransparency ? SlumberTheme.Stroke.solid : SlumberTheme.Stroke.thin
+                                    lineWidth: reduceTransparency ? SlumbrTheme.Stroke.solid : SlumbrTheme.Stroke.thin
                                 )
                         )
                         .matchedGeometryEffect(id: "activeTabIndicator", in: animationNamespace)
                 } else if isHovered {
-                    RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous)
+                    RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous)
                         .fill(Color.white.opacity(reduceTransparency ? Spec.hoverFillOpacitySolid : Spec.hoverFillOpacity))
                 }
             }
-            .contentShape(RoundedRectangle(cornerRadius: SlumberTheme.Radius.md, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous))
         }
-        .buttonStyle(SlumberTactileButtonStyle(scaleDown: Spec.pressScale))
+        .buttonStyle(SlumbrTactileButtonStyle(scaleDown: Spec.pressScale))
         .accessibilityLabel("\(title) tab")
         .accessibilityValue(active ? "Selected" : "Not selected")
         .onHover { hovering in
-            withAnimation(SlumberTheme.Motion.hover) {
+            withAnimation(SlumbrTheme.Motion.hover) {
                 isHovered = hovering
             }
         }

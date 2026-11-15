@@ -1,17 +1,17 @@
 //
 //  Companions.swift
-//  Slumber
+//  Slumbr
 //
 //  Vector companion characters (Sleeping Fox, Kitten, Dodo Bird) and Keplerian orbital physics.
 //  Path data lives in ArtPaths.swift.
 //
 
 import SwiftUI
-import SlumberCore
+import SlumbrCore
 
 // MARK: - Sleeping Fox
 public struct SleepingFox: View {
-    private typealias Shared = SlumberTheme.Art.Companion
+    private typealias Shared = SlumbrTheme.Art.Companion
     public let isNearEnd: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
@@ -19,7 +19,7 @@ public struct SleepingFox: View {
     @State private var tailSway = false
     @State private var zzz = false
 
-    private typealias Palette = SlumberTheme.Art.Fox
+    private typealias Palette = SlumbrTheme.Art.Fox
 
     public init(isNearEnd: Bool) {
         self.isNearEnd = isNearEnd
@@ -107,7 +107,7 @@ public struct SleepingFox: View {
 
 // MARK: - Sleeping Cat
 public struct SleepingCat: View {
-    private typealias Shared = SlumberTheme.Art.Companion
+    private typealias Shared = SlumbrTheme.Art.Companion
     public let isNearEnd: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
@@ -116,7 +116,7 @@ public struct SleepingCat: View {
     @State private var tailSway = false
     @State private var zzz = false
 
-    private typealias Palette = SlumberTheme.Art.Cat
+    private typealias Palette = SlumbrTheme.Art.Cat
 
     public init(isNearEnd: Bool) {
         self.isNearEnd = isNearEnd
@@ -206,14 +206,14 @@ public struct SleepingCat: View {
 
 // MARK: - Sleeping Dodo
 public struct SleepingDodo: View {
-    private typealias Shared = SlumberTheme.Art.Companion
+    private typealias Shared = SlumbrTheme.Art.Companion
     public let isNearEnd: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
     @State private var fidget = false
     @State private var zzz = false
 
-    private typealias Palette = SlumberTheme.Art.Dodo
+    private typealias Palette = SlumbrTheme.Art.Dodo
 
     public init(isNearEnd: Bool) {
         self.isNearEnd = isNearEnd
@@ -302,7 +302,7 @@ private struct AwakeEye: View {
             .frame(width: 2.6, height: 3.0)
             .overlay(alignment: .topLeading) {
                 Circle()
-                    .fill(SlumberTheme.Art.Companion.glint)
+                    .fill(SlumbrTheme.Art.Companion.glint)
                     .frame(width: 1.1, height: 1.1)
                     .offset(x: 0.4, y: 0.4)
             }
@@ -317,10 +317,10 @@ private extension View {
         onChange(of: isNearEnd, initial: true) { _, nearEnd in
             if nearEnd && !reduceMotion {
                 withAnimation(
-                    .easeInOut(duration: SlumberTheme.Art.Companion.fidgetDuration).repeatForever(autoreverses: true)
+                    .easeInOut(duration: SlumbrTheme.Art.Companion.fidgetDuration).repeatForever(autoreverses: true)
                 ) { fidget.wrappedValue = true }
             } else {
-                withAnimation(.easeInOut(duration: SlumberTheme.Art.Companion.fidgetSettleDuration)) { fidget.wrappedValue = false }
+                withAnimation(.easeInOut(duration: SlumbrTheme.Art.Companion.fidgetSettleDuration)) { fidget.wrappedValue = false }
             }
         }
     }
@@ -328,7 +328,7 @@ private extension View {
 
 // MARK: - Animated Scene with Orbiting Companions
 public struct AnimatedScene: View {
-    @ObservedObject public var timerModel: SlumberTimer
+    @ObservedObject public var timerModel: SlumbrTimer
     public let companionType: Int
     public let isVisible: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -336,8 +336,8 @@ public struct AnimatedScene: View {
     @State private var orbitStartTime: Date? = nil
     @State private var transfer = OrbitTransfer(settledAt: 0)
 
-    private typealias Layout = SlumberTheme.Art.Scene
-    private typealias Orbit = SlumberTheme.Art.Orbit
+    private typealias Layout = SlumbrTheme.Art.Scene
+    private typealias Orbit = SlumbrTheme.Art.Orbit
 
     private let orbitDuration = Orbit.period
     private let launchDuration = Orbit.launchDuration
@@ -350,7 +350,7 @@ public struct AnimatedScene: View {
     private let moonX = Layout.moon.x
     private let moonY = Layout.moon.y
 
-    public init(timerModel: SlumberTimer, companionType: Int, isVisible: Bool = true) {
+    public init(timerModel: SlumbrTimer, companionType: Int, isVisible: Bool = true) {
         self.timerModel = timerModel
         self.companionType = companionType
         self.isVisible = isVisible

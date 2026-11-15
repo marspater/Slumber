@@ -1,6 +1,6 @@
 //
 //  CelestialArt.swift
-//  Slumber
+//  Slumbr
 //
 //  Display P3 + EDR celestial artwork: moon, clouds, stars, fireflies, constellations, auroras.
 //
@@ -55,7 +55,7 @@ public struct StarField: View {
 }
 
 public struct TwinklingStar: View {
-    private typealias Stars = SlumberTheme.Art.Stars
+    private typealias Stars = SlumbrTheme.Art.Stars
     public let position: CGPoint
     public let size: CGFloat
     public let delay: Double
@@ -97,7 +97,7 @@ public struct TwinklingStar: View {
 
 // MARK: - Shooting Star
 public struct ShootingStar: View {
-    private typealias Streak = SlumberTheme.Art.ShootingStar
+    private typealias Streak = SlumbrTheme.Art.ShootingStar
     public let angle: Double
     public let cycleDuration: Double
     public let initialDelay: Double
@@ -179,7 +179,7 @@ public struct FireflyField: View {
 }
 
 public struct Firefly: View {
-    private typealias Fly = SlumberTheme.Art.Firefly
+    private typealias Fly = SlumbrTheme.Art.Firefly
     public let seed: Int
     public let bounds: CGSize
 
@@ -230,7 +230,7 @@ public struct Firefly: View {
 
 // MARK: - Constellation Overlay
 public struct ConstellationOverlay: View {
-    private typealias Constellation = SlumberTheme.Art.Constellation
+    private typealias Constellation = SlumbrTheme.Art.Constellation
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var rotation: Double = 0
 
@@ -272,7 +272,7 @@ public struct ConstellationLinesShape: Shape {
 }
 
 public struct ConstellationPattern: View {
-    private typealias Constellation = SlumberTheme.Art.Constellation
+    private typealias Constellation = SlumbrTheme.Art.Constellation
     public let stars: [CGPoint]
     public let lines: [(Int, Int)]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -310,7 +310,7 @@ public struct ConstellationPattern: View {
 
 // MARK: - Cute Moon
 public struct CuteMoon: View {
-    private typealias Moon = SlumberTheme.Art.Moon
+    private typealias Moon = SlumbrTheme.Art.Moon
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var bob = false
     @State private var glow = false
@@ -366,7 +366,7 @@ public struct CuteMoon: View {
 // MARK: - Clouds
 /// Sleepy cloud: soft shadow, lilac-to-white body, a fading EDR top rim and a face.
 private struct SleepyCloud: View {
-    private typealias Palette = SlumberTheme.Art.Cloud
+    private typealias Palette = SlumbrTheme.Art.Cloud
     let art: CloudArt
     let opacity: Double
 
@@ -409,13 +409,13 @@ public struct CuteCloud1: View {
     }
 
     public var body: some View {
-        SleepyCloud(art: .large, opacity: SlumberTheme.Art.Cloud.largeOpacity)
+        SleepyCloud(art: .large, opacity: SlumbrTheme.Art.Cloud.largeOpacity)
             .scaleEffect(scale)
             .offset(y: bob ? -5 : 4)
             .rotationEffect(.degrees(bob ? 2 : -2))
             .onAppear {
                 guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: SlumberTheme.Art.Cloud.largeBobDuration).repeatForever(autoreverses: true)) { bob = true }
+                withAnimation(.easeInOut(duration: SlumbrTheme.Art.Cloud.largeBobDuration).repeatForever(autoreverses: true)) { bob = true }
             }
     }
 }
@@ -430,16 +430,16 @@ public struct CuteCloud2: View {
     }
 
     public var body: some View {
-        SleepyCloud(art: .small, opacity: SlumberTheme.Art.Cloud.smallOpacity)
+        SleepyCloud(art: .small, opacity: SlumbrTheme.Art.Cloud.smallOpacity)
             .scaleEffect(scale)
             .offset(y: bob ? -4 : 3)
             .rotationEffect(.degrees(bob ? -1.5 : 2))
             .onAppear {
                 guard !reduceMotion else { return }
                 withAnimation(
-                    .easeInOut(duration: SlumberTheme.Art.Cloud.smallBobDuration)
+                    .easeInOut(duration: SlumbrTheme.Art.Cloud.smallBobDuration)
                     .repeatForever(autoreverses: true)
-                    .delay(SlumberTheme.Art.Cloud.smallBobDelay)
+                    .delay(SlumbrTheme.Art.Cloud.smallBobDelay)
                 ) { bob = true }
             }
     }
@@ -447,7 +447,7 @@ public struct CuteCloud2: View {
 
 // MARK: - Aurora Effect
 public struct AuroraEffect: View {
-    private typealias Aurora = SlumberTheme.Art.Aurora
+    private typealias Aurora = SlumbrTheme.Art.Aurora
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var s1 = false
     @State private var s2 = false
@@ -476,7 +476,7 @@ public struct AuroraEffect: View {
 
 // MARK: - Pulsing Ring
 public struct PulsingRing: View {
-    private typealias Ring = SlumberTheme.Components.Ring
+    private typealias Ring = SlumbrTheme.Components.Ring
     public let progress: CGFloat
 
     public init(progress: CGFloat) {
@@ -506,17 +506,17 @@ public struct PulsingRing: View {
                 )
                 .rotationEffect(.degrees(-90))
                 .frame(width: Ring.diameter, height: Ring.diameter)
-                .shadow(color: SlumberTheme.Colors.cyan.opacity(Ring.glowOpacity), radius: Ring.glowRadius)
-                .animation(SlumberTheme.Motion.ringProgress, value: progress)
+                .shadow(color: SlumbrTheme.Colors.cyan.opacity(Ring.glowOpacity), radius: Ring.glowRadius)
+                .animation(SlumbrTheme.Motion.ringProgress, value: progress)
 
             // Glow dot at leading edge
             Circle()
                 .fill(Ring.dot)
                 .frame(width: Ring.dotSize, height: Ring.dotSize)
-                .shadow(color: SlumberTheme.Colors.cyan.opacity(Ring.dotGlowOpacity), radius: Ring.dotGlowRadius)
+                .shadow(color: SlumbrTheme.Colors.cyan.opacity(Ring.dotGlowOpacity), radius: Ring.dotGlowRadius)
                 .offset(y: -Ring.diameter / 2)
                 .rotationEffect(.degrees(Double(progress) * 360))
-                .animation(SlumberTheme.Motion.ringProgress, value: progress)
+                .animation(SlumbrTheme.Motion.ringProgress, value: progress)
         }
     }
 }

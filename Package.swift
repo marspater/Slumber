@@ -2,37 +2,37 @@
 import PackageDescription
 
 let package = Package(
-    name: "Slumber",
+    name: "Slumbr",
     platforms: [
         .macOS("26.0")
     ],
     products: [
-        .executable(name: "Slumber", targets: ["Slumber"])
+        .executable(name: "Slumbr", targets: ["Slumbr"])
     ],
     targets: [
         .target(
-            name: "SlumberCore",
-            path: "Sources/SlumberCore",
+            name: "SlumbrCore",
+            path: "Sources/SlumbrCore",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
         ),
         .executableTarget(
-            name: "Slumber",
+            name: "Slumbr",
             dependencies: [
-                "SlumberCore"
+                "SlumbrCore"
             ],
-            path: "Sources/Slumber",
+            path: "Sources/Slumbr",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
         ),
         .testTarget(
-            name: "SlumberTests",
+            name: "SlumbrTests",
             dependencies: [
-                "SlumberCore"
+                "SlumbrCore"
             ],
-            path: "Tests/SlumberTests",
+            path: "Tests/SlumbrTests",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]

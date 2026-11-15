@@ -1,8 +1,12 @@
 # Changelog
 
-Notable changes are recorded here so the README can stay focused on installing and using Slumber.
+Notable changes are recorded here so the README can stay focused on installing and using Slumbr.
 
-## Unreleased
+## v4.0
+
+### Changed
+
+- The app is now called Slumbr. Its bundle identifier is `com.marspater.slumbr`, so macOS treats it as a new app: the "Show in Dock" setting and the menu bar icon position reset, and macOS asks once more for permission to control System Events. Delete the previous app from `/Applications` after installing Slumbr.
 
 ### Fixed
 
@@ -27,12 +31,12 @@ Everything since the `v3.2` tag.
 ### Changed
 
 - The Start button is 38pt tall like Cancel and Quit, and uses the same accent-to-cyan gradient as a translucent tint with a stroke and a white label.
-- Consolidated UI, motion, component, sky, and artwork values under `Sources/Slumber/Theme/` without intentionally changing the visual output (#22).
+- Consolidated UI, motion, component, sky, and artwork values under `Sources/Slumbr/Theme/` without intentionally changing the visual output (#22).
 - Reworked EDR rendering to use exposure adjustment for real brightness above SDR white while allowing macOS to tone-map the same P3 colors on displays without headroom (#21).
 - Smoothed companion travel for 60 Hz displays and raised shooting-star updates to 60 fps (#21).
 - Updated the menu bar symbol sizing to better match native macOS status items (#18).
 - Refreshed the Icon Composer asset and vector artwork while preserving the native asset pipeline.
-- Simplified release packaging so `Slumber.zip` is rebuilt only with `./build.sh --package`.
+- Simplified release packaging so `Slumbr.zip` is rebuilt only with `./build.sh --package`.
 - Build signing now prefers a Developer ID identity when one is available and otherwise falls back to ad-hoc signing (#21).
 
 ### Fixed

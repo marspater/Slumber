@@ -2,16 +2,16 @@ import SwiftUI
 import AppKit
 import Carbon
 import os
-import SlumberCore
+import SlumbrCore
 
 private let appLog = Logger(subsystem: "com.marspater.slumbr", category: "app")
 
 extension Notification.Name {
-    static let slumberOpening = Notification.Name("SlumberOpening")
-    static let slumberClosed = Notification.Name("SlumberClosed")
-    static let slumberTogglePopover = Notification.Name("SlumberTogglePopover")
+    static let slumbrOpening = Notification.Name("SlumbrOpening")
+    static let slumbrClosed = Notification.Name("SlumbrClosed")
+    static let slumbrTogglePopover = Notification.Name("SlumbrTogglePopover")
     /// Keyboard duration nudge; `object` is the Int minute delta.
-    static let slumberNudgeDuration = Notification.Name("SlumberNudgeDuration")
+    static let slumbrNudgeDuration = Notification.Name("SlumbrNudgeDuration")
 }
 
 /// 'SLMB'
@@ -21,7 +21,7 @@ private let hotKeySignature: OSType = 0x534C4D42
 class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
-    let timerModel = SlumberTimer()
+    let timerModel = SlumbrTimer()
     private var globalMonitor: Any?
     private var keyMonitor: Any?
     private var hotKeyRef: EventHotKeyRef?
@@ -33,8 +33,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
         popover = NSPopover()
         popover.contentSize = NSSize(
-            width: SlumberTheme.Metrics.popoverWidth,
-            height: SlumberTheme.Metrics.popoverHeight
+            width: SlumbrTheme.Metrics.popoverWidth,
+            height: SlumbrTheme.Metrics.popoverHeight
         )
         popover.animates = true
         popover.behavior = .applicationDefined
@@ -44,29 +44,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let hotKeyAvailable = setupGlobalHotkey()
         preloadSounds()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleTogglePopoverNotification), name: .slumberTogglePopover, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleTogglePopoverNotification), name: .slumbrTogglePopover, object: nil)
 
-        let vc = NSHostingController(rootView: SlumberView(timerModel: timerModel, hotKeyAvailable: hotKeyAvailable))
+        let vc = NSHostingController(rootView: SlumbrView(timerModel: timerModel, hotKeyAvailable: hotKeyAvailable))
         vc.view.wantsLayer = true
         vc.view.appearance = NSAppearance(named: .darkAqua)
         popover.contentViewController = vc
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.autosaveName = "SlumberMainIconV4"
+        statusItem.autosaveName = "SlumbrMainIconV4"
         statusItem.isVisible = true
         
         if let button = statusItem.button {
-            let symbolConfig = NSImage.SymbolConfiguration(pointSize: SlumberTheme.MenuBar.symbolPointSize, weight: SlumberTheme.MenuBar.symbolWeight)
-            if let img = NSImage(systemSymbolName: SlumberTheme.MenuBar.symbol, accessibilityDescription: "Slumber")?
+            let symbolConfig = NSImage.SymbolConfiguration(pointSize: SlumbrTheme.MenuBar.symbolPointSize, weight: SlumbrTheme.MenuBar.symbolWeight)
+            if let img = NSImage(systemSymbolName: SlumbrTheme.MenuBar.symbol, accessibilityDescription: "Slumbr")?
                 .withSymbolConfiguration(symbolConfig) {
                 img.isTemplate = true
                 button.image = img
-            } else if let fallback = NSImage(systemSymbolName: SlumberTheme.MenuBar.fallbackSymbol, accessibilityDescription: "Slumber")?
+            } else if let fallback = NSImage(systemSymbolName: SlumbrTheme.MenuBar.fallbackSymbol, accessibilityDescription: "Slumbr")?
                 .withSymbolConfiguration(symbolConfig) {
                 fallback.isTemplate = true
                 button.image = fallback
             } else {
-                button.title = SlumberTheme.MenuBar.fallbackTitle
+                button.title = SlumbrTheme.MenuBar.fallbackTitle
             }
             button.imagePosition = .imageOnly
             button.target = self
@@ -123,7 +123,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             )
             if status == noErr && hotKeyID.signature == hotKeySignature && hotKeyID.id == 1 {
                 DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: .slumberTogglePopover, object: nil)
+                    NotificationCenter.default.post(name: .slumbrTogglePopover, object: nil)
                 }
                 return noErr
             }
@@ -176,7 +176,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     // MARK: - NSPopoverDelegate
     func popoverWillShow(_: Notification) {
-        NotificationCenter.default.post(name: .slumberOpening, object: nil)
+        NotificationCenter.default.post(name: .slumbrOpening, object: nil)
         setupGlobalMonitor()
         if keyMonitor == nil {
             keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -190,10 +190,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 if event.modifierFlags.intersection([.command, .option, .control]).isEmpty {
                     switch event.keyCode {
                     case 123, 125: // Left, Down
-                        NotificationCenter.default.post(name: .slumberNudgeDuration, object: -step)
+                        NotificationCenter.default.post(name: .slumbrNudgeDuration, object: -step)
                         return nil
                     case 124, 126: // Right, Up
-                        NotificationCenter.default.post(name: .slumberNudgeDuration, object: step)
+                        NotificationCenter.default.post(name: .slumbrNudgeDuration, object: step)
                         return nil
                     default:
                         break
@@ -205,7 +205,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     func popoverDidClose(_: Notification) {
-        NotificationCenter.default.post(name: .slumberClosed, object: nil)
+        NotificationCenter.default.post(name: .slumbrClosed, object: nil)
         removeGlobalMonitor()
         if let kMon = keyMonitor {
             NSEvent.removeMonitor(kMon)
@@ -220,7 +220,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     @objc private func statusBarAction(_ sender: NSStatusBarButton) {
         if let event = NSApp.currentEvent, event.type == .rightMouseUp {
             let menu = NSMenu()
-            menu.addItem(NSMenuItem(title: "Quit Slumber", action: #selector(quitApp), keyEquivalent: "q"))
+            menu.addItem(NSMenuItem(title: "Quit Slumbr", action: #selector(quitApp), keyEquivalent: "q"))
             menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height), in: sender)
         } else {
             togglePopover()
@@ -266,7 +266,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 }
 
 @main
-struct SlumberApp: App {
+struct SlumbrApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {

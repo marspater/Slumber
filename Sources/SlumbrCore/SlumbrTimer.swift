@@ -19,7 +19,7 @@ public enum SleepResult: Sendable, Equatable {
 private let log = Logger(subsystem: "com.marspater.slumbr", category: "timer")
 
 @MainActor
-public class SlumberTimer: ObservableObject {
+public class SlumbrTimer: ObservableObject {
     public typealias SleepAction = @MainActor () -> SleepResult
     public typealias DateProvider = @MainActor () -> Date
     /// Total seconds the system has spent asleep since boot. Only grows during real system sleep.
@@ -65,7 +65,7 @@ public class SlumberTimer: ObservableObject {
     public init(
         sleepAction: SleepAction? = nil,
         dateProvider: @escaping DateProvider = { Date() },
-        sleepClock: @escaping SleepClock = { SlumberTimer.systemSleepDuration() }
+        sleepClock: @escaping SleepClock = { SlumbrTimer.systemSleepDuration() }
     ) {
         self.customSleepAction = sleepAction
         self.dateProvider = dateProvider
@@ -311,7 +311,7 @@ public class SlumberTimer: ObservableObject {
     }
 }
 
-public enum SlumberTimeFormatter {
+public enum SlumbrTimeFormatter {
     public static func hasHours(_ t: TimeInterval) -> Bool {
         let rounded = max(0, Int(ceil(t)))
         return rounded >= 3600

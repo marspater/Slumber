@@ -1,6 +1,6 @@
 //
-//  SlumberSlider.swift
-//  Slumber
+//  SlumbrSlider.swift
+//  Slumbr
 //
 //  Accessible, wide-gamut glowing slider aligned to standard 272pt content grid.
 //
@@ -15,10 +15,10 @@ public struct GlowingSlider: View {
     @State private var isDragging = false
     @State private var isHovered = false
 
-    private let sliderWidth: CGFloat = SlumberTheme.Metrics.contentWidth
-    private let thumbSize: CGFloat = SlumberTheme.Components.Slider.thumbSize
-    private let trackHeight: CGFloat = SlumberTheme.Components.Slider.trackHeight
-    private typealias Spec = SlumberTheme.Components.Slider
+    private let sliderWidth: CGFloat = SlumbrTheme.Metrics.contentWidth
+    private let thumbSize: CGFloat = SlumbrTheme.Components.Slider.thumbSize
+    private let trackHeight: CGFloat = SlumbrTheme.Components.Slider.trackHeight
+    private typealias Spec = SlumbrTheme.Components.Slider
 
     public init(
         value: Binding<Int>,
@@ -90,8 +90,8 @@ public struct GlowingSlider: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            SlumberTheme.Colors.accent,
-                            SlumberTheme.Colors.cyan
+                            SlumbrTheme.Colors.accent,
+                            SlumbrTheme.Colors.cyan
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -99,7 +99,7 @@ public struct GlowingSlider: View {
                 )
                 .frame(width: trackFillWidth, height: trackHeight)
                 .shadow(
-                    color: SlumberTheme.Colors.cyan.opacity(
+                    color: SlumbrTheme.Colors.cyan.opacity(
                         interactionValue(Spec.fillGlowOpacity)
                     ),
                     radius: isDragging ? Spec.fillGlowRadius.drag : Spec.fillGlowRadius.rest
@@ -111,11 +111,11 @@ public struct GlowingSlider: View {
                 .frame(width: thumbSize, height: thumbSize)
                 .overlay(
                     RoundedRectangle(cornerRadius: thumbSize / 2.0, style: .continuous)
-                        .stroke(Color.white.opacity(Spec.thumbStrokeOpacity), lineWidth: SlumberTheme.Stroke.hairline)
+                        .stroke(Color.white.opacity(Spec.thumbStrokeOpacity), lineWidth: SlumbrTheme.Stroke.hairline)
                 )
-                .shadow(color: SlumberTheme.Colors.shadow.opacity(Spec.thumbShadowOpacity), radius: Spec.thumbShadowRadius, x: 0, y: Spec.thumbShadowOffsetY)
+                .shadow(color: SlumbrTheme.Colors.shadow.opacity(Spec.thumbShadowOpacity), radius: Spec.thumbShadowRadius, x: 0, y: Spec.thumbShadowOffsetY)
                 .shadow(
-                    color: SlumberTheme.Colors.accent.opacity(Spec.thumbGlowOpacity),
+                    color: SlumbrTheme.Colors.accent.opacity(Spec.thumbGlowOpacity),
                     radius: isDragging ? Spec.thumbGlowRadius.drag : Spec.thumbGlowRadius.rest
                 )
                 .scaleEffect(interactionValue(Spec.thumbScale))
@@ -127,7 +127,7 @@ public struct GlowingSlider: View {
             DragGesture(minimumDistance: 0)
                 .onChanged { gesture in
                     if !isDragging {
-                        withAnimation(SlumberTheme.Motion.drag) {
+                        withAnimation(SlumbrTheme.Motion.drag) {
                             isDragging = true
                         }
                         onEditingChanged(true)
@@ -140,14 +140,14 @@ public struct GlowingSlider: View {
                     value = min(max(computed, bounds.lowerBound), bounds.upperBound)
                 }
                 .onEnded { _ in
-                    withAnimation(SlumberTheme.Motion.drag) {
+                    withAnimation(SlumbrTheme.Motion.drag) {
                         isDragging = false
                     }
                     onEditingChanged(false)
                 }
         )
         .onHover { hovering in
-            withAnimation(SlumberTheme.Motion.hoverSlider) {
+            withAnimation(SlumbrTheme.Motion.hoverSlider) {
                 isHovered = hovering
             }
         }
