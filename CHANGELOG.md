@@ -2,6 +2,17 @@
 
 Notable changes are recorded here so the README can stay focused on installing and using Slumber.
 
+## Unreleased
+
+### Fixed
+
+- The Mac no longer silently stays awake when the timer ends. A tick that ran more than 2 seconds late was treated as "the Mac slept through the deadline" and finished without sleeping; the timer now checks the system's real sleep time instead.
+- A sleep request that reports success but never sleeps the Mac now shows a retryable "Your Mac didn't go to sleep" error after 15 seconds instead of claiming success. If the sleep lands later, the error clears itself.
+
+### Changed
+
+- Logging uses `os.Logger` (subsystem `com.marspater.slumbr`), so timer and sleep events persist and can be read with `log show --predicate 'subsystem == "com.marspater.slumbr"'`.
+
 ## v3.5
 
 Everything since the `v3.2` tag.

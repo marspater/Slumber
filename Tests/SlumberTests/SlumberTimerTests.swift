@@ -9,8 +9,18 @@ final class MockClock {
         self.currentDate = initialDate
     }
     
+    /// Total seconds the simulated system has spent asleep.
+    var asleep: TimeInterval = 0
+
+    /// Wall-clock time passes while the Mac stays awake.
     func advance(by seconds: TimeInterval) {
         currentDate = currentDate.addingTimeInterval(seconds)
+    }
+
+    /// Wall-clock time passes while the Mac is asleep.
+    func sleep(for seconds: TimeInterval) {
+        advance(by: seconds)
+        asleep += seconds
     }
     
     func now() -> Date {
@@ -32,7 +42,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testStartTransitionsToRunningAndSetsTotalTime() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() })
+        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 15)
         XCTAssertEqual(timer.state, TimerState.running)
         XCTAssertTrue(timer.isRunning)
@@ -44,7 +54,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testStopTransitionsToIdle() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() })
+        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 30)
         XCTAssertEqual(timer.state, TimerState.running)
         timer.stop()
@@ -58,7 +68,7 @@ final class SlumberTimerTests: XCTestCase {
         let clock = MockClock()
         let timer = SlumberTimer(
             sleepAction: { SleepResult.failure(reason: "nope") },
-            dateProvider: { clock.now() }
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
         timer.start(minutes: 1)
         clock.advance(by: 61)
@@ -87,7 +97,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testTickCalculatesExactRemainingTime() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() })
+        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 10) // 600s
         
         clock.advance(by: 120) // 2 minutes elapsed
@@ -107,7 +117,7 @@ final class SlumberTimerTests: XCTestCase {
                 sleepExecuted = true
                 return SleepResult.success
             },
-            dateProvider: { clock.now() }
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
         
         timer.start(minutes: 15) // 900 seconds
@@ -118,9 +128,14 @@ final class SlumberTimerTests: XCTestCase {
         timer.tick()
         
         XCTAssertTrue(sleepExecuted)
-        XCTAssertEqual(timer.state, TimerState.completed)
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
         XCTAssertEqual(timer.timeRemaining, 0)
         XCTAssertFalse(timer.isRunning)
+
+        // The Mac sleeps, then wakes: only now is the job confirmed done.
+        clock.sleep(for: 3600)
+        timer.handleSystemWake()
+        XCTAssertEqual(timer.state, TimerState.completed)
     }
 
     @MainActor
@@ -130,7 +145,7 @@ final class SlumberTimerTests: XCTestCase {
             sleepAction: {
                 return SleepResult.failure(reason: "Simulated IOKit Error")
             },
-            dateProvider: { clock.now() }
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
         
         timer.start(minutes: 15)
@@ -156,7 +171,7 @@ final class SlumberTimerTests: XCTestCase {
             sleepAction: {
                 return controller.shouldSucceed ? SleepResult.success : SleepResult.failure(reason: "Temporary Lock")
             },
-            dateProvider: { clock.now() }
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
         
         timer.start(minutes: 5)
@@ -168,7 +183,10 @@ final class SlumberTimerTests: XCTestCase {
         // Retry with success
         controller.shouldSucceed = true
         timer.retrySleep()
-        
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+
+        clock.sleep(for: 60)
+        timer.tick()
         XCTAssertEqual(timer.state, TimerState.completed)
         XCTAssertNil(timer.sleepError)
     }
@@ -176,7 +194,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testRepeatedStartsCleanlyResetPreviousSession() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() })
+        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 15)
         XCTAssertEqual(timer.totalTime, 900)
         
@@ -190,7 +208,7 @@ final class SlumberTimerTests: XCTestCase {
     @MainActor
     func testWakeHandlingResumesIfTimeRemains() {
         let clock = MockClock()
-        let timer = SlumberTimer(dateProvider: { clock.now() })
+        let timer = SlumberTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 60) // 3600 seconds
         XCTAssertEqual(timer.state, TimerState.running)
         
@@ -212,13 +230,13 @@ final class SlumberTimerTests: XCTestCase {
                 sleepExecuted = true
                 return SleepResult.success
             },
-            dateProvider: { clock.now() }
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
         
         timer.start(minutes: 10) // 600s
         
         // The Mac slept through the deadline; the user has just woken it.
-        clock.advance(by: 700)
+        clock.sleep(for: 700)
         timer.handleSystemWake()
         
         XCTAssertFalse(sleepExecuted)
@@ -235,18 +253,136 @@ final class SlumberTimerTests: XCTestCase {
                 sleepExecuted = true
                 return SleepResult.success
             },
-            dateProvider: { clock.now() }
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
         )
 
         timer.start(minutes: 10) // 600s
 
         // The once-a-second tick can fire right after wake, before the wake notification.
-        clock.advance(by: 700)
+        clock.sleep(for: 700)
         timer.tick()
 
         XCTAssertFalse(sleepExecuted)
         XCTAssertEqual(timer.state, TimerState.completed)
         XCTAssertEqual(timer.timeRemaining, 0)
+    }
+
+    @MainActor
+    func testLateTickWhileAwakeStillSleeps() {
+        let clock = MockClock()
+        var sleepExecuted = false
+        let timer = SlumberTimer(
+            sleepAction: {
+                sleepExecuted = true
+                return SleepResult.success
+            },
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
+        )
+
+        timer.start(minutes: 10)
+
+        // The Mac stayed awake, but the tick ran late (main-thread stall, timer delay, clock jump).
+        clock.advance(by: 700)
+        timer.tick()
+
+        XCTAssertTrue(sleepExecuted)
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+        timer.stop()
+    }
+
+    @MainActor
+    func testAcceptedSleepRequestThatNeverSleepsFailsAndStaysRetryable() {
+        let clock = MockClock()
+        var sleeps = 0
+        let timer = SlumberTimer(
+            sleepAction: { sleeps += 1; return SleepResult.success },
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
+        )
+        timer.start(minutes: 1)
+        clock.advance(by: 60)
+        timer.tick()
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+
+        // Still within the confirmation window: keep waiting.
+        clock.advance(by: 10)
+        timer.tick()
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+
+        // The request "succeeded" but the Mac never slept: say so instead of claiming success.
+        clock.advance(by: 10)
+        timer.tick()
+        XCTAssertEqual(timer.sleepError, "Your Mac didn't go to sleep. Another app may be keeping it awake.")
+
+        timer.retrySleep()
+        XCTAssertEqual(sleeps, 2)
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+        clock.sleep(for: 120)
+        timer.tick()
+        XCTAssertEqual(timer.state, TimerState.completed)
+    }
+
+    @MainActor
+    func testSleepLandingAfterTimeoutStillCompletes() {
+        let clock = MockClock()
+        let timer = SlumberTimer(
+            sleepAction: { SleepResult.success },
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
+        )
+        timer.start(minutes: 1)
+        clock.advance(by: 60)
+        timer.tick()
+        clock.advance(by: 20)
+        timer.tick()
+        XCTAssertNotNil(timer.sleepError)
+
+        // The slow sleep finally happens; on wake the stale error must clear itself.
+        clock.sleep(for: 3600)
+        timer.handleSystemWake()
+        XCTAssertEqual(timer.state, TimerState.completed)
+    }
+
+    @MainActor
+    func testSleepAndWakeBeforeDeadlineKeepsCountingThenSleeps() {
+        let clock = MockClock()
+        var sleeps = 0
+        let timer = SlumberTimer(
+            sleepAction: { sleeps += 1; return SleepResult.success },
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
+        )
+        timer.start(minutes: 10)
+
+        // Lid closed for 100s, reopened long before the deadline.
+        clock.sleep(for: 100)
+        timer.handleSystemWake()
+        XCTAssertEqual(timer.state, TimerState.running)
+        XCTAssertEqual(timer.timeRemaining, 500)
+
+        // The earlier sleep must not count as sleeping through the deadline.
+        clock.advance(by: 503)
+        timer.tick()
+        XCTAssertEqual(sleeps, 1)
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+        timer.stop()
+    }
+
+    @MainActor
+    func testStopWhileAwaitingSleepReturnsToIdle() {
+        let clock = MockClock()
+        let timer = SlumberTimer(
+            sleepAction: { SleepResult.success },
+            dateProvider: { clock.now() }, sleepClock: { clock.asleep }
+        )
+        timer.start(minutes: 1)
+        clock.advance(by: 61)
+        timer.tick()
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+        timer.stop()
+        XCTAssertEqual(timer.state, TimerState.idle)
+
+        // A late confirmation tick after stopping changes nothing.
+        clock.sleep(for: 30)
+        timer.tick()
+        XCTAssertEqual(timer.state, TimerState.idle)
     }
 
     @MainActor
@@ -305,7 +441,7 @@ final class SlumberTimerTests: XCTestCase {
     func testDoesNotSleepBeforeDeadlineButDoesAtDeadline() {
         let clock = MockClock()
         var sleeps = 0
-        let timer = SlumberTimer(sleepAction: { sleeps += 1; return SleepResult.success }, dateProvider: { clock.now() })
+        let timer = SlumberTimer(sleepAction: { sleeps += 1; return SleepResult.success }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 10)
 
         clock.advance(by: 599)
@@ -314,6 +450,11 @@ final class SlumberTimerTests: XCTestCase {
         XCTAssertTrue(timer.isRunning)
 
         clock.advance(by: 1) // exactly the deadline
+        timer.tick()
+        XCTAssertEqual(sleeps, 1)
+        XCTAssertEqual(timer.state, TimerState.requestingSleep)
+
+        clock.sleep(for: 5)
         timer.tick()
         XCTAssertEqual(sleeps, 1)
         XCTAssertEqual(timer.state, TimerState.completed)
@@ -337,7 +478,7 @@ final class SlumberTimerTests: XCTestCase {
         timer.stop()
 
         let clock = MockClock()
-        let failing = SlumberTimer(sleepAction: { SleepResult.failure(reason: "busy") }, dateProvider: { clock.now() })
+        let failing = SlumberTimer(sleepAction: { SleepResult.failure(reason: "busy") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         failing.start(minutes: 1)
         clock.advance(by: 61)
         failing.tick()

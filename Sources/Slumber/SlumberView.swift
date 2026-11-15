@@ -8,11 +8,14 @@
 import SwiftUI
 import AppKit
 import AVFoundation
+import os
 import SlumberCore
 
 // ===================================================================
 // MARK: - Audio Helper
 // ===================================================================
+
+private let audioLog = Logger(subsystem: "com.marspater.slumbr", category: "audio")
 
 private let soundNames = ["space_timer_start", "cancel", "space_button"]
 
@@ -35,7 +38,7 @@ private actor SoundBoard {
     private func player(named name: String) -> AVAudioPlayer? {
         if let player = players[name] { return player }
         guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
-            NSLog("[SlumberAudio] Audio file '%@.wav' not found in bundle resources.", name)
+            audioLog.error("Audio file '\(name, privacy: .public).wav' not found in bundle resources.")
             return nil
         }
         do {
@@ -44,7 +47,7 @@ private actor SoundBoard {
             players[name] = player
             return player
         } catch {
-            NSLog("[SlumberAudio] Failed to initialize AVAudioPlayer for '%@.wav': %@", name, error.localizedDescription)
+            audioLog.error("Failed to initialize AVAudioPlayer for '\(name, privacy: .public).wav': \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
