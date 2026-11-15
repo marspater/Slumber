@@ -52,7 +52,7 @@ public struct TabButton: View {
                             .font(SlumbrTheme.Typography.title.weight(active ? .bold : .medium))
                     }
             }
-            .foregroundColor(
+            .foregroundStyle(
                 active || isHovered
                     ? SlumbrTheme.Colors.textPrimary
                     : SlumbrTheme.Colors.textSecondary
@@ -67,13 +67,13 @@ public struct TabButton: View {
                                 ? SlumbrTheme.Colors.solidTabActive
                                 : SlumbrTheme.Colors.accent.opacity(Spec.activeFillOpacity)
                         )
-                        .overlay(
+                        .overlay {
                             RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous)
                                 .stroke(
                                     Color.white.opacity(reduceTransparency ? Spec.activeStrokeOpacitySolid : Spec.activeStrokeOpacity),
                                     lineWidth: reduceTransparency ? SlumbrTheme.Stroke.solid : SlumbrTheme.Stroke.thin
                                 )
-                        )
+                        }
                         .matchedGeometryEffect(id: "activeTabIndicator", in: animationNamespace)
                 } else if isHovered {
                     RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous)

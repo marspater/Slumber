@@ -29,12 +29,12 @@ public struct StartButton: View {
             }
             .frame(width: SlumbrTheme.Metrics.contentWidth, height: SlumbrTheme.Metrics.buttonHeight)
             .background(gradient(opacity: Spec.fillOpacity(isHovered)))
-            .foregroundColor(SlumbrTheme.Colors.textPrimary)
+            .foregroundStyle(SlumbrTheme.Colors.textPrimary)
             .clipShape(RoundedRectangle(cornerRadius: SlumbrTheme.Radius.lg, style: .continuous))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: SlumbrTheme.Radius.lg, style: .continuous)
                     .stroke(gradient(opacity: Spec.strokeOpacity(isHovered)), lineWidth: SlumbrTheme.Stroke.thin)
-            )
+            }
             .shadow(
                 color: accent.opacity(Spec.glowOpacity(isHovered)),
                 radius: Spec.glowRadius(isHovered),
@@ -78,12 +78,12 @@ public struct CancelButton: View {
             }
             .frame(width: Spec.width, height: SlumbrTheme.Metrics.buttonHeight)
             .background(coral.opacity(Spec.fillOpacity(isHovered)))
-            .foregroundColor(coral)
+            .foregroundStyle(coral)
             .clipShape(RoundedRectangle(cornerRadius: SlumbrTheme.Radius.lg, style: .continuous))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: SlumbrTheme.Radius.lg, style: .continuous)
                     .stroke(coral.opacity(Spec.strokeOpacity(isHovered)), lineWidth: SlumbrTheme.Stroke.thin)
-            )
+            }
             .shadow(color: coral.opacity(Spec.glowOpacity(isHovered)), radius: Spec.glowRadius)
         }
         .buttonStyle(SlumbrTactileButtonStyle(scaleDown: Spec.pressScale))
@@ -119,12 +119,12 @@ public struct QuitButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: SlumbrTheme.Metrics.buttonHeight)
             .background(coral.opacity(Spec.fillOpacity(isHovered)))
-            .foregroundColor(coral)
+            .foregroundStyle(coral)
             .clipShape(RoundedRectangle(cornerRadius: SlumbrTheme.Radius.lg, style: .continuous))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: SlumbrTheme.Radius.lg, style: .continuous)
                     .stroke(coral.opacity(Spec.strokeOpacity(isHovered)), lineWidth: SlumbrTheme.Stroke.thin)
-            )
+            }
         }
         .buttonStyle(SlumbrTactileButtonStyle(scaleDown: Spec.pressScale))
         .accessibilityLabel("Quit Slumbr")

@@ -51,7 +51,7 @@ public struct PresetChip: View {
             Text(label)
                 .font(SlumbrTheme.Typography.caption.weight(selected ? .semibold : .medium))
                 .frame(width: Spec.size.width, height: Spec.size.height)
-                .background(
+                .background {
                     ZStack {
                         RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous)
                             .fill(fillColor)
@@ -71,8 +71,8 @@ public struct PresetChip: View {
                         .clipShape(RoundedRectangle(cornerRadius: SlumbrTheme.Radius.md, style: .continuous))
                         .opacity(selected && !reduceTransparency ? 1.0 : 0.0)
                     }
-                )
-                .foregroundColor(
+                }
+                .foregroundStyle(
                     selected || isHovered
                         ? SlumbrTheme.Colors.textPrimary
                         : SlumbrTheme.Colors.textSecondary

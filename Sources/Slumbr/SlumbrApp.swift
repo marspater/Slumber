@@ -240,7 +240,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     /// (the global hotkey path otherwise leaves another app frontmost).
     private func showPopover(from button: NSStatusBarButton) {
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         popover.contentViewController?.view.window?.makeKey()
     }
 

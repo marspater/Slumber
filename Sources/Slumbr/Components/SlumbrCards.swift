@@ -23,13 +23,13 @@ public struct SettingsCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(SlumbrTheme.Colors.cardBackground(reduceTransparency: reduceTransparency))
             .clipShape(RoundedRectangle(cornerRadius: SlumbrTheme.Radius.card, style: .continuous))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: SlumbrTheme.Radius.card, style: .continuous)
                     .stroke(
                         SlumbrTheme.Colors.cardBorder(isHovered: isHovered, reduceTransparency: reduceTransparency),
                         lineWidth: reduceTransparency ? SlumbrTheme.Stroke.solid : SlumbrTheme.Stroke.thin
                     )
-            )
+            }
             .onHover { hovering in
                 withAnimation(SlumbrTheme.Motion.hover) {
                     isHovered = hovering
@@ -54,14 +54,14 @@ public struct KeycapBadge: View {
             }
         }
         .font(SlumbrTheme.Typography.keycap)
-        .foregroundColor(SlumbrTheme.Colors.textPrimary)
+        .foregroundStyle(SlumbrTheme.Colors.textPrimary)
         .padding(.horizontal, SlumbrTheme.Metrics.spaceSM)
         .padding(.vertical, Spec.verticalPadding)
-        .background(
+        .background {
             RoundedRectangle(cornerRadius: SlumbrTheme.Radius.xs, style: .continuous)
                 .fill(Color.white.opacity(Spec.fillOpacity))
-        )
-        .overlay(
+        }
+        .overlay {
             RoundedRectangle(cornerRadius: SlumbrTheme.Radius.xs, style: .continuous)
                 .stroke(
                     LinearGradient(
@@ -71,7 +71,7 @@ public struct KeycapBadge: View {
                     ),
                     lineWidth: SlumbrTheme.Stroke.thin
                 )
-        )
+        }
         .shadow(color: SlumbrTheme.Colors.shadow.opacity(Spec.shadowOpacity), radius: Spec.shadowRadius, y: Spec.shadowOffsetY)
     }
 }
@@ -100,11 +100,11 @@ public struct ErrorBanner: View {
         HStack(spacing: Spec.spacing) {
             Image(systemName: SlumbrTheme.Icons.warning)
                 .font(SlumbrTheme.Icons.warningFont)
-                .foregroundColor(SlumbrTheme.Colors.amber)
+                .foregroundStyle(SlumbrTheme.Colors.amber)
 
             Text(reason)
                 .font(SlumbrTheme.Typography.caption)
-                .foregroundColor(SlumbrTheme.Colors.textPrimary)
+                .foregroundStyle(SlumbrTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
@@ -112,10 +112,10 @@ public struct ErrorBanner: View {
             Button(action: onRetry) {
                 Text("Retry")
                     .font(SlumbrTheme.Typography.caption.weight(.semibold))
-                    .foregroundColor(SlumbrTheme.Colors.textPrimary)
+                    .foregroundStyle(SlumbrTheme.Colors.textPrimary)
                     .padding(.horizontal, Spec.retryHorizontalPadding)
                     .padding(.vertical, Spec.retryVerticalPadding)
-                    .background(
+                    .background {
                         ZStack {
                             RoundedRectangle(cornerRadius: SlumbrTheme.Radius.sm, style: .continuous)
                                 .fill(
@@ -133,7 +133,7 @@ public struct ErrorBanner: View {
                                     lineWidth: SlumbrTheme.Stroke.thin
                                 )
                         }
-                    )
+                    }
             }
             .buttonStyle(SlumbrTactileButtonStyle(scaleDown: Spec.retryPressScale))
             .accessibilityLabel("Retry put Mac to sleep")
@@ -146,7 +146,7 @@ public struct ErrorBanner: View {
             Button(action: onDismiss) {
                 Image(systemName: SlumbrTheme.Icons.dismiss)
                     .font(SlumbrTheme.Icons.dismissFont)
-                    .foregroundColor(
+                    .foregroundStyle(
                         isDismissHovered
                             ? SlumbrTheme.Colors.textPrimary
                             : SlumbrTheme.Colors.textPrimary.opacity(reduceTransparency ? Spec.dismissOpacitySolid : Spec.dismissOpacity)
@@ -164,7 +164,7 @@ public struct ErrorBanner: View {
         }
         .padding(.horizontal, SlumbrTheme.Metrics.spaceMD)
         .padding(.vertical, Spec.verticalPadding)
-        .background(
+        .background {
             ZStack {
                 if reduceTransparency {
                     RoundedRectangle(cornerRadius: SlumbrTheme.Radius.lg, style: .continuous)
@@ -181,7 +181,7 @@ public struct ErrorBanner: View {
                         lineWidth: reduceTransparency ? SlumbrTheme.Stroke.solid : SlumbrTheme.Stroke.thin
                     )
             }
-        )
+        }
         .shadow(color: SlumbrTheme.Colors.shadow.opacity(Spec.shadowOpacity), radius: Spec.shadowRadius, y: Spec.shadowOffsetY)
     }
 }
