@@ -276,10 +276,10 @@ public class SlumberTimer: ObservableObject {
             log.error("IOPMFindPowerManagement returned a null port, falling back to AppleScript.")
         }
         
-        if sleepSucceeded {
-            awaitSleepConfirmation()
-            return
-        }
+        // Watch the sleep clock and the timeout while the AppleScript fallback runs too: on first use it
+        // blocks on the Automation consent prompt, which nobody may answer at bedtime.
+        awaitSleepConfirmation()
+        if sleepSucceeded { return }
 
         // Offload blocking AppleScript execution to a background queue to avoid blocking the main thread / MainActor
         let generation = sleepGeneration
@@ -299,8 +299,8 @@ public class SlumberTimer: ObservableObject {
                     log.error("AppleScript fallback sleep failed without an error message.")
                     self.state = .sleepFailed(reason: "Could not put Mac to sleep.")
                 } else {
+                    // The confirmation window is already running.
                     log.notice("AppleScript fallback accepted the sleep request.")
-                    self.awaitSleepConfirmation()
                 }
             }
         }
