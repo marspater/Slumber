@@ -1,12 +1,6 @@
 version: 2
 
 updates:
-  # Swift Package Manager
-  - package-ecosystem: "swift"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

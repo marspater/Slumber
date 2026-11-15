@@ -4,18 +4,19 @@
 
 Slumbr is a native macOS menu bar application written in Swift 6 and SwiftUI.
 
-The repository is a Swift Package Manager project with:
+The repository is a native Xcode project (`Slumbr.xcodeproj`, built with `xcodebuild`) with:
 
-- `Sources/SlumbrCore` - timer/domain logic and platform sleep integration
-- `Sources/Slumbr` - macOS AppKit/SwiftUI UI, menu bar integration, animations, theme, assets
-- `Tests/SlumbrTests` - XCTest coverage for `SlumbrCore`
+- `Sources/SlumbrCore` - timer/domain logic and platform sleep integration (`SlumbrCore` static framework target)
+- `Sources/Slumbr` - macOS AppKit/SwiftUI UI, menu bar integration, animations, theme (`Slumbr` app target)
+- `Tests/SlumbrTests` - unit tests (`SlumbrTests`, hosted in the app)
+- `Slumbr.entitlements` - app entitlements (Apple Events for the AppleScript sleep fallback)
 - `Assets` - app icon, audio, and image resources
-- `build.sh` - local `.app` bundle construction and code-signing
+- `build.sh` - thin `xcodebuild` wrapper: Release build, signing identity choice, `--package`, `--install`
 - `CHANGELOG.md` - notable changes after tagged releases
 - `.github/workflows/swift.yml` - CI tests and app-bundle build
 - `.github/workflows/codeql.yml` - CodeQL security scanning for Swift
 
-`Package.swift` is the source of truth for the supported platform and language version.
+The build settings in `Slumbr.xcodeproj/project.pbxproj` are the source of truth for the deployment target (macOS 26.0), Swift language version, version numbers, bundle identifier and generated `Info.plist` keys. Source folders are synchronized groups, so new files under `Sources/` or `Tests/` join their target without project edits; the app resources in `Assets/` are explicit references.
 
 ## Environment Requirements
 
@@ -23,9 +24,8 @@ Primary development requires a macOS host with Xcode/Apple command-line develope
 
 Required toolchain characteristics on macOS:
 
-- Swift 6 / Swift Package Manager
-- macOS 26 SDK/runtime compatibility
-- Apple platform tooling available on the PATH (`xcrun`, `actool`, `codesign`, `security`, `xattr`)
+- Xcode 27 (Swift 6 language mode, macOS 27 SDK); the deployment target stays macOS 26.0
+- Apple platform tooling available on the PATH (`xcodebuild`, `codesign`, `security`, `ditto`, `xattr`)
 
 Do not attempt to compile native AppKit targets or run `build.sh` on Linux or Windows. Do not replace Apple frameworks with cross-platform substitutes.
 
@@ -43,21 +43,20 @@ Before making changes, inspect the current repository state and existing scripts
 Run these from the repository root:
 
 ```bash
-swift --version
-swift package describe
-swift test
-swift build -c release
+xcodebuild -version
+xcodebuild -list -project Slumbr.xcodeproj
+xcodebuild test -project Slumbr.xcodeproj -scheme Slumbr -destination 'platform=macOS'
 chmod +x build.sh
 ./build.sh
 ```
 
-For faster iteration during source-only changes, `swift test` is the minimum validation gate. Changes touching packaging, assets, signing, app lifecycle, AppKit integration, or SwiftUI rendering should also run `./build.sh`.
+For faster iteration during source-only changes, `xcodebuild test` is the minimum validation gate. Changes touching packaging, assets, signing, app lifecycle, AppKit integration, or SwiftUI rendering should also run `./build.sh`.
 
 When a change affects actual app behavior, prefer validating the built `.app` rather than relying only on compilation.
 
 ### In a Headless Linux Sandbox (e.g., Jules):
 
-- **Do NOT execute `swift build`, `swift test`, or `./build.sh`**.
+- **Do NOT execute `xcodebuild` or `./build.sh`**.
 - Perform static verification of imports, actor boundaries, method signatures, and API compatibility.
 - Ensure test files in `Tests/` are structurally updated to match `SlumbrCore` changes.
 
@@ -145,20 +144,22 @@ Important:
 
 - Do not ignore command failures that can produce a broken application bundle.
 - If an Apple tool is optional because of SDK/toolchain differences, verify the fallback is actually valid before keeping the fallback.
-- Keep `Info.plist` deployment metadata aligned with `Package.swift`.
+- `Info.plist` is generated from `INFOPLIST_KEY_*` build settings; keep `LSMinimumSystemVersion` derived from `MACOSX_DEPLOYMENT_TARGET`.
 - Do not claim support for an OS version that the package cannot actually compile for.
 - Preserve bundle identifier/versioning unless the task explicitly requires changing them.
+- Keep `SlumbrCore` a static framework. An embedded dynamic framework fails to load in ad-hoc signed Release builds: hardened runtime library validation rejects it ("different Team IDs"), and the tracked `Slumbr.zip` is ad-hoc signed.
+- Keep `ENABLE_APP_SANDBOX = NO`: `IOPMSleepSystem` and the System Events fallback do not work sandboxed.
 - Preserve code-signing behavior, but never commit certificates, private keys, provisioning profiles, or other signing secrets.
 
-If packaging metadata conflicts with `Package.swift`, stop and report the inconsistency rather than silently choosing whichever value is more convenient.
+If packaging metadata conflicts with the project's build settings, stop and report the inconsistency rather than silently choosing whichever value is more convenient.
 
 ## Testing Expectations
 
 Before declaring a task complete:
 
 - **On macOS:**
-  1. Run `swift test`.
-  2. Run `swift build -c release` when source changes affect compilation.
+  1. Run `xcodebuild test -project Slumbr.xcodeproj -scheme Slumbr -destination 'platform=macOS'`.
+  2. Run `./build.sh` (Release build) when source changes affect compilation.
   3. Run `./build.sh` for app-bundle or packaging changes.
 - **In Jules / Linux Sandbox:**
   1. Skip native build and packaging executions.

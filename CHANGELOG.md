@@ -7,15 +7,14 @@ Notable changes are recorded here so the README can stay focused on installing a
 ### Changed
 
 - The app is now called Slumbr. Its bundle identifier is `com.marspater.slumbr`, so macOS treats it as a new app: the "Show in Dock" setting and the menu bar icon position reset, and macOS asks once more for permission to control System Events. Delete the previous app from `/Applications` after installing Slumbr.
+- The project is a native Xcode project (`Slumbr.xcodeproj`) built with `xcodebuild`, replacing the Swift package. `build.sh` is now a thin wrapper around it. Built with the macOS 27 SDK, it still runs on macOS 26 and later, and the packaged app is now universal (Apple silicon and Intel).
+- CI and CodeQL build with Xcode 27 on GitHub's `xcode-27` runner.
+- Logging uses `os.Logger` (subsystem `com.marspater.slumbr`), so timer and sleep events persist and can be read with `log show --predicate 'subsystem == "com.marspater.slumbr"'`.
 
 ### Fixed
 
 - The Mac no longer silently stays awake when the timer ends. A tick that ran more than 2 seconds late was treated as "the Mac slept through the deadline" and finished without sleeping; the timer now checks the system's real sleep time instead.
 - A sleep request that reports success but never sleeps the Mac now shows a retryable "Your Mac didn't go to sleep" error after 15 seconds instead of claiming success. If the sleep lands later, the error clears itself.
-
-### Changed
-
-- Logging uses `os.Logger` (subsystem `com.marspater.slumbr`), so timer and sleep events persist and can be read with `log show --predicate 'subsystem == "com.marspater.slumbr"'`.
 
 ## v3.5
 

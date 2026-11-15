@@ -15,15 +15,24 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-latest
+    # Preview image with Xcode 27 (macOS 27 SDK); macos-latest still ships Xcode 26.
+    runs-on: xcode-27
     timeout-minutes: 30
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Show toolchain
+        run: xcodebuild -version
+
       - name: Run tests
-        run: swift test
+        run: >-
+          xcodebuild test
+          -project Slumbr.xcodeproj
+          -scheme Slumbr
+          -destination 'platform=macOS'
+          -derivedDataPath .build/DerivedData
 
       - name: Build app bundle
         run: |

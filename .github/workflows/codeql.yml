@@ -20,7 +20,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze Swift
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 45
 
     permissions:
@@ -38,8 +38,16 @@ jobs:
           languages: swift
           build-mode: manual
 
-      - name: Build Swift package
-        run: swift build -c release --force-resolved-versions
+      - name: Build app
+        run: >-
+          xcodebuild build
+          -project Slumbr.xcodeproj
+          -scheme Slumbr
+          -configuration Release
+          -destination 'generic/platform=macOS'
+          -derivedDataPath .build/DerivedData
+          CODE_SIGNING_ALLOWED=NO
+          COMPILER_INDEX_STORE_ENABLE=NO
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
