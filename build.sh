@@ -41,11 +41,12 @@ mkdir -p "${ARTIFACTS_DIR}"
 ditto "${DERIVED_DATA}/Build/Products/Release/${APP_NAME}.app" "${APP_DIR}"
 codesign --verify --deep --strict "${APP_DIR}"
 
-# Package Slumbr.zip only on request, so ordinary builds leave the tree clean
+# Package Slumbr.zip only on request, so ordinary builds leave the tree clean. No xattrs/resource
+# forks: as AppleDouble ._ files they break the signature when the zip is extracted with unzip.
 if [[ " $* " == *" --package "* ]]; then
     echo "Packaging ${APP_NAME}.zip..."
     rm -f "${REPO_ROOT}/${APP_NAME}.zip"
-    ditto -c -k --keepParent "${APP_DIR}" "${REPO_ROOT}/${APP_NAME}.zip"
+    ditto -c -k --norsrc --noextattr --keepParent "${APP_DIR}" "${REPO_ROOT}/${APP_NAME}.zip"
 fi
 
 if [[ " $* " == *" --install "* || " $* " == *" -i "* ]]; then
