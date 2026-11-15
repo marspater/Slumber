@@ -69,7 +69,7 @@ When a Developer ID signing identity is available, the build script prefers it. 
 | `Sources/SlumbrCore` | Timer/domain logic and sleep integration |
 | `Sources/Slumbr` | SwiftUI/AppKit UI, menu bar integration, art, and theme |
 | `Sources/Slumbr/Theme` | Central design tokens, P3/EDR levels, component and art specs |
-| `Tests/SlumbrTests` | XCTest coverage for core behavior and vector parsing |
+| `Tests/SlumbrTests` | Swift Testing suites for the timer, formatting, vector parsing, theme and artwork |
 | `Assets` | Icon Composer source, screenshot, and audio assets |
 | `docs/DESIGN.md` | Design system and artwork reference |
 | `.github/workflows` | CI and CodeQL workflows |
