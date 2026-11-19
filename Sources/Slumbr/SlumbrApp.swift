@@ -27,7 +27,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
 
+    static let isRunningAsTestHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+
     func applicationDidFinishLaunching(_: Notification) {
+        // Tests are hosted in the real app: skip the hotkey, status item and defaults setup there.
+        guard !AppDelegate.isRunningAsTestHost else { return }
         let showInDock = UserDefaults.standard.bool(forKey: "showInDock")
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
 
