@@ -1,5 +1,7 @@
 import Foundation
 import Testing
+import Observation
+import Synchronization
 import SlumbrCore
 
 @MainActor
@@ -33,7 +35,7 @@ final class MockClock {
 @Suite("SlumbrTimer")
 struct SlumbrTimerTests {
     @Test func initialStateIsIdle() {
-        let timer = SlumbrTimer()
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") })
         #expect(timer.state == TimerState.idle)
         #expect(!timer.isRunning)
         #expect(timer.timeRemaining == 0)
@@ -43,7 +45,7 @@ struct SlumbrTimerTests {
 
     @Test func startTransitionsToRunningAndSetsTotalTime() {
         let clock = MockClock()
-        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 15)
         #expect(timer.state == TimerState.running)
         #expect(timer.isRunning)
@@ -54,7 +56,7 @@ struct SlumbrTimerTests {
 
     @Test func stopTransitionsToIdle() {
         let clock = MockClock()
-        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 30)
         #expect(timer.state == TimerState.running)
         timer.stop()
@@ -79,7 +81,7 @@ struct SlumbrTimerTests {
     }
 
     @Test func invalidMinutesDoesNotStart() {
-        let timer = SlumbrTimer()
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") })
         timer.start(minutes: 0)
         #expect(timer.state == TimerState.idle)
         timer.start(minutes: -10)
@@ -94,7 +96,7 @@ struct SlumbrTimerTests {
 
     @Test func tickCalculatesExactRemainingTime() {
         let clock = MockClock()
-        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 10) // 600s
         
         clock.advance(by: 120) // 2 minutes elapsed
@@ -187,7 +189,7 @@ struct SlumbrTimerTests {
 
     @Test func repeatedStartsCleanlyResetPreviousSession() {
         let clock = MockClock()
-        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 15)
         #expect(timer.totalTime == 900)
         
@@ -200,7 +202,7 @@ struct SlumbrTimerTests {
 
     @Test func wakeHandlingResumesIfTimeRemains() {
         let clock = MockClock()
-        let timer = SlumbrTimer(dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
         timer.start(minutes: 60) // 3600 seconds
         #expect(timer.state == TimerState.running)
         
@@ -371,7 +373,7 @@ struct SlumbrTimerTests {
     }
 
     @Test func deinitCancelsTimerAndCleansUpResources() {
-        var timer: SlumbrTimer? = SlumbrTimer()
+        var timer: SlumbrTimer? = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") })
         weak let weakTimer = timer
         timer?.start(minutes: 10)
         #expect(timer?.state == TimerState.running)
@@ -379,6 +381,18 @@ struct SlumbrTimerTests {
         // Releasing the reference must not be blocked by the dispatch source or wake observer
         timer = nil
         #expect(weakTimer == nil)
+    }
+
+    @Test func timeRemainingIsObservable() {
+        let clock = MockClock()
+        let timer = SlumbrTimer(sleepAction: { SleepResult.failure(reason: "test") }, dateProvider: { clock.now() }, sleepClock: { clock.asleep })
+        timer.start(minutes: 10)
+        let fired = Mutex(false)
+        withObservationTracking({ _ = timer.timeRemaining }, onChange: { fired.withLock { $0 = true } })
+        clock.advance(by: 60)
+        timer.tick()
+        #expect(fired.withLock { $0 })
+        timer.stop()
     }
 
     @Test func doesNotSleepBeforeDeadlineButDoesAtDeadline() {
